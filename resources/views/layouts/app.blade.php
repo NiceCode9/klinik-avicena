@@ -157,7 +157,7 @@
         </nav>
 
         {{-- Sidebar --}}
-        <aside class="app-sidebar bg-body-secondary shadow" data-bs-theme="dark">
+        {{-- <aside class="app-sidebar bg-body-secondary shadow" data-bs-theme="dark">
             <div class="sidebar-brand">
                 <a href="{{ route('dashboard') }}" class="brand-link">
                     <i class="bi bi-heart-pulse fs-4 me-2"></i>
@@ -214,7 +214,8 @@
                     </ul>
                 </nav>
             </div>
-        </aside>
+        </aside> --}}
+        @include('layouts.sidebar')
 
         {{-- Main content --}}
         <main class="app-main">
