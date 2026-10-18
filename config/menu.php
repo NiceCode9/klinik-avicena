@@ -7,7 +7,7 @@
  * - Jalankan `php artisan menu:sinkron` setiap kali file ini berubah / saat deploy.
  */
 return [
-    ['kode' => 'dasbor', 'nama' => 'Dasbor', 'ikon' => 'bi-speedometer2', 'rute' => 'dasbor'],
+    ['kode' => 'dasbor', 'nama' => 'Dasbor', 'ikon' => 'bi-speedometer2', 'rute' => 'dashboard'],
 
     ['kode' => 'pendaftaran', 'nama' => 'Pendaftaran', 'ikon' => 'bi-person-plus', 'anak' => [
         ['kode' => 'pendaftaran.pasien',      'nama' => 'Data Pasien',             'rute' => 'pasien.index'],

@@ -111,42 +111,27 @@
                     <!--begin::User Menu Dropdown-->
                     <li class="nav-item dropdown user-menu">
                         <a href="#" class="nav-link dropdown-toggle" data-bs-toggle="dropdown">
-                            <img src="./assets/img/user2-160x160.jpg" class="user-image rounded-circle shadow"
-                                alt="Alexander Pierce" />
-                            <span class="d-none d-xl-inline">Alexander Pierce</span>
+                            <span class="user-image rounded-circle text-bg-primary d-inline-flex align-items-center justify-content-center">
+                                <i class="bi bi-person-circle"></i>
+                            </span>
+                            <span class="d-none d-xl-inline">{{ auth()->user()?->nama }}</span>
                         </a>
                         <ul class="dropdown-menu dropdown-menu-lg dropdown-menu-end">
-                            <!--begin::User Image-->
+                            <!--begin::User Header-->
                             <li class="user-header text-bg-primary">
-                                <img src="./assets/img/user2-160x160.jpg" class="rounded-circle shadow"
-                                    alt="Alexander Pierce" />
+                                <i class="bi bi-person-circle" style="font-size: 4rem;"></i>
                                 <p>
-                                    Alexander Pierce - Web Developer
-                                    <small>Member since Nov. 2023</small>
+                                    {{ auth()->user()?->nama }}
+                                    <small>{{ auth()->user()?->peran?->nama }}</small>
                                 </p>
                             </li>
-                            <!--end::User Image-->
-                            <!--begin::Menu Body-->
-                            <li class="user-body">
-                                <!--begin::Row-->
-                                <div class="row">
-                                    <div class="col-4 text-center">
-                                        <a href="#">Followers</a>
-                                    </div>
-                                    <div class="col-4 text-center">
-                                        <a href="#">Sales</a>
-                                    </div>
-                                    <div class="col-4 text-center">
-                                        <a href="#">Friends</a>
-                                    </div>
-                                </div>
-                                <!--end::Row-->
-                            </li>
-                            <!--end::Menu Body-->
+                            <!--end::User Header-->
                             <!--begin::Menu Footer-->
                             <li class="user-footer">
-                                <a href="#" class="btn btn-outline-secondary">Profile</a>
-                                <a href="#" class="btn btn-outline-danger float-end">Sign out</a>
+                                <form action="{{ route('logout') }}" method="post">
+                                    @csrf
+                                    <button type="submit" class="btn btn-outline-danger w-100">Keluar</button>
+                                </form>
                             </li>
                             <!--end::Menu Footer-->
                         </ul>
