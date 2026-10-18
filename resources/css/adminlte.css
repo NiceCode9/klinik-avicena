@@ -1,0 +1,10 @@
+/* AdminLTE 4 (Bootstrap 5 based) styles for the admin panel. */
+@import 'admin-lte/dist/css/adminlte.min.css';
+@import 'bootstrap-icons/font/bootstrap-icons.css';
+@import 'overlayscrollbars/styles/overlayscrollbars.css';
+
+/* Source Sans 3, the font AdminLTE is designed around. */
+@import '@fontsource/source-sans-3/latin-300.css';
+@import '@fontsource/source-sans-3/latin-400.css';
+@import '@fontsource/source-sans-3/latin-600.css';
+@import '@fontsource/source-sans-3/latin-700.css';
