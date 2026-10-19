@@ -79,3 +79,22 @@ function penggunaDenganIzin(array $kodeMenu = ['dasbor'], array $atribut = []): 
 
     return User::factory()->create(['peran_id' => $peran->id] + $atribut);
 }
+
+/**
+ * Pengguna dengan hanya hak lihat pada menu tersebut.
+ */
+function penggunaHanyaLihat(string $kodeMenu): User
+{
+    $peran = Peran::create(['nama' => 'peran_lihat_'.Str::random(6)]);
+
+    HakAkses::create([
+        'peran_id' => $peran->id,
+        'menu_id' => buatMenu($kodeMenu)->id,
+        'bisa_lihat' => true,
+        'bisa_tambah' => false,
+        'bisa_ubah' => false,
+        'bisa_hapus' => false,
+    ]);
+
+    return User::factory()->create(['peran_id' => $peran->id]);
+}

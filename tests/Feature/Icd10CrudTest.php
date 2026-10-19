@@ -7,9 +7,6 @@ use App\Models\Master\Icd10;
 use App\Models\Master\Pasien;
 use App\Models\Master\Poli;
 use App\Models\Registrasi\Kunjungan;
-use App\Models\Sys\HakAkses;
-use App\Models\Sys\Peran;
-use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Http\UploadedFile;
 
@@ -177,18 +174,7 @@ test('pengguna dengan hak dapat menghapus icd-10 yang belum dipakai', function (
 });
 
 test('impor tanpa hak tambah ditolak', function () {
-    $menu = buatMenu('master.icd10', 'icd10.index', 'ICD-10');
-    $peran = Peran::create(['nama' => 'peran_lihat_saja']);
-    HakAkses::create([
-        'peran_id' => $peran->id,
-        'menu_id' => $menu->id,
-        'bisa_lihat' => true,
-        'bisa_tambah' => false,
-        'bisa_ubah' => false,
-        'bisa_hapus' => false,
-    ]);
-
-    $pengguna = User::factory()->create(['peran_id' => $peran->id]);
+    $pengguna = penggunaHanyaLihat('master.icd10');
 
     $this->actingAs($pengguna)
         ->get(route('icd10.impor'))
