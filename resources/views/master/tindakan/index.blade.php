@@ -12,7 +12,7 @@
         <div class="card-header d-flex justify-content-between align-items-center">
             <span>Daftar Tindakan Medis</span>
             @izin('master.tindakan', 'tambah')
-                <a href="{{ route('tindakan.create') }}" class="btn btn-sm btn-primary">
+                <a href="{{ route('tindakan.create') }}" class="btn btn-sm btn-primary ms-auto">
                     <i class="bi bi-plus-lg"></i> Tambah Tindakan
                 </a>
             @endizin

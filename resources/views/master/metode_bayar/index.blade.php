@@ -12,7 +12,7 @@
         <div class="card-header d-flex justify-content-between align-items-center">
             <span>Daftar Metode Bayar</span>
             @izin('master.metode_bayar', 'tambah')
-                <a href="{{ route('metode-bayar.create') }}" class="btn btn-sm btn-primary">
+                <a href="{{ route('metode-bayar.create') }}" class="btn btn-sm btn-primary ms-auto">
                     <i class="bi bi-plus-lg"></i> Tambah Metode Bayar
                 </a>
             @endizin

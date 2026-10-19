@@ -12,7 +12,7 @@
         <div class="card-header d-flex justify-content-between align-items-center">
             <span>Daftar Dokter</span>
             @izin('master.dokter', 'tambah')
-                <a href="{{ route('dokter.create') }}" class="btn btn-sm btn-primary">
+                <a href="{{ route('dokter.create') }}" class="btn btn-sm btn-primary ms-auto">
                     <i class="bi bi-plus-lg"></i> Tambah Dokter
                 </a>
             @endizin

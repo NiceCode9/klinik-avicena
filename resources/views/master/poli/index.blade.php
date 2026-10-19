@@ -12,7 +12,7 @@
         <div class="card-header d-flex justify-content-between align-items-center">
             <span>Daftar Poli</span>
             @izin('master.poli', 'tambah')
-                <a href="{{ route('poli.create') }}" class="btn btn-sm btn-primary">
+                <a href="{{ route('poli.create') }}" class="btn btn-sm btn-primary ms-auto">
                     <i class="bi bi-plus-lg"></i> Tambah Poli
                 </a>
             @endizin

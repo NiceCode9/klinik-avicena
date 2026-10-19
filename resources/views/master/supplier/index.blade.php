@@ -12,7 +12,7 @@
         <div class="card-header d-flex justify-content-between align-items-center">
             <span>Daftar Supplier / PBF</span>
             @izin('master.supplier', 'tambah')
-                <a href="{{ route('supplier.create') }}" class="btn btn-sm btn-primary">
+                <a href="{{ route('supplier.create') }}" class="btn btn-sm btn-primary ms-auto">
                     <i class="bi bi-plus-lg"></i> Tambah Supplier
                 </a>
             @endizin

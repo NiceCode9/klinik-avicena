@@ -12,7 +12,7 @@
         <div class="card-header d-flex justify-content-between align-items-center">
             <span>Daftar Kategori Obat</span>
             @izin('master.kategori_obat', 'tambah')
-                <a href="{{ route('kategori-obat.create') }}" class="btn btn-sm btn-primary">
+                <a href="{{ route('kategori-obat.create') }}" class="btn btn-sm btn-primary ms-auto">
                     <i class="bi bi-plus-lg"></i> Tambah Kategori Obat
                 </a>
             @endizin

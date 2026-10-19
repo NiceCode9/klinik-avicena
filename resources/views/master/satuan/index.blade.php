@@ -12,7 +12,7 @@
         <div class="card-header d-flex justify-content-between align-items-center">
             <span>Daftar Satuan</span>
             @izin('master.satuan', 'tambah')
-                <a href="{{ route('satuan.create') }}" class="btn btn-sm btn-primary">
+                <a href="{{ route('satuan.create') }}" class="btn btn-sm btn-primary ms-auto">
                     <i class="bi bi-plus-lg"></i> Tambah Satuan
                 </a>
             @endizin
