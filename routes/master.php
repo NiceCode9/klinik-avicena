@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\Master\DokterController;
+use App\Http\Controllers\Master\Icd10Controller;
 use App\Http\Controllers\Master\KategoriObatController;
 use App\Http\Controllers\Master\MetodeBayarController;
 use App\Http\Controllers\Master\ObatController;
@@ -27,6 +28,10 @@ Route::middleware('auth')->prefix('master')->group(function () {
     Route::resource('tindakan', TindakanController::class)->except('show');
     Route::resource('obat', ObatController::class)->except('show');
     Route::resource('racikan', RacikanController::class)->except('show');
+
+    Route::get('icd10/impor', [Icd10Controller::class, 'impor'])->name('icd10.impor');
+    Route::post('icd10/impor', [Icd10Controller::class, 'simpanImpor'])->name('icd10.impor.simpan');
+    Route::resource('icd10', Icd10Controller::class)->except('show');
     Route::resource('pemeriksaan-lab', PemeriksaanLabController::class)->except('show')
         ->parameters(['pemeriksaan-lab' => 'pemeriksaanLab']);
 });
