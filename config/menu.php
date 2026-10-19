@@ -47,6 +47,7 @@ return [
         ['kode' => 'master.dokter',          'nama' => 'Dokter',          'rute' => 'dokter.index'],
         ['kode' => 'master.poli',            'nama' => 'Poli',            'rute' => 'poli.index'],
         ['kode' => 'master.obat',            'nama' => 'Obat',            'rute' => 'obat.index'],
+        ['kode' => 'master.satuan',          'nama' => 'Satuan',          'rute' => 'satuan.index'],
         ['kode' => 'master.racikan',         'nama' => 'Menu Racikan',    'rute' => 'racikan.index'],
         ['kode' => 'master.supplier',        'nama' => 'Supplier / PBF',  'rute' => 'supplier.index'],
         ['kode' => 'master.tindakan',        'nama' => 'Tindakan Medis',  'rute' => 'tindakan.index'],

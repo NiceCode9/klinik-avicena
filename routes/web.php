@@ -25,3 +25,4 @@ Route::middleware('auth')->group(function () {
 });
 
 require __DIR__.'/sistem.php';
+require __DIR__.'/master.php';
