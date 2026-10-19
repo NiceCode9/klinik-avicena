@@ -21,6 +21,15 @@ class Obat extends ModelDasar
 
     protected $table = 'mtr_obat';
 
+    /** Label pilihan kolom `golongan` (ENUM di DB). */
+    public const GOLONGAN = [
+        'bebas' => 'Bebas',
+        'bebas_terbatas' => 'Bebas Terbatas',
+        'keras' => 'Keras',
+        'narkotika' => 'Narkotika',
+        'psikotropika' => 'Psikotropika',
+    ];
+
     protected function casts(): array
     {
         return [

@@ -3,8 +3,11 @@
 use App\Http\Controllers\Master\DokterController;
 use App\Http\Controllers\Master\KategoriObatController;
 use App\Http\Controllers\Master\MetodeBayarController;
+use App\Http\Controllers\Master\ObatController;
 use App\Http\Controllers\Master\PoliController;
 use App\Http\Controllers\Master\SatuanController;
+use App\Http\Controllers\Master\SupplierController;
+use App\Http\Controllers\Master\TindakanController;
 use Illuminate\Support\Facades\Route;
 
 // Di routes/web.php tambahkan:  require __DIR__ . '/master.php';
@@ -17,4 +20,8 @@ Route::middleware('auth')->prefix('master')->group(function () {
         ->parameters(['metode-bayar' => 'metodeBayar']);
     Route::resource('kategori-obat', KategoriObatController::class)->except('show')
         ->parameters(['kategori-obat' => 'kategoriObat']);
+
+    Route::resource('supplier', SupplierController::class)->except('show');
+    Route::resource('tindakan', TindakanController::class)->except('show');
+    Route::resource('obat', ObatController::class)->except('show');
 });
