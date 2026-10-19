@@ -128,6 +128,9 @@
                             <!--end::User Header-->
                             <!--begin::Menu Footer-->
                             <li class="user-footer">
+                                <a href="{{ route('kata-sandi.edit') }}" class="btn btn-outline-secondary w-100 mb-2">
+                                    Ganti Kata Sandi
+                                </a>
                                 <form action="{{ route('logout') }}" method="post">
                                     @csrf
                                     <button type="submit" class="btn btn-outline-danger w-100">Keluar</button>

@@ -46,7 +46,7 @@ class DataAwalSeeder extends Seeder
             'nama' => 'Administrator',
             'username' => 'admin',
             'email' => 'admin@example.com',
-            'password' => Hash::make('admin'),
+            'password' => Hash::make('ganti-kata-sandi-ini'),
             'peran_id' => DB::table('sys_peran')->where('nama', 'admin')->value('id'),
             'aktif' => true,
         ] + $waktu);

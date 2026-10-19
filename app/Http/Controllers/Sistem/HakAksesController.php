@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Sistem;
 
 use App\Http\Controllers\Controller;
 use App\Models\Sys\HakAkses;
+use App\Models\Sys\LogAktivitas;
 use App\Models\Sys\Menu;
 use App\Models\Sys\Peran;
 use App\Services\IzinService;
@@ -65,6 +66,7 @@ class HakAksesController extends Controller implements HasMiddleware
         });
 
         IzinService::lupakan($peran->id);
+        LogAktivitas::catat($request->user(), 'ubah', 'sys_hak_akses', $peran->id);
 
         return redirect()->route('hak-akses.index', ['peran' => $peran->id])
             ->with('sukses', "Hak akses peran {$peran->nama} disimpan.");

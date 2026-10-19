@@ -70,3 +70,58 @@ test('logout mengakhiri sesi', function () {
     $respons->assertRedirect(route('login'));
     $this->assertGuest();
 });
+
+test('login sukses mengisi waktu login terakhir', function () {
+    $pengguna = User::factory()->create(['username' => 'putri']);
+    expect($pengguna->login_terakhir)->toBeNull();
+
+    $this->post('/login', ['username' => 'putri', 'password' => 'password']);
+
+    expect($pengguna->fresh()->login_terakhir)->not->toBeNull();
+});
+
+test('percobaan login dibatasi throttle', function () {
+    User::factory()->create(['username' => 'putri']);
+
+    foreach (range(1, 5) as $percobaan) {
+        $this->post('/login', ['username' => 'putri', 'password' => 'salah']);
+    }
+
+    $respons = $this->post('/login', ['username' => 'putri', 'password' => 'password']);
+
+    $respons->assertSessionHasErrors('username');
+    expect($respons->getSession()->get('errors')->first('username'))->toContain('Terlalu banyak');
+    $this->assertGuest();
+});
+
+test('pengguna nonaktif dengan sesi lama ditolak di dashboard', function () {
+    $this->actingAs(User::factory()->create(['aktif' => false]));
+
+    $this->get('/dashboard')->assertForbidden();
+});
+
+test('pesan validasi tampil dalam bahasa indonesia', function () {
+    $respons = $this->post('/login', ['username' => '', 'password' => '']);
+
+    $respons->assertSessionHasErrors('username');
+    expect($respons->getSession()->get('errors')->first('username'))->toContain('wajib diisi');
+});
+
+test('username berbentuk array tidak menyebabkan error server', function () {
+    $respons = $this->post('/login', ['username' => ['admin'], 'password' => 'rahasia']);
+
+    $respons->assertSessionHasErrors('username');
+    $this->assertGuest();
+});
+
+test('logout dicatat di log aktivitas', function () {
+    $pengguna = User::factory()->create();
+    $this->actingAs($pengguna);
+
+    $this->post('/logout');
+
+    $this->assertDatabaseHas('sys_log_aktivitas', [
+        'pengguna_id' => $pengguna->id,
+        'aksi' => 'logout',
+    ]);
+});

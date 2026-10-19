@@ -1,6 +1,11 @@
 <?php
 
+use App\Models\Sys\HakAkses;
+use App\Models\Sys\Menu;
+use App\Models\Sys\Peran;
+use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Str;
 use Tests\TestCase;
 
 /*
@@ -44,7 +49,33 @@ expect()->extend('toBeOne', function () {
 |
 */
 
-function something()
+function buatMenu(string $kode, ?string $rute = null, ?string $nama = null): Menu
 {
-    // ..
+    return Menu::firstOrCreate(
+        ['kode' => $kode],
+        ['nama' => $nama ?? $kode, 'rute' => $rute ?? 'dashboard', 'aktif' => true],
+    );
+}
+
+/**
+ * Pengguna (default aktif) dengan peran baru yang punya hak penuh untuk menu-menu tersebut.
+ */
+function penggunaDenganIzin(array $kodeMenu = ['dasbor'], array $atribut = []): User
+{
+    $peran = Peran::create(['nama' => 'peran_'.Str::random(6)]);
+
+    foreach ($kodeMenu as $kode) {
+        $menu = buatMenu($kode);
+
+        HakAkses::create([
+            'peran_id' => $peran->id,
+            'menu_id' => $menu->id,
+            'bisa_lihat' => true,
+            'bisa_tambah' => true,
+            'bisa_ubah' => true,
+            'bisa_hapus' => true,
+        ]);
+    }
+
+    return User::factory()->create(['peran_id' => $peran->id] + $atribut);
 }

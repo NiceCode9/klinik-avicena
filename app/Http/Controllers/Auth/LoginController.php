@@ -48,17 +48,16 @@ class LoginController extends Controller implements HasMiddleware
         Auth::login($pengguna, $request->boolean('ingat'));
         $request->session()->regenerate();
 
-        LogAktivitas::create([
-            'pengguna_id' => $pengguna->id,
-            'aksi' => 'login',
-            'alamat_ip' => $request->ip(),
-        ]);
+        $pengguna->forceFill(['login_terakhir' => now()])->save();
+        LogAktivitas::catat($pengguna, 'login');
 
         return redirect()->intended(route('dashboard'));
     }
 
     public function logout(Request $request): RedirectResponse
     {
+        LogAktivitas::catat($request->user(), 'logout');
+
         Auth::logout();
         $request->session()->invalidate();
         $request->session()->regenerateToken();
