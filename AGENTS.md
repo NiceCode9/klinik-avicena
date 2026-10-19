@@ -8,6 +8,7 @@
 This application is a Laravel application running on PHP 8.3. Always use the APIs that match the installed major version of each package — do not assume a version.
 
 Before relying on a package's API, confirm its installed version:
+
 - PHP packages: run `composer show --direct` to list direct dependencies with versions, or `composer show <vendor/package>` for a single package.
 - JS packages: check `package.json` for the installed versions.
 
@@ -52,7 +53,7 @@ Before relying on a package's API, confirm its installed version:
 
 - Execute PHP in app context for debugging and testing code. Do not create models without user approval, prefer tests with factories instead. Prefer existing Artisan commands over custom tinker code.
 - Always use single quotes to prevent shell expansion: `php artisan tinker --execute 'Your::code();'`
-  - Double quotes for PHP strings inside: `php artisan tinker --execute 'User::where("active", true)->count();'`
+    - Double quotes for PHP strings inside: `php artisan tinker --execute 'User::where("active", true)->count();'`
 
 === php rules ===
 
@@ -121,3 +122,86 @@ Before relying on a package's API, confirm its installed version:
 - After the feature tests pass, ask the user to run the complete suite with `php artisan test --compact`.
 
 </laravel-boost-guidelines>
+
+# AGENTS.md — SIM Klinik Avicena
+
+Panduan untuk AI coding agent (Claude Code, Cursor, Copilot, dll). Jika alat Anda membaca `CLAUDE.md`, salin file ini dengan nama itu.
+**Baca file ini sepenuhnya sebelum menulis kode.** Dokumen detail ada di `docs/`.
+
+## Ringkasan
+
+Sistem informasi klinik onsite: pendaftaran & antrean per poli, rekam medis elektronik (SOAP + ICD-10), laboratorium, apotek/farmasi/inventaris, kasir, dan sinkronisasi **SATUSEHAT Kemenkes** lewat queue. Bahasa domain dan UI: **Indonesia**. Spesifikasi produk: `docs/PRD.md`.
+
+## Stack
+
+- Laravel 13, MySQL 8 (InnoDB, utf8mb4), Blade + Bootstrap 5 + **AdminLTE 4** (server-rendered, JS seminimal mungkin)
+- Queue untuk SATUSEHAT (Redis + Supervisor direkomendasikan; driver `database` boleh di awal)
+- Pengujian: PHPUnit/Pest dengan **MySQL** (bukan SQLite: kita memakai JSON, ENUM, CHECK, dan row lock)
+- UI: AdminLTE 4 dipasang via npm + Vite (aset di resources/, dibuild dengan `npm run dev` / `npm run build`)
+- Autentikasi sudah ada (login/logout) memakai model App\Models\User (tabel `sys_pengguna`; kolom username + password)
+
+## Perintah
+
+```bash
+composer install
+php artisan migrate --seed          # DataAwalSeeder -> HakAksesAwalSeeder -> menu:sinkron
+php artisan menu:sinkron            # WAJIB dijalankan tiap config/menu.php berubah / saat deploy
+php artisan queue:work --queue=satusehat,default
+php artisan test
+vendor/bin/pint                     # format kode
+```
+
+Akun awal: `admin` / `ganti-kata-sandi-ini` (WAJIB diganti, jangan dipakai di produksi).
+
+## Struktur kode
+
+```
+app/Models/<Ns>/            Sys, Master, Registrasi, Erm, Lab, Apotek, Billing, SatuSehat (semua extends ModelDasar)
+app/Http/Controllers/<Ns>/  tipis: validasi (FormRequest) -> panggil Service -> kembalikan view/redirect
+app/Http/Requests/<Ns>/
+app/Services/<Ns>/          SELURUH logika bisnis & transaksi DB (mis. Registrasi/AntreanService, Apotek/StokService)
+app/Jobs/SatuSehat/         SatuSehatSyncJob dan turunannya
+app/Policies/               aturan tingkat data (mis. dokter hanya pemeriksaannya sendiri, data terkunci)
+app/Services/IzinService.php, app/Http/Middleware/PeriksaIzin.php   (hak akses menu)
+config/menu.php             sumber kebenaran menu sidebar
+resources/views/<ns>/       Blade per modul; layout AdminLTE di resources/views/layouts
+```
+
+Prefix tabel ↔ namespace: `sys_`=Sys, `mtr_`=Master, `reg_`=Registrasi, `erm_`=Erm, `lab_`=Lab, `apt_`=Apotek, `bil_`=Billing, `sts_`=SatuSehat.
+
+## ATURAN WAJIB
+
+1. **Skema**: ubah database HANYA lewat migration baru. Jangan edit migration yang sudah dijalankan. `docs/schema.sql` adalah snapshot awal, bukan sumber kebenaran setelah rilis.
+2. **Penamaan**: tabel & kolom bahasa Indonesia dengan prefix modul. **Pengecualian** (nama bawaan Laravel, tetap Inggris): `created_at`, `updated_at`, `deleted_at`, `password`, `remember_token`. Tabel framework (`jobs`, `failed_jobs`, `migrations`, `sessions`, `cache`) tetap default Laravel.
+3. **Logika bisnis di Service**, bukan di controller/model/Blade. Setiap operasi yang mengubah >1 tabel dibungkus `DB::transaction()`.
+4. **Stok obat**: jangan pernah `update jumlah_sisa` langsung. Semua perubahan lewat `StokService` (FEFO + `lockForUpdate()` + catat `apt_mutasi_stok`). Lihat `docs/business-rules.md`.
+5. **Antrean**: nomor diambil lewat `AntreanService` (transaksi + lock `reg_penghitung_antrean`). Format `INT-001`, `GIG-001`, `SRF-001`, `LAB-001`, reset harian.
+6. **Hak akses**: setiap controller memakai middleware `izin:<kode_menu>,<aksi>` (aksi: lihat/tambah/ubah/hapus) lewat `HasMiddleware`. Menyembunyikan tombol/menu BUKAN keamanan. Kode menu tidak boleh diubah setelah dipakai.
+7. **Menu baru**: tambah di `config/menu.php` → jalankan `menu:sinkron` → atur hak di `HakAksesAwalSeeder` dan/atau UI Hak Akses.
+8. **Data medis tidak dihapus**: gunakan status/pembatalan. Setelah kasir konfirmasi bayar, `erm_pemeriksaan.dikunci` dan `lab_permintaan.dikunci` = true dan **tidak boleh diubah**.
+9. **Tarif/harga disnapshot** ke baris transaksi (tindakan, lab, resep, tagihan) saat transaksi terjadi; perubahan master tidak mengubah transaksi lama.
+10. **SATUSEHAT**: simpan data lokal dulu, lalu `dispatch` job. Jangan panggil API SATUSEHAT di request web. Retry 3x lalu `failed_jobs` + tampil di dashboard admin. Lihat `docs/satusehat.md`.
+11. **Keamanan data**: `nik` (pasien/dokter) dan token memakai cast `encrypted`; pencarian NIK lewat `nik_hash` (HMAC). Jangan log NIK, hasil lab, atau isi SOAP ke file log. Rahasia hanya di `.env`.
+12. **Zona waktu** `Asia/Jakarta`, locale `id`. Pesan validasi dan UI berbahasa Indonesia.
+
+## JANGAN
+
+- Menambah package besar (Livewire, Inertia, SPA framework, spatie/permission, dsb.) tanpa persetujuan eksplisit; lihat `docs/decisions.md`.
+- Mengubah `kode` menu, nama tabel, atau nama kolom yang sudah dipakai tanpa migration + update semua referensi.
+- Menaruh query berat/N+1 di Blade; gunakan eager loading dan `paginate()`.
+- Menulis logika yang bergantung pada `status` ENUM tanpa memeriksa transisi yang valid (`docs/business-rules.md` §1).
+- Menebak aturan bisnis yang belum jelas: lihat "Pertanyaan terbuka" di `docs/decisions.md` dan tanyakan.
+
+## Definition of Done (setiap fitur)
+
+- [ ] Migration (jika perlu) + model + relasi
+- [ ] FormRequest + Service + Controller (tipis) + Blade
+- [ ] Middleware `izin` terpasang & menu terdaftar di `config/menu.php`
+- [ ] Tes untuk logika bisnis (wajib untuk antrean, stok/FEFO, tagihan, penguncian data)
+- [ ] Aksi penting tercatat di `sys_log_aktivitas`
+- [ ] Halaman < 2 detik di LAN (cek N+1, indeks)
+- [ ] `vendor/bin/pint` dan `php artisan test` lulus
+
+## Dokumen rujukan
+
+`docs/architecture.md` · `docs/database.md` · `docs/business-rules.md` · `docs/permissions.md` · `docs/satusehat.md` · `docs/conventions.md` · `docs/roadmap.md` · `docs/decisions.md` · `docs/vibe-coding-guide.md`
