@@ -4,8 +4,10 @@
 --            created_at, updated_at, deleted_at tetap (standar Laravel)
 -- Prefix   : sys_ sistem | mtr_ master | reg_ pendaftaran | erm_ rekam medis
 --            lab_ laboratorium | apt_ apotek | bil_ billing | sts_ SATUSEHAT
--- Catatan  : tabel bawaan Laravel (jobs, failed_jobs, migrations, cache,
---            sessions) dibuat lewat artisan, bukan di file ini.
+-- Catatan  : snapshot awal — setelah rilis, sumber kebenaran skema adalah
+--            database/migrations (lihat decisions.md D12). Tabel framework
+--            (jobs, failed_jobs, migrations, cache, sessions,
+--            password_reset_tokens) dibuat lewat artisan/migration.
 -- ============================================================================
 
 SET NAMES utf8mb4;
@@ -61,7 +63,8 @@ CREATE TABLE sys_pengguna (
   id               BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
   nama             VARCHAR(150) NOT NULL,
   username         VARCHAR(50)  NOT NULL,
-  email            VARCHAR(150) NULL,
+  email            VARCHAR(150) NOT NULL,
+  email_verified_at TIMESTAMP NULL DEFAULT NULL,
   password         VARCHAR(255) NOT NULL COMMENT 'nama bawaan Laravel (hashed)',
   peran_id         BIGINT UNSIGNED NOT NULL,
   dokter_id        BIGINT UNSIGNED NULL COMMENT 'terisi jika pengguna adalah dokter',

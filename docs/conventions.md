@@ -101,7 +101,7 @@ Selalu FormRequest. NIK: 16 digit angka. Pesan Indonesia (`lang/id/validation.ph
 - Nama tes deskriptif Indonesia: `test_racikan_gagal_jika_satu_bahan_kurang_dan_tidak_memotong_stok_lain()`.
 
 ## Git
-- Branch `fitur/<modul>-<ringkas>`; commit kecil, pesan imperatif Indonesia: `Tambah AntreanService dengan lock harian`.
+- Branch `fitur/<modul>-<ringkas>`; commit kecil dengan prefix conventional (`feat:`, `fix:`, `docs:`, `chore:`) lalu ringkasan imperatif singkat bahasa Indonesia: `feat: tambah AntreanService dengan lock harian`.
 - Satu PR/commit = satu kemampuan. Jangan campur refactor dan fitur.
 - Jangan commit `.env`, dump DB berisi data pasien, atau file kredensial.
 

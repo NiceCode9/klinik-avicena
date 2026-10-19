@@ -204,4 +204,4 @@ Prefix tabel ↔ namespace: `sys_`=Sys, `mtr_`=Master, `reg_`=Registrasi, `erm_`
 
 ## Dokumen rujukan
 
-`docs/architecture.md` · `docs/database.md` · `docs/business-rules.md` · `docs/permissions.md` · `docs/satusehat.md` · `docs/conventions.md` · `docs/roadmap.md` · `docs/decisions.md` · `docs/vibe-coding-guide.md`
+`docs/PRD.md` · `docs/architecture.md` · `docs/database.md` · `docs/business-rules.md` · `docs/permissions.md` · `docs/satusehat.md` · `docs/conventions.md` · `docs/roadmap.md` · `docs/decisions.md` · `docs/vibe-coding-guide.md`
