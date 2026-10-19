@@ -4,6 +4,7 @@ use App\Http\Controllers\Master\DokterController;
 use App\Http\Controllers\Master\KategoriObatController;
 use App\Http\Controllers\Master\MetodeBayarController;
 use App\Http\Controllers\Master\ObatController;
+use App\Http\Controllers\Master\PemeriksaanLabController;
 use App\Http\Controllers\Master\PoliController;
 use App\Http\Controllers\Master\SatuanController;
 use App\Http\Controllers\Master\SupplierController;
@@ -24,4 +25,6 @@ Route::middleware('auth')->prefix('master')->group(function () {
     Route::resource('supplier', SupplierController::class)->except('show');
     Route::resource('tindakan', TindakanController::class)->except('show');
     Route::resource('obat', ObatController::class)->except('show');
+    Route::resource('pemeriksaan-lab', PemeriksaanLabController::class)->except('show')
+        ->parameters(['pemeriksaan-lab' => 'pemeriksaanLab']);
 });
