@@ -22,11 +22,12 @@ Status: ✅ selesai · 🔄 berjalan · ⬜ belum
 | ✅     | Zona waktu `Asia/Jakarta`, locale `id`, `lang/id` (validasi, auth)                             | S      |
 | ✅     | `.env.example` siap klinik (MySQL, timezone/locale, `NIK_HMAC_KEY`, `SATUSEHAT_*` sandbox)     | S      |
 | ✅     | Log aktivitas manual: login, logout, simpan hak akses                                          | S      |
-| ⬜     | Pencatat `sys_log_aktivitas` otomatis (trait/observer)                                         | S      |
-| ⬜     | CRUD Pengguna & Peran                                                                          | M      |
+| ✅     | Pencatat `sys_log_aktivitas` otomatis (observer; master + pengguna + peran)                    | S      |
+| ✅     | CRUD Pengguna & Peran (pengaman admin terakhir, sandi opsional saat ubah)                      | M      |
 | ⬜     | CI: pint + test pada MySQL                                                                     | S      |
 
 **Selesai bila**: admin login, sidebar muncul sesuai peran (diuji per peran), halaman Hak Akses menyimpan perubahan + tes 403, throttle & ganti kata sandi jalan, tes dasar lulus.
+**Tercapai** (20 Okt 2026): log aktivitas otomatis dan CRUD Pengguna & Peran selesai; 160 tes hijau.
 
 ## Fase 1 — Data master
 

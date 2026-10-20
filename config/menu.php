@@ -63,6 +63,7 @@ return [
 
     ['kode' => 'sistem', 'nama' => 'Sistem', 'ikon' => 'bi-gear', 'anak' => [
         ['kode' => 'sistem.pengguna',   'nama' => 'Pengguna',      'rute' => 'pengguna.index'],
+        ['kode' => 'sistem.peran',      'nama' => 'Peran',         'rute' => 'peran.index'],
         ['kode' => 'sistem.hak_akses',  'nama' => 'Hak Akses',     'rute' => 'hak-akses.index'],
         ['kode' => 'sistem.pengaturan', 'nama' => 'Pengaturan',    'rute' => 'pengaturan.index'],
         ['kode' => 'sistem.log',        'nama' => 'Log Aktivitas', 'rute' => 'log-aktivitas.index'],
