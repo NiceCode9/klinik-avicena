@@ -2,6 +2,22 @@
 
 namespace App\Providers;
 
+use App\Models\Master\Dokter;
+use App\Models\Master\Icd10;
+use App\Models\Master\KategoriObat;
+use App\Models\Master\MetodeBayar;
+use App\Models\Master\Obat;
+use App\Models\Master\ParameterLab;
+use App\Models\Master\PemeriksaanLab;
+use App\Models\Master\Poli;
+use App\Models\Master\Racikan;
+use App\Models\Master\RacikanBahan;
+use App\Models\Master\Satuan;
+use App\Models\Master\Supplier;
+use App\Models\Master\Tindakan;
+use App\Models\Sys\Peran;
+use App\Models\User;
+use App\Observers\CatatAktivitasObserver;
 use Illuminate\Cache\RateLimiting\Limit;
 use Illuminate\Http\Request;
 use Illuminate\Pagination\Paginator;
@@ -42,5 +58,16 @@ class AppServiceProvider extends ServiceProvider
 
         // Paginator bergaya Bootstrap 5 agar cocok dengan AdminLTE.
         Paginator::useBootstrapFive();
+
+        // Tabel transaksional (lab, billing, stok) sengaja tidak dipantau agar log tidak banjir.
+        $modelTercatat = [
+            Poli::class, Dokter::class, MetodeBayar::class, Satuan::class, KategoriObat::class,
+            Obat::class, Supplier::class, Tindakan::class, PemeriksaanLab::class, ParameterLab::class,
+            Racikan::class, RacikanBahan::class, Icd10::class, User::class, Peran::class,
+        ];
+
+        foreach ($modelTercatat as $model) {
+            $model::observe(CatatAktivitasObserver::class);
+        }
     }
 }

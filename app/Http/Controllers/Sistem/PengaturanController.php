@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Sistem;
 
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Sistem\SimpanPengaturanRequest;
+use App\Models\Sys\LogAktivitas;
 use App\Models\Sys\Pengaturan;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Routing\Controllers\HasMiddleware;
@@ -35,6 +36,9 @@ class PengaturanController extends Controller implements HasMiddleware
                 Pengaturan::where('kunci', $kunci)->update(['nilai' => $nilai]);
             }
         });
+
+        // Update lewat query builder tidak memicu event model, jadi dicatat manual.
+        LogAktivitas::catat($request->user(), 'ubah', 'sys_pengaturan');
 
         return redirect()->route('pengaturan.index')->with('sukses', 'Pengaturan berhasil disimpan.');
     }

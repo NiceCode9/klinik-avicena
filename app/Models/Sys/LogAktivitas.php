@@ -25,14 +25,17 @@ class LogAktivitas extends ModelDasar
 
     /**
      * Catat aksi penting (login, logout, ubah hak akses, dst.) tanpa memuat data sensitif.
+     *
+     * @param  array<string, mixed>|null  $nilaiBaru
      */
-    public static function catat(?User $pengguna, string $aksi, ?string $namaTabel = null, ?int $dataId = null): void
+    public static function catat(?User $pengguna, string $aksi, ?string $namaTabel = null, ?int $dataId = null, ?array $nilaiBaru = null): void
     {
         static::create([
             'pengguna_id' => $pengguna?->id,
             'aksi' => $aksi,
             'nama_tabel' => $namaTabel,
             'data_id' => $dataId,
+            'nilai_baru' => $nilaiBaru,
             'alamat_ip' => request()->ip(),
         ]);
     }
