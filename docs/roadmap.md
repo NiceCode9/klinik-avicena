@@ -31,15 +31,16 @@ Status: ✅ selesai · 🔄 berjalan · ⬜ belum
 ## Fase 1 — Data master
 
 Master dibutuhkan semua modul, kerjakan lebih dulu. Semua CRUD memakai pola yang sama (buat satu contoh yang rapi, lalu replikasi).
-| Item | Ukuran |
-|---|---|
-| Poli, Dokter, Metode Bayar, Satuan, Kategori Obat | M |
-| Obat (+ stok minimum, golongan, kode KFA opsional), Supplier | M |
-| Tindakan Medis, ICD-10 (impor CSV), Pemeriksaan Lab + Parameter Lab | M |
-| Menu Racikan (template + bahan) | M |
-| Pengaturan sistem (`sys_pengaturan`: jasa racik flat, kebijakan retur pasien, dll.) | S |
+| Status | Item | Ukuran |
+|---|---|---|
+| ✅ | Poli, Dokter, Metode Bayar, Satuan, Kategori Obat | M |
+| ✅ | Obat (+ stok minimum, golongan, kode KFA opsional), Supplier | M |
+| ✅ | Tindakan Medis, ICD-10 (impor CSV), Pemeriksaan Lab + Parameter Lab | M |
+| ✅ | Menu Racikan (template + bahan) | M |
+| ✅ | Pengaturan sistem (`sys_pengaturan`: jasa racik flat, kebijakan retur pasien, dll.) | S |
 
 **Selesai bila**: seluruh master bisa dikelola sesuai hak akses, impor ICD-10 berjalan, ada tes validasi dasar.
+**Tercapai** (20 Okt 2026): 131 tes hijau, semua halaman master memakai middleware `izin` dan terdaftar di `config/menu.php`.
 
 ## Fase 2 — Pendaftaran & antrean
 
