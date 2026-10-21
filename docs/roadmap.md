@@ -111,15 +111,15 @@ Fase paling berisiko: kerjakan `StokService` + tes dulu, baru UI.
 
 **Selesai bila**: satu kunjungan menghasilkan satu tagihan lengkap & akurat; setelah lunas data medis terkunci; laporan harian cocok dengan pembayaran.
 
-## Fase 7 — Integrasi SATUSEHAT
-
-| Item                                                                      | Ukuran |
-| ------------------------------------------------------------------------- | ------ |
-| Autentikasi & token (`sts_token`), konfigurasi sandbox/produksi           | M      |
-| Sinkron master: IHS Number pasien, Practitioner dokter, Location poli     | M      |
-| `SatuSehatSyncJob`: Encounter + Condition (FHIR), retry 3x + backoff      | L      |
-| Monitor sinkronisasi + tombol Manual Re-sync + notifikasi dashboard admin | M      |
-| Uji sandbox end-to-end                                                    | M      |
+## Fase 7 — Integrasi SATUSEHAT (dipecah)
+| Sub-fase | Isi | Ukuran |
+|---|---|---|
+| **7.0 Pemetaan terminologi** | kolom pemetaan di form master (obat→KFA, pemeriksaan/parameter lab→LOINC/SNOMED/UCUM, poli→tipe pelayanan), CRUD `mtr_nakes` & `mtr_lokasi`, laporan "master belum terpetakan" | L |
+| **7A Fondasi + Tahap A** | client/token, sinkron IHS master, siklus Encounter, Condition, listener & ketergantungan | XL |
+| **7B Obat** | Medication/MedicationRequest/MedicationDispense | L |
+| **7C Lab + TTV** | ServiceRequest, Specimen, Observation lab, Observation TTV (+ DiagnosticReport bila diputuskan) | XL |
+| **7D Resume medis** | Composition | M |
+| **7E Monitor & uji sandbox** | monitor, Re-sync, rasio Composition:Encounter, checklist sandbox | M |
 
 **Selesai bila**: simpan data medis tidak menunggu API; gangguan SATUSEHAT tidak mengganggu pelayanan; data gagal bisa disinkron ulang manual.
 
@@ -140,3 +140,6 @@ Fase paling berisiko: kerjakan `StokService` + tes dulu, baru UI.
 ## Di luar lingkup (belum diminta di PRD)
 
 Pendaftaran online, BPJS/asuransi, multi-cabang, aplikasi mobile pasien, integrasi alat lab otomatis. Jangan dikerjakan tanpa keputusan baru di `decisions.md`.
+
+
+Catatan lintas fase (kerjakan di fase asalnya, bukan menunggu Fase 7): **Fase 2** mencatat `waktu_datang` + riwayat status; **Fase 3** form resep dosis terstruktur + `waktu_mulai/selesai` + cara keluar; **Fase 4** pencatatan spesimen; **Fase 5** event `ResepDiserahkan`. Lihat `prompts-fase7.md` (perubahan prompt).

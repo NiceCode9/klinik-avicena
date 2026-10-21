@@ -1,54 +1,97 @@
-# Integrasi SATUSEHAT Kemenkes
+# Integrasi SATUSEHAT Kemenkes (menggantikan versi sebelumnya)
 
-> **Catatan penting**: dokumen ini menjelaskan *arsitektur & alur* di sisi aplikasi kita. Detail teknis API (URL, profil FHIR, kode terminologi, aturan validasi) HARUS dicocokkan dengan dokumentasi resmi SATUSEHAT/portal developer Kemenkes saat implementasi — jangan mengandalkan tebakan AI. Mulai dari **sandbox**.
+> **Aturan emas**: dokumen ini menjelaskan _arsitektur & alur_ di sisi aplikasi kita. Detail API (URL, profil FHIR, elemen wajib, kode terminologi) HARUS dibaca dari dokumentasi resmi `satusehat.kemkes.go.id/platform/docs` saat mengimplementasikan tiap resource, lalu dicatat di `docs/satusehat-payload-<resource>.md` beserta sumbernya. **Jangan menebak. Jangan memakai PDF playbook lama** (mis. kode `Composition.type` berubah antar versi). Mulai dari **sandbox**.
+> Analisis kebutuhan data dan celah skema: `satusehat-kebutuhan-data.md`.
 
-## Tujuan & prinsip
-- Kepatuhan: data kunjungan & diagnosis terkirim ke SATUSEHAT (PRD §4).
-- **Simpan lokal dulu, kirim belakangan.** Request web tidak pernah menunggu API SATUSEHAT.
-- Pengiriman **idempotent**: aman diulang tanpa menggandakan data di SATUSEHAT.
-- Gangguan SATUSEHAT/internet tidak boleh mengganggu pelayanan pasien.
+## 1. Cakupan (diputuskan)
 
-## Pemetaan data lokal → resource FHIR
-| Lokal | Kolom penanda sinkron | FHIR | Catatan |
-|---|---|---|---|
-| Organisasi klinik | `.env SATUSEHAT_ORGANIZATION_ID` | Organization | didaftarkan di portal |
-| `mtr_poli` | `ihs_location_id` | Location | satu per poli/unit |
-| `mtr_dokter` | `ihs_practitioner_id` | Practitioner | dicari lewat NIK dokter |
-| `mtr_pasien` | `ihs_number` | Patient | dicari lewat NIK pasien (via API), disimpan agar tidak dicari ulang |
-| `reg_kunjungan` | `ihs_encounter_id` | Encounter | |
-| `erm_diagnosis` | `ihs_condition_id` | Condition | memakai kode ICD-10 dari `mtr_icd10` |
+Klinik dengan ERM, e-resep, dan laboratorium. Akun SATUSEHAT klinik menampilkan resource: Observation, Composition, ServiceRequest, Specimen, Medication, MedicationRequest, MedicationDispense (selain Encounter dan Condition).
 
-Lab mandiri: praktisi pada Encounter = dokter lab yang dipilih (`lab_permintaan.dokter_id`).
-Resource lain (Observation lab, Medication, dll.) di luar lingkup PRD v2.0; tambahkan lewat `decisions.md` bila diminta.
+| Tahap                        | Resource                                                                      | Prasyarat/Catatan                                                                                    |
+| ---------------------------- | ----------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------- |
+| **0 (prasyarat)**            | Organization, Location, Practitioner, Patient                                 | IHS di `mtr_poli`, `mtr_lokasi`, `mtr_dokter`, `mtr_nakes`, `mtr_pasien`                             |
+| **A**                        | Encounter (siklus), Condition                                                 | inti                                                                                                 |
+| **B**                        | MedicationRequest, MedicationDispense, Medication                             | butuh KFA + dosis terstruktur                                                                        |
+| **C**                        | ServiceRequest, Specimen, Observation (hasil lab), Observation (TTV)          | butuh LOINC, SNOMED spesimen, UCUM                                                                   |
+| **C2 (menunggu verifikasi)** | DiagnosticReport                                                              | ada di playbook resmi, **tidak tampil** di akun; putuskan setelah baca halaman resminya / konfirmasi |
+| **D**                        | Composition (resume medis rawat jalan)                                        | dikirim terakhir; mereferensikan resource lain                                                       |
+| **Tunda**                    | Procedure, AllergyIntolerance, ClinicalImpression, CarePlan, riwayat penyakit | di luar cakupan sampai ada keputusan baru                                                            |
+| **Tidak relevan**            | ImagingStudy, MedicationAdministration, dll.                                  | tidak ada layanan terkait                                                                            |
 
-## Tabel
-`sts_sinkronisasi` (satu baris per resource per referensi): `jenis_resource`, `referensi_tabel`, `referensi_id`, `status (menunggu|berhasil|gagal)`, `ihs_id`, `jumlah_percobaan`, `payload` (JSON), `respons` (JSON), `pesan_galat`, `terkirim_pada`.
-`sts_token`: token akses terenkripsi + `kedaluwarsa_pada`. Tabel framework `jobs` & `failed_jobs` tetap dipakai.
-Payload/respons berisi data pribadi → perlakukan sebagai data sensitif (jangan di-log, akses terbatas).
+## 2. Prinsip
 
-## Alur
-1. Dokter/perawat klik **Simpan Data Medis** → `PemeriksaanService::simpan()` dalam transaksi: simpan data, buat baris `sts_sinkronisasi` (`menunggu`) untuk Encounter & Condition.
-2. Setelah commit: `SatuSehatSyncJob::dispatch(...)->onQueue('satusehat')` (gunakan `afterCommit`).
-3. Respons sukses ke layar dokter segera.
-4. Worker (`queue:work --queue=satusehat,default`):
-   1. Ambil token (refresh bila hampir kedaluwarsa, simpan di `sts_token`).
-   2. Pastikan prasyarat: pasien punya `ihs_number` (cari via NIK bila kosong), dokter punya `ihs_practitioner_id`, poli punya `ihs_location_id`. Jika tidak bisa dipenuhi → status `gagal` dengan pesan jelas (mis. "NIK pasien tidak ditemukan di SATUSEHAT").
-   3. Bentuk JSON FHIR → kirim **Encounter** → simpan `ihs_encounter_id`.
-   4. Kirim **Condition** (merujuk Encounter) → simpan `ihs_condition_id`.
-   5. Update `sts_sinkronisasi` → `berhasil`, `ihs_id`, `terkirim_pada`.
-5. Jika Encounter sukses tetapi Condition gagal: retry **hanya** Condition (cek status per baris `sts_sinkronisasi`, jangan kirim ulang Encounter).
+1. **Simpan lokal dulu, kirim belakangan.** Request web tidak menunggu API.
+2. **Idempotent & bisa di-PUT.** Setiap resource yang berhasil menyimpan `ihs_id`; pembaruan memakai ID itu.
+3. **Event, bukan panggilan langsung.** Service domain memancarkan event `afterCommit`; listener SATUSEHAT membuat baris `sts_sinkronisasi` + job. ERM/Lab/Apotek bisa selesai dan dites tanpa SATUSEHAT.
+4. **Urutan ditentukan ketergantungan** (`sts_sinkronisasi.bergantung_pada_id`).
+5. **Waktu dikirim UTC+00** (WIB dikurangi 7 jam); tanggal tidak boleh sebelum 3 Juni 2014 (aturan dokumentasi resmi).
 
-## Retry & error handling (PRD §4.2)
-- `tries = 3`, `backoff = [60, 300, 900]` detik, antrean `satusehat`.
-- Setelah 3 gagal → masuk `failed_jobs`, `sts_sinkronisasi.status = gagal`, notifikasi di dashboard admin.
-- **[USULAN]** Klasifikasi: timeout/5xx/401 (setelah refresh token) → retry; 4xx validasi data → langsung `gagal` tanpa retry buta (pesan error dari SATUSEHAT disimpan agar bisa diperbaiki lalu Re-sync).
-- Job memakai `ShouldBeUnique` per (jenis_resource, referensi) agar tidak dobel.
-- **Manual Re-sync**: tombol di halaman SATUSEHAT (`satusehat.sinkronisasi`) → reset status ke `menunggu` + dispatch ulang. Mendukung aksi massal untuk semua `gagal`.
+## 3. Siklus Encounter
 
-## Halaman Monitor (menu `satusehat.sinkronisasi`)
-Ringkasan (menunggu/berhasil/gagal hari ini), tabel gagal dengan pesan galat, tombol Re-sync, filter tanggal/jenis. Badge jumlah gagal di dashboard admin.
+| Momen di aplikasi                 | Event                  | Aksi SATUSEHAT                                                           | Encounter.status |
+| --------------------------------- | ---------------------- | ------------------------------------------------------------------------ | ---------------- |
+| Kunjungan didaftarkan             | `KunjunganDidaftarkan` | POST Encounter                                                           | `arrived`        |
+| Dokter memulai pemeriksaan        | `PemeriksaanDimulai`   | PUT Encounter                                                            | `in-progress`    |
+| Pemeriksaan selesai + cara keluar | `PemeriksaanSelesai`   | POST Condition (tiap diagnosis) → PUT Encounter (diagnosis, cara keluar) | `finished`       |
 
-## Pengujian
-- Interface `SatuSehatClient` + implementasi `FakeSatuSehatClient` untuk tes (tidak memanggil jaringan).
-- Tes: sukses, gagal sementara lalu sukses (retry), gagal permanen (masuk `failed_jobs`), Encounter ok/Condition gagal, idempotensi, prasyarat IHS belum ada.
-- Uji end-to-end hanya di sandbox; kredensial produksi tidak pernah dipakai di tes.
+- `statusHistory` dibentuk dari `reg_kunjungan_riwayat_status`; `period.start/end` dari `waktu_mulai/waktu_selesai`; `serviceType` dari `mtr_poli.kode_tipe_pelayanan`; `location` dari `mtr_poli.ihs_location_id`; `class` rawat jalan = AMB (kode resmi: verifikasi).
+- Lab mandiri & apotek umum membuat Encounter sendiri; praktisi = dokter lab (`lab_permintaan.dokter_id`) / apoteker (`mtr_nakes`).
+
+## 4. Event & ketergantungan (graf)
+
+```
+Encounter(arrived) ─► Encounter(in-progress) ─► Condition ─► Encounter(finished)
+     │
+     ├─► Observation TTV                              (induk: Encounter)
+     ├─► MedicationRequest ─► MedicationDispense      (induk: Encounter; dispense ← request)
+     ├─► ServiceRequest ─► Specimen ─► Observation(hasil) ─► [DiagnosticReport]
+     └─► Composition  ◄── semua resource di atas (dikirim TERAKHIR, setelah Encounter finished)
+```
+
+Event: `KunjunganDidaftarkan`, `TtvDisimpan`, `PemeriksaanDimulai`, `PemeriksaanSelesai`, `ResepDiterbitkan`, `ResepDiserahkan`, `LabDiminta`, `SpesimenDiambil`, `LabDikunci`.
+
+## 5. `sts_sinkronisasi` (satu baris = satu resource yang dikirim)
+
+Kolom kunci: `jenis_resource`, `aksi` (POST/PUT), `referensi_tabel`+`referensi_id`+`sub_kunci` (mis. satu `reg_ttv` → beberapa Observation: sub_kunci `tekanan_darah`, `nadi`, `suhu`, `berat_badan`), `status`, `bergantung_pada_id`, `ihs_id`, `jumlah_percobaan`, `payload`, `respons`, `pesan_galat`. Unik per `(jenis_resource, aksi, referensi_tabel, referensi_id, sub_kunci)`.
+`ihs_id` resource baru (ServiceRequest, Specimen, Observation, MedicationRequest, dst.) disimpan **di tabel ini**, bukan kolom baru di tabel domain. Encounter/Condition tetap juga di `reg_kunjungan.ihs_encounter_id` / `erm_diagnosis.ihs_condition_id` (sudah ada).
+
+## 6. Pemetaan data lokal → resource
+
+| Resource                       | Sumber lokal                                       | Terminologi                                       |
+| ------------------------------ | -------------------------------------------------- | ------------------------------------------------- |
+| Patient (prasyarat)            | `mtr_pasien.ihs_number` (cari via NIK)             | —                                                 |
+| Practitioner                   | `mtr_dokter`, `mtr_nakes` `ihs_practitioner_id`    | —                                                 |
+| Location                       | `mtr_poli`, `mtr_lokasi` `ihs_location_id`         | —                                                 |
+| Encounter                      | `reg_kunjungan` + riwayat status                   | AMB, serviceType, cara keluar                     |
+| Condition                      | `erm_diagnosis` ← `mtr_icd10`                      | ICD-10                                            |
+| Observation TTV                | `reg_ttv`                                          | LOINC (konstanta di `config/satusehat.php`), UCUM |
+| Medication / MedicationRequest | `erm_resep_item` (+ dosis terstruktur), `mtr_obat` | KFA, bentuk sediaan, rute                         |
+| MedicationDispense             | `apt_pengeluaran_resep`, resep `diserahkan`        | KFA kode **aktual** (93xxxxxx)                    |
+| ServiceRequest                 | `lab_permintaan_detail` — **satu per kode**        | LOINC `mtr_pemeriksaan_lab.kode_loinc`            |
+| Specimen                       | `lab_spesimen`                                     | SNOMED CT `kode_spesimen`                         |
+| Observation hasil              | `lab_hasil` ← `mtr_parameter_lab`                  | LOINC parameter, UCUM, interpretasi               |
+| Composition                    | semua ID di atas + SOAP (narasi)                   | LOINC (`Composition.type`, section)               |
+
+## 7. Composition (resume medis)
+
+- Dikirim **terakhir** per kunjungan, **satu payload** yang memuat section berisi referensi ke resource yang sudah punya ID (Encounter, Condition, Observation, MedicationRequest, MedicationDispense, ServiceRequest, dst.) dan/atau narasi.
+- `Composition.type` di halaman resmi saat ini memakai LOINC `88645-7`; PDF playbook lama memakai `18842-5` → **ikuti halaman resmi terbaru**, verifikasi saat implementasi.
+- Section wajib dan format narasi: baca halaman Composition + Bab "Pengiriman Data Resume Medis" pada modul Rawat Jalan; catat di `satusehat-payload-composition.md`.
+- Hanya dibuat bila ada isi; narasi bisa diambil dari SOAP (S, O, A, P) sehingga SOAP berbasis teks tetap berguna.
+- **[SEKUNDER]** dashboard memantau rasio Composition terhadap Encounter (idealnya mendekati 1:1) — pantau di monitor kita.
+
+## 8. Job, retry, error
+
+- Antrean `satusehat`; `tries = 3`, `backoff = [60, 300, 900]` detik; `ShouldBeUnique` per baris `sts_sinkronisasi`; sebelum dikirim, job memeriksa induk (`bergantung_pada_id`) sudah `berhasil` — jika belum, `release()` dengan jeda (tidak menghitung sebagai percobaan gagal).
+- Gagal 3x → `failed_jobs` + status `gagal` + pesan galat + notifikasi admin; **Manual Re-sync** mengembalikan ke `menunggu` (satuan/massal) tanpa menggandakan resource yang sudah berhasil.
+- **[USULAN]** 5xx/timeout/401 → retry; 4xx validasi → langsung `gagal` (simpan pesan agar bisa diperbaiki lalu Re-sync).
+- **Prasyarat tidak lengkap** (obat tanpa KFA, pemeriksaan lab tanpa LOINC/spesimen, nakes tanpa IHS) → status `gagal` dengan pesan jelas, bukan error umum. Laporan "master belum terpetakan" (menu `satusehat.pemetaan`) membantu staf melengkapi.
+- Payload/respons = data pribadi: tidak di-log, akses terbatas.
+
+## 9. Monitor
+
+Menu `satusehat.sinkronisasi`: ringkasan per jenis resource (menunggu/berhasil/gagal), tabel gagal + pesan, filter, Re-sync, rasio Composition:Encounter. Menu `satusehat.pemetaan`: master belum terpetakan (obat→KFA, pemeriksaan/parameter lab→LOINC & spesimen, nakes→IHS).
+
+## 10. Pengujian
+
+`SatuSehatClient` (interface) + `FakeSatuSehatClient`. Tes: tiap siklus Encounter; urutan & ketergantungan; retry/gagal permanen; satu ServiceRequest per kode; banyak Observation per TTV (sub_kunci); idempotensi PUT; prasyarat belum terpetakan; Composition hanya setelah Encounter finished; simpan data medis tetap sukses saat SATUSEHAT mati. Uji end-to-end hanya di sandbox.

@@ -180,9 +180,10 @@ Prefix tabel ↔ namespace: `sys_`=Sys, `mtr_`=Master, `reg_`=Registrasi, `erm_`
 7. **Menu baru**: tambah di `config/menu.php` → jalankan `menu:sinkron` → atur hak di `HakAksesAwalSeeder` dan/atau UI Hak Akses.
 8. **Data medis tidak dihapus**: gunakan status/pembatalan. Setelah kasir konfirmasi bayar, `erm_pemeriksaan.dikunci` dan `lab_permintaan.dikunci` = true dan **tidak boleh diubah**.
 9. **Tarif/harga disnapshot** ke baris transaksi (tindakan, lab, resep, tagihan) saat transaksi terjadi; perubahan master tidak mengubah transaksi lama.
-10. **SATUSEHAT**: simpan data lokal dulu, lalu `dispatch` job. Jangan panggil API SATUSEHAT di request web. Retry 3x lalu `failed_jobs` + tampil di dashboard admin. Lihat `docs/satusehat.md`.
+10. **SATUSEHAT**: layanan domain memancarkan event `afterCommit`; listener **SATUSEHAT** membuat `sts_sinkronisasi` + job. Jangan panggil **API SATUSEHAT** di request web. Retry 3x lalu `failed_jobs` + tampil di dashboard admin. Lihat `docs/satusehat.md`.
 11. **Keamanan data**: `nik` (pasien/dokter) dan token memakai cast `encrypted`; pencarian NIK lewat `nik_hash` (HMAC). Jangan log NIK, hasil lab, atau isi SOAP ke file log. Rahasia hanya di `.env`.
 12. **Zona waktu** `Asia/Jakarta`, locale `id`. Pesan validasi dan UI berbahasa Indonesia.
+13. **"Payload SATUSEHAT hanya dari dokumentasi resmi yang dibaca saat implementasi (dicatat di `docs/satusehat-payload-<resource>.md` + sumbernya). Jangan menebak elemen wajib, kode terminologi, atau URL. Jangan memakai PDF playbook lama."**
 
 ## JANGAN
 
@@ -204,4 +205,4 @@ Prefix tabel ↔ namespace: `sys_`=Sys, `mtr_`=Master, `reg_`=Registrasi, `erm_`
 
 ## Dokumen rujukan
 
-`docs/PRD.md` · `docs/architecture.md` · `docs/database.md` · `docs/business-rules.md` · `docs/permissions.md` · `docs/satusehat.md` · `docs/conventions.md` · `docs/roadmap.md` · `docs/decisions.md` · `docs/vibe-coding-guide.md`
+`docs/PRD.md` · `docs/architecture.md` · `docs/database.md` · `docs/business-rules.md` · `docs/permissions.md` · `docs/satusehat.md` · `docs/conventions.md` · `docs/roadmap.md` · `docs/decisions.md` · `docs/vibe-coding-guide.md` . `docs/satusehat-kebutuhan-data.md` · `docs/prompts.md` · `docs/prompts-fase7.md`

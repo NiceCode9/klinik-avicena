@@ -19,6 +19,7 @@ Sumber: `PRD.md` + keputusan di `decisions.md`. Item bertanda **[USULAN]** adala
 - Perpindahan status HANYA lewat Service yang memvalidasi tabel di atas. Dilarang `update(['status' => ...])` langsung dari controller.
 - Jenis `lab_mandiri` dan `apotek_umum` tidak melewati ttv/poli: `terdaftar → lab → kasir → selesai` dan `terdaftar → kasir → selesai`.
 - **[USULAN] Lab dan farmasi bisa berjalan paralel** (pasien dirujuk lab sekaligus diberi resep). Satu kolom status tidak bisa mewakili paralel, jadi: status menjadi `kasir` ketika SEMUA unit terkait selesai (semua `lab_permintaan` terkunci DAN semua `erm_resep` diserahkan/batal). `StatusKunjunganService::sinkron($kunjungan)` dipanggil setiap unit selesai dan menghitung ulang status.
+- setiap perpindahan status mencatat baris `reg_kunjungan_riwayat_status` (status, waktu, pengguna). `waktu_datang` terisi saat dibuat, `waktu_mulai` saat `diperiksa`/mulai dilayani, `waktu_selesai` saat selesai pemeriksaan. Cara keluar (`kode_cara_keluar`) wajib diisi saat pemeriksaan difinalkan.
 
 ## 2. Pasien & NIK
 - Pencarian pasien oleh NIK memakai `nik_hash = HMAC-SHA256(nik, NIK_HMAC_KEY)`. `nik` disimpan terenkripsi (cast `encrypted`).
@@ -48,6 +49,7 @@ Sumber: `PRD.md` + keputusan di `decisions.md`. Item bertanda **[USULAN]** adala
 - Status: `diterbitkan → divalidasi → diracik (jika ada racikan) → diserahkan | batal`.
 - Item `jenis = reguler` wajib `obat_id`; item `racikan` wajib punya bahan di `erm_resep_racikan_bahan` (bisa disalin dari template `mtr_racikan`).
 - Validasi apoteker memeriksa ketersediaan stok (hanya batch belum kedaluwarsa).
+- item wajib memuat dosis terstruktur (`dosis`, `satuan_dosis`, `frekuensi`, `periode`, `satuan_periode`, `kode_rute`, `lama_hari`); `aturan_pakai` teks tetap disimpan untuk tampilan. Obat tanpa kode KFA boleh diresepkan tetapi akan ditandai "belum terpetakan" dan tidak terkirim ke SATUSEHAT.
 
 ## 7. Laboratorium
 - **Rujukan**: `erm_rujukan_lab` → otomatis membuat `lab_permintaan` (`sumber = rujukan`) + antrean `LAB-xxx`.
@@ -55,6 +57,7 @@ Sumber: `PRD.md` + keputusan di `decisions.md`. Item bertanda **[USULAN]** adala
 - **Dokter lab (`lab_permintaan.dokter_id`)**: dipilih petugas lab dari daftar semua dokter aktif (dokter berpoli LAB diurutkan paling atas). Mandiri: wajib saat pendaftaran. Rujukan: wajib sebelum hasil dikunci. Dokter perujuk berbeda dan tetap di `erm_rujukan_lab.dokter_id`.
 - Hasil per parameter (`lab_hasil`) menyimpan snapshot satuan & nilai rujukan, penanda otomatis (normal/rendah/tinggi) dari batas min/max.
 - Kunci hasil (`dikunci = 1`) → tarif dari `lab_permintaan_detail` masuk tagihan. Setelah dikunci tidak bisa diubah.
+- pengambilan spesimen dicatat di `lab_spesimen` (jenis dari `mtr_pemeriksaan_lab.kode_spesimen`, waktu, petugas) sebelum hasil diinput; `lab_permintaan_detail.spesimen_id` terisi. Permintaan dipecah menjadi **satu baris detail per kode pemeriksaan** (sesuai satu ServiceRequest per kode).
 
 ## 8. Apotek & inventaris
 
@@ -111,3 +114,6 @@ Header `apt_opname` (`draf → final`), detail per batch: `stok_sistem`, `stok_f
 6. Data terkunci tidak dapat diubah lewat Service, controller, maupun API.
 7. Perpindahan status kunjungan hanya yang sah (§1).
 8. Izin: peran tanpa hak `tambah` mendapat 403 pada `store`, dst.
+
+## 11. Event SATUSEHAT
+- daftar event pada D14; event dipancarkan hanya setelah transaksi commit.

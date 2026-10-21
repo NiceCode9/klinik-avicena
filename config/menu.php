@@ -25,6 +25,7 @@ return [
     ['kode' => 'lab', 'nama' => 'Laboratorium', 'ikon' => 'bi-eyedropper', 'anak' => [
         ['kode' => 'lab.antrean', 'nama' => 'Antrean Lab', 'rute' => 'lab-antrean.index'],
         ['kode' => 'lab.hasil',   'nama' => 'Hasil Lab',   'rute' => 'lab-hasil.index'],
+        ['kode' => 'lab.spesimen',  'nama' => 'Pengambilan Spesimen', 'rute' => 'spesimen.index'],
     ]],
 
     ['kode' => 'apotek', 'nama' => 'Apotek & Farmasi', 'ikon' => 'bi-capsule', 'anak' => [
@@ -55,10 +56,13 @@ return [
         ['kode' => 'master.pemeriksaan_lab', 'nama' => 'Pemeriksaan Lab', 'rute' => 'pemeriksaan-lab.index'],
         ['kode' => 'master.icd10',           'nama' => 'ICD-10',          'rute' => 'icd10.index'],
         ['kode' => 'master.metode_bayar',    'nama' => 'Metode Bayar',    'rute' => 'metode-bayar.index'],
+        ['kode' => 'master.nakes',  'nama' => 'Tenaga Kesehatan', 'rute' => 'nakes.index'],
+        ['kode' => 'master.lokasi', 'nama' => 'Lokasi',           'rute' => 'lokasi.index'],
     ]],
 
     ['kode' => 'satusehat', 'nama' => 'SATUSEHAT', 'ikon' => 'bi-cloud-arrow-up', 'anak' => [
         ['kode' => 'satusehat.sinkronisasi', 'nama' => 'Monitor & Re-sync', 'rute' => 'satusehat.index'],
+        ['kode' => 'satusehat.pemetaan', 'nama' => 'Pemetaan Terminologi', 'rute' => 'satusehat-pemetaan.index'],
     ]],
 
     ['kode' => 'sistem', 'nama' => 'Sistem', 'ikon' => 'bi-gear', 'anak' => [

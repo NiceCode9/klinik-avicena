@@ -284,3 +284,10 @@ Satu-satunya constraint `CHECK` di DB: `apt_stok_batch.jumlah_sisa >= 0`.
 
 ## Seed awal
 `DataAwalSeeder`: peran (admin, resepsionis, perawat, dokter, petugas_lab, apoteker, kasir), poli (INT, GIG, SRF, LAB), metode bayar, pengaturan (`biaya_jasa_racik`, `retur_pasien_diizinkan`, `batas_peringatan_kedaluwarsa_hari`), akun `admin`. `HakAksesAwalSeeder`: menu (`menu:sinkron`) + hak per peran.
+
+## Migration `2026_10_21_000001_tambah_pemetaan_dan_kebutuhan_data_satusehat` menambah (total **60 tabel**):
+- **Tabel baru**: `mtr_nakes`, `mtr_lokasi`, `reg_kunjungan_riwayat_status`, `lab_spesimen`.
+- **Kolom baru**: `mtr_obat` (`kode_kfa_virtual`, `nama_kfa`, `kode_bentuk_sediaan`, `nama_bentuk_sediaan`; kolom lama `kode_kfa` = kode produk **aktual**); `mtr_pemeriksaan_lab` (`kode_loinc`, `nama_loinc`, `kode_spesimen`, `nama_spesimen`); `mtr_parameter_lab` (`kode_loinc`, `nama_loinc`, `satuan_ucum`, `jenis_nilai`); `mtr_poli` (`kode_tipe_pelayanan`, `nama_tipe_pelayanan`); `reg_kunjungan` (`waktu_datang`, `waktu_mulai`, `waktu_selesai`, `kode_cara_keluar`, `nama_cara_keluar`); `erm_resep_item` (`dosis`, `satuan_dosis`, `frekuensi`, `periode`, `satuan_periode`, `kode_rute`, `nama_rute`, `lama_hari`, `aturan_tambahan`); `lab_permintaan_detail.spesimen_id`; `sts_sinkronisasi` (`aksi`, `sub_kunci`, `bergantung_pada_id`, unik `(jenis_resource, aksi, referensi_tabel, referensi_id, sub_kunci)`).
+- Kolom sensitif baru: `mtr_nakes.nik` (encrypted), `mtr_nakes.nik_hash` (HMAC).
+- Aturan app-level baru: kolom pemetaan boleh kosong, tetapi item belum terpetakan **tidak boleh dikirim** (status `gagal` dengan pesan jelas); satu `ServiceRequest` per kode pemeriksaan; `Specimen.type` wajib sebelum kirim lab.
+- Skrip DDL setara: `docs/schema-delta-satusehat.sql` (sudah diuji pada MariaDB 10.11 di atas schema dasar).

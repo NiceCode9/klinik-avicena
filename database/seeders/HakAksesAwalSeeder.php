@@ -47,6 +47,7 @@ class HakAksesAwalSeeder extends Seeder
                 'lab.antrean' => 'LU',
                 'lab.hasil' => 'LTU',
                 'master.pemeriksaan_lab' => 'L',
+                'lab.spesimen' => 'LTU',
             ],
             'apoteker' => [
                 'dasbor' => 'L',

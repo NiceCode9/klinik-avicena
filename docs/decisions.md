@@ -18,7 +18,13 @@ Perbarui file ini setiap ada keputusan baru. Agen AI wajib memeriksanya sebelum 
 | D11 | Soft delete hanya untuk master & pengguna; transaksi/medis tidak dihapus. | Integritas & audit |
 | D12 | Setelah rilis pertama, migration adalah sumber kebenaran skema (bukan `schema.sql`). | Hindari drift |
 | D13 | Data medis & hasil lab dikunci setelah pembayaran lunas. | PRD §3.5 |
-| D14 | Model autentikasi tetap `App\Models\User` (extends `Authenticatable`, tabel `sys_pengguna`), bukan `App\Models\Sys\Pengguna`. | Mengikuti skeleton Laravel; tabel `sys_` lain tetap di namespace `Sys` |
+| D14 | Layanan domain memancarkan event `afterCommit`: `KunjunganDidaftarkan`, `TtvDisimpan`, `PemeriksaanDimulai`, `PemeriksaanSelesai`, `ResepDiterbitkan`, `ResepDiserahkan`, `LabDiminta`, `SpesimenDiambil`, `LabDikunci`. Listener SATUSEHAT (Fase 7) membuat `sts_sinkronisasi` + job. | Encounter punya siklus (arrived → in-progress → finished); modul klinis bisa selesai tanpa SATUSEHAT |
+| D15 | Cakupan SATUSEHAT: prasyarat; Tahap A Encounter+Condition; B MedicationRequest/Dispense/Medication; C ServiceRequest/Specimen/Observation lab + Observation TTV; D Composition. DiagnosticReport menunggu verifikasi. Procedure/alergi/ClinicalImpression ditunda. | Akun SATUSEHAT klinik + analisis kebutuhan data |
+| D16 | Observation TTV ikut dikirim. | Data sudah dikumpulkan; pelengkap resume medis |
+| D17 | Spesimen dicatat di tabel `lab_spesimen`; `lab_permintaan_detail.spesimen_id` menautkan. | `Specimen.type` (SNOMED) wajib |
+| D18 | Tenaga kesehatan non-dokter di `mtr_nakes` (nik terenkripsi, `ihs_practitioner_id`, `pengguna_id` opsional). | Apoteker/perawat/petugas lab butuh IHS Practitioner; akun login terpisah dari data nakes |
+| D19 | Lokasi non-poli (apotek) di `mtr_lokasi` (seed `APT`). | Lokasi dispense obat |
+| D20 | `ihs_id` resource baru disimpan di `sts_sinkronisasi` (kolom `aksi`, `sub_kunci`, `bergantung_pada_id`); bukan kolom baru di tabel domain. | Menghindari kolom berlebih; mendukung ketergantungan & banyak resource per referensi |
 
 ## Pertanyaan terbuka (tanyakan ke pemilik proyek sebelum implementasi final)
 | # | Pertanyaan | Default sementara |
@@ -37,3 +43,7 @@ Perbarui file ini setiap ada keputusan baru. Agen AI wajib memeriksanya sebelum 
 | Q12 | Obat narkotika/psikotropika perlu pencatatan/pelaporan khusus? | Belum |
 | Q13 | Kebijakan retensi & arsip data rekam medis sesuai regulasi | Tidak ada penghapusan data medis; verifikasi regulasi |
 | Q14 | Satu pasien boleh punya >1 kunjungan aktif di hari yang sama (poli berbeda)? | Boleh, tiap kunjungan mandiri |
+|Q15–Q20 = terjawab| (lihat §6 `satusehat-kebutuhan-data.md`). |
+|Q21| DiagnosticReport perlu atau tidak (default: tunda sampai halaman resmi dibaca). |
+|Q22| section wajib & kode `Composition` (default: ikuti halaman resmi saat Tahap D). |
+|Q23| kapan Encounter `in-progress` dikirim bila dokter lupa menekan "mulai" (default: `PemeriksaanDimulai` dipicu otomatis saat dokter membuka form pemeriksaan pertama kali). |
