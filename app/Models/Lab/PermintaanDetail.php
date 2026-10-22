@@ -32,4 +32,9 @@ class PermintaanDetail extends ModelDasar
     {
         return $this->hasMany(Hasil::class, 'permintaan_detail_id');
     }
+
+    public function spesimen(): BelongsTo
+    {
+        return $this->belongsTo(Spesimen::class, 'spesimen_id');
+    }
 }

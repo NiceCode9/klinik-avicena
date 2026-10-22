@@ -2,6 +2,7 @@
 
 use App\Http\Controllers\Auth\KataSandiController;
 use App\Http\Controllers\Auth\LoginController;
+use App\Http\Controllers\SatuSehat\PemetaanController;
 use Illuminate\Support\Facades\Route;
 
 Route::get('/', function () {
@@ -19,6 +20,8 @@ Route::middleware('auth')->group(function () {
     Route::get('/dashboard', function () {
         return view('dashboard');
     })->name('dashboard')->middleware('izin:dasbor,lihat');
+
+    Route::get('satusehat/pemetaan', [PemetaanController::class, 'index'])->name('satusehat-pemetaan.index');
 
     Route::get('ganti-kata-sandi', [KataSandiController::class, 'edit'])->name('kata-sandi.edit');
     Route::put('ganti-kata-sandi', [KataSandiController::class, 'update'])->name('kata-sandi.update');

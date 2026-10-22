@@ -33,6 +33,10 @@ class SimpanObatRequest extends FormRequest
             'stok_minimum' => ['required', 'numeric', 'min:0'],
             'harga_jual' => ['required', 'numeric', 'min:0'],
             'kode_kfa' => ['nullable', 'string', 'max:50'],
+            'kode_kfa_virtual' => ['nullable', 'string', 'max:30'],
+            'nama_kfa' => ['nullable', 'string', 'max:255'],
+            'kode_bentuk_sediaan' => ['nullable', 'string', 'max:30'],
+            'nama_bentuk_sediaan' => ['nullable', 'string', 'max:100'],
             'aktif' => ['boolean'],
         ];
     }

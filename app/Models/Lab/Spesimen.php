@@ -3,7 +3,7 @@
 namespace App\Models\Lab;
 
 use App\Models\ModelDasar;
-use App\Models\Sys\Pengguna;
+use App\Models\User;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 
@@ -23,7 +23,7 @@ class Spesimen extends ModelDasar
 
     public function pengambil(): BelongsTo
     {
-        return $this->belongsTo(Pengguna::class, 'diambil_oleh');
+        return $this->belongsTo(User::class, 'diambil_oleh');
     }
 
     public function permintaanDetail(): HasMany

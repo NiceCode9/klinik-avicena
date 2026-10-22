@@ -98,14 +98,60 @@
     </div>
 </div>
 
-<div class="mb-3">
-    <label for="kode_kfa" class="form-label">Kode KFA (opsional)</label>
-    <input type="text" id="kode_kfa" name="kode_kfa" maxlength="50"
-        class="form-control @error('kode_kfa') is-invalid @enderror" value="{{ old('kode_kfa', $obat->kode_kfa ?? '') }}">
-    @error('kode_kfa')
-        <div class="invalid-feedback">{{ $message }}</div>
-    @enderror
-    <div class="form-text">Kode obat dari KFA Kemenkes untuk SATUSEHAT.</div>
+<div class="row">
+    <div class="col-md-4 mb-3">
+        <label for="kode_kfa" class="form-label">Kode KFA Aktual (opsional)</label>
+        <input type="text" id="kode_kfa" name="kode_kfa" maxlength="50"
+            class="form-control @error('kode_kfa') is-invalid @enderror"
+            value="{{ old('kode_kfa', $obat->kode_kfa ?? '') }}">
+        @error('kode_kfa')
+            <div class="invalid-feedback">{{ $message }}</div>
+        @enderror
+        <div class="form-text">Kode produk aktual (93xxxxxx) untuk MedicationDispense.</div>
+    </div>
+
+    <div class="col-md-4 mb-3">
+        <label for="kode_kfa_virtual" class="form-label">Kode KFA Virtual (opsional)</label>
+        <input type="text" id="kode_kfa_virtual" name="kode_kfa_virtual" maxlength="30"
+            class="form-control @error('kode_kfa_virtual') is-invalid @enderror"
+            value="{{ old('kode_kfa_virtual', $obat->kode_kfa_virtual ?? '') }}">
+        @error('kode_kfa_virtual')
+            <div class="invalid-feedback">{{ $message }}</div>
+        @enderror
+        <div class="form-text">Untuk MedicationRequest bila halaman resmi mengonfirmasi.</div>
+    </div>
+
+    <div class="col-md-4 mb-3">
+        <label for="nama_kfa" class="form-label">Nama KFA (opsional)</label>
+        <input type="text" id="nama_kfa" name="nama_kfa" maxlength="255"
+            class="form-control @error('nama_kfa') is-invalid @enderror"
+            value="{{ old('nama_kfa', $obat->nama_kfa ?? '') }}">
+        @error('nama_kfa')
+            <div class="invalid-feedback">{{ $message }}</div>
+        @enderror
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-md-4 mb-3">
+        <label for="kode_bentuk_sediaan" class="form-label">Kode Bentuk Sediaan (opsional)</label>
+        <input type="text" id="kode_bentuk_sediaan" name="kode_bentuk_sediaan" maxlength="30"
+            class="form-control @error('kode_bentuk_sediaan') is-invalid @enderror"
+            value="{{ old('kode_bentuk_sediaan', $obat->kode_bentuk_sediaan ?? '') }}">
+        @error('kode_bentuk_sediaan')
+            <div class="invalid-feedback">{{ $message }}</div>
+        @enderror
+    </div>
+
+    <div class="col-md-8 mb-3">
+        <label for="nama_bentuk_sediaan" class="form-label">Nama Bentuk Sediaan (opsional)</label>
+        <input type="text" id="nama_bentuk_sediaan" name="nama_bentuk_sediaan" maxlength="100"
+            class="form-control @error('nama_bentuk_sediaan') is-invalid @enderror"
+            value="{{ old('nama_bentuk_sediaan', $obat->nama_bentuk_sediaan ?? '') }}">
+        @error('nama_bentuk_sediaan')
+            <div class="invalid-feedback">{{ $message }}</div>
+        @enderror
+    </div>
 </div>
 
 <div class="form-check mb-3">

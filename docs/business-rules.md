@@ -43,7 +43,7 @@ Sumber: `PRD.md` + keputusan di `decisions.md`. Item bertanda **[USULAN]** adala
 - Form khusus per poli: Penyakit Dalam (`erm_detail_penyakit_dalam`), Saraf (`erm_detail_saraf`), Gigi (`erm_odontogram`: satu baris per gigi/permukaan/kondisi, notasi FDI).
 - Dokter hanya melihat/mengubah pemeriksaan yang ia buat sampai terkunci (Policy). Dokter lain boleh MELIHAT riwayat pasien (hak `lihat`).
 - Setelah pembayaran lunas: `dikunci = 1`, `dikunci_pada` terisi. Pemeriksaan terkunci tidak bisa diubah/dihapus. Koreksi setelah terkunci: **belum diputuskan** (lihat pertanyaan terbuka).
-- Menyimpan data medis memicu `SatuSehatSyncJob` (lihat `satusehat.md`).
+- Perubahan data medis memancarkan event domain `afterCommit`; listener SATUSEHAT membuat `sts_sinkronisasi` + job (lihat `satusehat.md`).
 
 ## 6. e-Resep
 - Status: `diterbitkan → divalidasi → diracik (jika ada racikan) → diserahkan | batal`.
@@ -58,6 +58,7 @@ Sumber: `PRD.md` + keputusan di `decisions.md`. Item bertanda **[USULAN]** adala
 - Hasil per parameter (`lab_hasil`) menyimpan snapshot satuan & nilai rujukan, penanda otomatis (normal/rendah/tinggi) dari batas min/max.
 - Kunci hasil (`dikunci = 1`) → tarif dari `lab_permintaan_detail` masuk tagihan. Setelah dikunci tidak bisa diubah.
 - pengambilan spesimen dicatat di `lab_spesimen` (jenis dari `mtr_pemeriksaan_lab.kode_spesimen`, waktu, petugas) sebelum hasil diinput; `lab_permintaan_detail.spesimen_id` terisi. Permintaan dipecah menjadi **satu baris detail per kode pemeriksaan** (sesuai satu ServiceRequest per kode).
+- Status spesimen: `menunggu_diambil → diambil → diterima | ditolak`. Hasil hanya boleh diinput setelah status `diterima`; `ditolak` wajib mengisi `catatan`.
 
 ## 8. Apotek & inventaris
 

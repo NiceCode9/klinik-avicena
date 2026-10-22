@@ -23,8 +23,15 @@ Perbarui file ini setiap ada keputusan baru. Agen AI wajib memeriksanya sebelum 
 | D16 | Observation TTV ikut dikirim. | Data sudah dikumpulkan; pelengkap resume medis |
 | D17 | Spesimen dicatat di tabel `lab_spesimen`; `lab_permintaan_detail.spesimen_id` menautkan. | `Specimen.type` (SNOMED) wajib |
 | D18 | Tenaga kesehatan non-dokter di `mtr_nakes` (nik terenkripsi, `ihs_practitioner_id`, `pengguna_id` opsional). | Apoteker/perawat/petugas lab butuh IHS Practitioner; akun login terpisah dari data nakes |
-| D19 | Lokasi non-poli (apotek) di `mtr_lokasi` (seed `APT`). | Lokasi dispense obat |
+| D19 | Lokasi non-poli (apotek) di `mtr_lokasi` (seed `APT` lewat `PemetaanSatuSehatSeeder`). | Lokasi dispense obat |
 | D20 | `ihs_id` resource baru disimpan di `sts_sinkronisasi` (kolom `aksi`, `sub_kunci`, `bergantung_pada_id`); bukan kolom baru di tabel domain. | Menghindari kolom berlebih; mendukung ketergantungan & banyak resource per referensi |
+| D21 | Model autentikasi tetap `App\Models\User` (extends `Authenticatable`, tabel `sys_pengguna`), bukan `App\Models\Sys\Pengguna`. | Mengikuti skeleton Laravel; tabel `sys_` lain tetap di namespace `Sys` |
+| D22 | Status spesimen: `menunggu_diambil → diambil → diterima | ditolak`. Hasil lab hanya diinput setelah `diterima`; `ditolak` wajib `catatan`. | Menjawab Q24 (21 Okt 2026); menjaga kualitas spesimen & jejak audit |
+| D23 | Paket `ivanwilliammd/satusehat-integration` dipin `4.14.1` dan hanya boleh dipakai sebagai builder payload generik lewat satu adapter `App\Services\SatuSehat\PembentukFhir`. Queue, token, log, retry, dan klien terminologi paket tidak dipakai; domain tidak mengimpor paket. | Batas satu file; paket bisa dilepas tanpa mengubah domain. Rancangan: `satusehat-fondasi.md` §1 |
+| D24 | KFA: `mtr_obat.kode_kfa` = produk **aktual** (93xxxxxx) untuk MedicationDispense; `kode_kfa_virtual` untuk MedicationRequest hanya bila halaman resmi mengonfirmasi. Tanpa fallback diam-diam; laporan memisahkan status keduanya. | Mencegah kode granularitas salah terkirim; verifikasi resmi saat 7B.1 |
+| D25 | `mtr_satuan.kode_ucum` menyimpan kode UCUM (migration baru). `erm_resep_item.satuan_dosis` tetap nama satuan pilihan dari master; builder me-resolve ke UCUM. UCUM kosong = gagal permanen. | Satu pemetaan per satuan; tidak menebak `{nama}` |
+| D26 | KFA disimpan di master `mtr_obat`, bukan di `apt_stok_batch`. | KFA identitas produk; batch hanya untuk FEFO/kedaluwarsa |
+| D27 | Composition menunggu induk yang masih `menunggu/diproses`; induk `gagal` tidak memblokir, Composition dikirim dengan resource yang tersedia dan alasannya dicatat. | Resume medis tidak tertahan selamanya; detail final saat 7D.1 |
 
 ## Pertanyaan terbuka (tanyakan ke pemilik proyek sebelum implementasi final)
 | # | Pertanyaan | Default sementara |
@@ -43,7 +50,7 @@ Perbarui file ini setiap ada keputusan baru. Agen AI wajib memeriksanya sebelum 
 | Q12 | Obat narkotika/psikotropika perlu pencatatan/pelaporan khusus? | Belum |
 | Q13 | Kebijakan retensi & arsip data rekam medis sesuai regulasi | Tidak ada penghapusan data medis; verifikasi regulasi |
 | Q14 | Satu pasien boleh punya >1 kunjungan aktif di hari yang sama (poli berbeda)? | Boleh, tiap kunjungan mandiri |
-|Q15–Q20 = terjawab| (lihat §6 `satusehat-kebutuhan-data.md`). |
-|Q21| DiagnosticReport perlu atau tidak (default: tunda sampai halaman resmi dibaca). |
-|Q22| section wajib & kode `Composition` (default: ikuti halaman resmi saat Tahap D). |
-|Q23| kapan Encounter `in-progress` dikirim bila dokter lupa menekan "mulai" (default: `PemeriksaanDimulai` dipicu otomatis saat dokter membuka form pemeriksaan pertama kali). |
+| Q15–Q20 | Terjawab — lihat §6 `satusehat-kebutuhan-data.md`. | — |
+| Q21 | DiagnosticReport perlu atau tidak (default: tunda sampai halaman resmi dibaca). | — |
+| Q22 | section wajib & kode `Composition` (default: ikuti halaman resmi saat Tahap D). | — |
+| Q23 | kapan Encounter `in-progress` dikirim bila dokter lupa menekan "mulai" (default: `PemeriksaanDimulai` dipicu otomatis saat dokter membuka form pemeriksaan pertama kali). | — |

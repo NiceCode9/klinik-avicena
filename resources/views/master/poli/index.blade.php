@@ -33,7 +33,12 @@
                         <tr>
                             <td class="text-center">{{ $data->firstItem() + $loop->index }}</td>
                             <td><code>{{ $poli->kode }}</code></td>
-                            <td>{{ $poli->nama }}</td>
+                            <td>
+                                {{ $poli->nama }}
+                                @if ($poli->kode_tipe_pelayanan)
+                                    <div class="small text-muted">ServiceType: {{ $poli->kode_tipe_pelayanan }}</div>
+                                @endif
+                            </td>
                             <td>
                                 @if ($poli->aktif)
                                     <span class="badge text-bg-success">Aktif</span>

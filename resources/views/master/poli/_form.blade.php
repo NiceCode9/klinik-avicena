@@ -27,6 +27,29 @@
     @enderror
 </div>
 
+<div class="row">
+    <div class="col-md-4 mb-3">
+        <label for="kode_tipe_pelayanan" class="form-label">Kode Tipe Pelayanan (opsional)</label>
+        <input type="text" id="kode_tipe_pelayanan" name="kode_tipe_pelayanan" maxlength="30"
+            class="form-control @error('kode_tipe_pelayanan') is-invalid @enderror"
+            value="{{ old('kode_tipe_pelayanan', $poli->kode_tipe_pelayanan ?? '') }}">
+        @error('kode_tipe_pelayanan')
+            <div class="invalid-feedback">{{ $message }}</div>
+        @enderror
+        <div class="form-text">Untuk Encounter.serviceType SATUSEHAT.</div>
+    </div>
+
+    <div class="col-md-8 mb-3">
+        <label for="nama_tipe_pelayanan" class="form-label">Nama Tipe Pelayanan (opsional)</label>
+        <input type="text" id="nama_tipe_pelayanan" name="nama_tipe_pelayanan" maxlength="100"
+            class="form-control @error('nama_tipe_pelayanan') is-invalid @enderror"
+            value="{{ old('nama_tipe_pelayanan', $poli->nama_tipe_pelayanan ?? '') }}">
+        @error('nama_tipe_pelayanan')
+            <div class="invalid-feedback">{{ $message }}</div>
+        @enderror
+    </div>
+</div>
+
 <div class="mb-3">
     <label for="ihs_location_id" class="form-label">ID IHS Location (opsional)</label>
     <input type="text" id="ihs_location_id" name="ihs_location_id" maxlength="64"

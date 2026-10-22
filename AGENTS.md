@@ -205,4 +205,4 @@ Prefix tabel ↔ namespace: `sys_`=Sys, `mtr_`=Master, `reg_`=Registrasi, `erm_`
 
 ## Dokumen rujukan
 
-`docs/PRD.md` · `docs/architecture.md` · `docs/database.md` · `docs/business-rules.md` · `docs/permissions.md` · `docs/satusehat.md` · `docs/conventions.md` · `docs/roadmap.md` · `docs/decisions.md` · `docs/vibe-coding-guide.md` . `docs/satusehat-kebutuhan-data.md` · `docs/prompts.md` · `docs/prompts-fase7.md`
+`docs/PRD.md` · `docs/architecture.md` · `docs/database.md` · `docs/pembaruan-dokumen.md` (paket awal; baca saat mengubah data) · `docs/business-rules.md` · `docs/permissions.md` · `docs/satusehat.md` · `docs/conventions.md` · `docs/roadmap.md` · `docs/decisions.md` · `docs/vibe-coding-guide.md` . `docs/satusehat.md` . `docs/satusehat-kebutuhan-data.md` · `docs/prompts.md` · `docs/prompts-fase7.md`

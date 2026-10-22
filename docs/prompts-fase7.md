@@ -1,6 +1,8 @@
-# Prompt Fase 7 (pengganti) + Perubahan Prompt Fase 2–5
+# Prompt Fase 7 (pengganti)
 
 Simpan sebagai `docs/prompts-fase7.md`. Semua prompt memakai protokol **PEMBUKA** dari `prompts.md` (tempel sekali di awal sesi). Bagian "Fase 7" di `prompts.md` digantikan oleh dokumen ini.
+
+> Perubahan prompt Fase 2–5 sudah dipindahkan ke `prompts.md` (2.3, 3.1, 3.6, 3.7, 4.1–4.3, 5.4). Dokumen ini hanya untuk Fase 7.
 
 **Aturan tambahan untuk SEMUA prompt SATUSEHAT** (sudah dimasukkan ke tiap prompt di bawah):
 - Sebelum menulis payload suatu resource, baca halaman resmi resource itu di `satusehat.kemkes.go.id/platform/docs` (dan lampiran terminologinya), catat elemen wajib (tanda `*`), kode terminologi, dan sumbernya di `docs/satusehat-payload-<resource>.md`. Jika kamu tidak bisa mengakses dokumentasi, MINTA aku menempelkan halamannya. **Jangan menebak. Jangan memakai PDF playbook lama.**
@@ -8,72 +10,8 @@ Simpan sebagai `docs/prompts-fase7.md`. Semua prompt memakai protokol **PEMBUKA*
 
 ---
 
-# A. Perubahan pada prompt Fase 2–5 (kerjakan SEBELUM/SAAT fase itu)
-
-### Tambahan untuk 2.3 (KunjunganService & StatusKunjunganService)
-```
-Tambahan pada tugas 2.3 (ikuti docs/business-rules.md §1 dan §11, decisions D14):
-- Setiap perpindahan status oleh StatusKunjunganService mencatat baris reg_kunjungan_riwayat_status
-  (status, waktu, dibuat_oleh) dalam transaksi yang sama.
-- reg_kunjungan.waktu_datang diisi saat kunjungan dibuat; waktu_mulai saat pemeriksaan dimulai;
-  waktu_selesai saat pemeriksaan difinalkan.
-- Pancarkan event App\Events\KunjunganDidaftarkan dan TtvDisimpan dengan afterCommit.
-  JANGAN membuat listener SATUSEHAT atau memanggil API di fase ini.
-Tes tambahan: riwayat status terisi untuk tiap transisi; event hanya terpancar setelah commit.
-```
-
-### Tambahan untuk 3.1 (PemeriksaanService)
-```
-Ganti bagian event pada tugas 3.1 dengan (decisions D14):
-- mulai(): pancarkan PemeriksaanDimulai (afterCommit), isi waktu_mulai.
-- simpanFinal(): wajib mengisi cara keluar (kode_cara_keluar/nama_cara_keluar), isi waktu_selesai,
-  pancarkan PemeriksaanSelesai (afterCommit). Tanpa listener SATUSEHAT di fase ini.
-- PemeriksaanDimulai dipicu otomatis saat dokter pertama kali membuka form pemeriksaan (Q23).
-Tes: event dan waktu terisi benar; final tanpa cara keluar ditolak.
-```
-
-### Pengganti 3.6 (e-Resep dengan dosis terstruktur)
-```
-Gantikan prompt 3.6 dengan tugas ini.
-Tugas: ResepService + UI e-Resep (menu erm.resep) dengan DOSIS TERSTRUKTUR.
-Dokumen: business-rules §6, database.md (erm_resep_item kolom baru), decisions D14, D15.
-Tiap item resep memuat: obat (reguler) atau bahan (racikan), jumlah, dosis + satuan_dosis,
-frekuensi + periode + satuan_periode (jam/hari/minggu), rute (kode_rute/nama_rute dari daftar
-terminologi yang disetujui), lama_hari, aturan_tambahan, dan aturan_pakai (teks tampilan yang
-dibangkitkan otomatis dari kolom terstruktur, boleh disunting). Harga snapshot dari mtr_obat.
-Item reguler: obat_id wajib. Racikan: minimal 1 bahan; salin dari template mtr_racikan; dosis berlaku
-untuk racikan sebagai satu kesatuan. Obat tanpa kode KFA boleh diresepkan tetapi tampilkan
-peringatan "belum terpetakan ke KFA" (tidak memblokir).
-Pancarkan ResepDiterbitkan (afterCommit). JANGAN memotong stok.
-Langkah 1 (tanpa kode): usulkan daftar nilai rute dan cara pengisian terstruktur di form
-(mis. dropdown rute); tunggu persetujuanku. Daftar kode rute resmi diverifikasi di Fase 7.0.
-Tes: validasi struktur dosis, pembangkitan aturan_pakai, snapshot harga, peringatan KFA.
-```
-
-### Tambahan untuk 4.1–4.3 (Laboratorium)
-```
-Tambahan pada tugas Fase 4 (business-rules §7, decisions D14, D17):
-- Permintaan lab dipecah menjadi SATU BARIS lab_permintaan_detail per kode pemeriksaan.
-- Buat SpesimenService + UI (menu lab.spesimen): catat pengambilan spesimen di lab_spesimen
-  (jenis dari mtr_pemeriksaan_lab.kode_spesimen, status menunggu_diambil→diambil→diterima|ditolak,
-  waktu_pengambilan, diambil_oleh); tautkan lab_permintaan_detail.spesimen_id.
-- Hasil hanya boleh diinput jika spesimen berstatus diterima (atau pemeriksaan tanpa spesimen — usulkan aturan).
-- Pancarkan LabDiminta (saat permintaan dibuat), SpesimenDiambil, LabDikunci (afterCommit), tanpa listener SATUSEHAT.
-Tes: satu detail per kode, alur status spesimen, hasil ditolak tanpa spesimen diterima.
-```
-
-### Tambahan untuk 5.4 (Penyerahan resep)
-```
-Tambahan pada tugas 5.4: setelah penyerahan resep berhasil (transaksi commit), pancarkan ResepDiserahkan
-(afterCommit) berisi resep_id dan item yang diserahkan beserta batch (apt_pengeluaran_resep).
-Peringatkan apoteker bila ada obat belum terpetakan ke KFA aktual (tidak memblokir penyerahan).
-Tes: event terpancar sekali per penyerahan, tidak terpancar saat rollback.
-```
-
----
-
-# B. Fase 7 — Integrasi SATUSEHAT (pengganti)
-Dokumen utama: `satusehat.md`, `satusehat-kebutuhan-data.md`, `decisions.md` (D14–D20, Q21–Q23).
+# Fase 7 — Integrasi SATUSEHAT (pengganti)
+Dokumen utama: `satusehat.md`, `satusehat-kebutuhan-data.md`, `decisions.md` (D14–D22, Q21–Q23).
 
 ## 7.0 Pemetaan terminologi & master pendukung
 
@@ -83,11 +21,12 @@ Protokol sesi (PEMBUKA) berlaku.
 Tugas: pasang perubahan skema pemetaan SATUSEHAT. Kondisi: file migration
 2026_10_21_000001_tambah_pemetaan_dan_kebutuhan_data_satusehat.php, model baru (Master\Nakes,
 Master\Lokasi, Registrasi\KunjunganRiwayatStatus, Lab\Spesimen) dan PemetaanSatuSehatSeeder SUDAH disalin.
-Lakukan: (1) php artisan migrate lalu seed PemetaanSatuSehatSeeder; (2) tambahkan relasi/cast pada MODEL YANG SUDAH ADA
+Lakukan: (1) php artisan migrate lalu seed PemetaanSatuSehatSeeder (jika belum); (2) tambahkan relasi/cast pada MODEL YANG SUDAH ADA
 (jangan menimpa kode kustom): Kunjungan::riwayatStatus(); cast datetime waktu_datang/waktu_mulai/waktu_selesai;
-Lab\Permintaan::spesimen() (hasMany); Lab\PermintaanDetail::spesimen() (belongsTo); ErmResepItem cast
-dosis decimal:3; SatuSehat\Sinkronisasi::induk() dan dependen(); Sys\Pengguna::nakes() (hasOne);
-Master\Dokter/Nakes tidak berubah; (3) jalankan php artisan migrate:fresh --seed di DB lokal dan php artisan test.
+Lab\Permintaan::spesimen() (hasMany); Lab\PermintaanDetail::spesimen() (belongsTo); Erm\ResepItem cast
+dosis decimal:3; SatuSehat\Sinkronisasi::induk() dan dependen(); App\Models\User::nakes() (hasOne);
+Master\Dokter/Nakes tidak berubah; (3) jalankan php artisan test; gunakan migrate:fresh --seed HANYA jika
+data lokal boleh dihapus (minta persetujuan).
 Jangan mengubah migration yang sudah ada. Laporkan model yang kamu ubah.
 ```
 
@@ -100,7 +39,9 @@ kode_spesimen, nama_spesimen), Parameter Lab (kode_loinc, nama_loinc, satuan_ucu
 (kode_tipe_pelayanan, nama_tipe_pelayanan); semua opsional di form. (2) CRUD Master Nakes (menu master.nakes; NIK
 terenkripsi + nik_hash lewat NikHasher; pengguna_id opsional) dan Master Lokasi (menu master.lokasi).
 Ikuti pola CRUD master yang sudah ada, izin, dan tes. Kode terminologi diisi manual dulu (pencarian otomatis
-ke layanan resmi dibahas terpisah). Tambahkan menu ke config/menu.php (docs/pembaruan-dokumen.md §6) lalu menu:sinkron.
+ke layanan resmi dibahas terpisah). Tambahkan menu ke config/menu.php
+(docs/pembaruan-dokumen.md §6; prosedur umum di docs/permissions.md bagian
+"Menambah menu / fitur baru") lalu menu:sinkron.
 Tes: simpan kolom pemetaan, NIK nakes terenkripsi, izin admin saja untuk nakes/lokasi.
 ```
 
@@ -113,6 +54,81 @@ poli tanpa kode_tipe_pelayanan/ihs_location_id, dokter/nakes tanpa ihs_practitio
 Ringkasan jumlah per kategori + daftar dengan tautan ke form edit. Satu service PemetaanService::belumTerpetakan()
 yang dipakai juga oleh job (7A) untuk memvalidasi prasyarat. Query agregat di database, paginate.
 Tes: tiap kategori terdeteksi benar, item lengkap tidak muncul, izin admin.
+```
+
+### 7.0d Referensi terminologi + picker
+> Dikerjakan setelah laporan 7.0c terbukti dipakai. Jangan menggabungkan 7.0d.1–7.0d.3 dalam satu sesi.
+
+#### 7.0d.1 Tabel referensi + perintah impor
+```
+Protokol sesi (PEMBUKA) berlaku.
+Tugas: buat tabel/model referensi terminologi dan perintah impor CSV untuk LOINC, SNOMED CT, UCUM, dan KFA.
+Dokumen: satusehat-fondasi.md §5 (tiga tingkat pemetaan), decisions.md D23–D27, database.md, AGENTS.md (prefix mtr_ = Master).
+Cakupan:
+- Migration BARU mtr_terminologi: id, enum sistem (kfa/loinc/snomed/ucum), kode (50), display (500),
+  metadata JSON nullable, aktif boolean default true, timestamps; unik (sistem,kode); index (sistem).
+  Jangan mengubah migration lama.
+- Model App\Models\Master\Terminologi (extends ModelDasar), konstanta SISTEM + label, cast metadata array/aktif boolean,
+  scope aktif.
+- Command satusehat:impor-terminologi {sistem} {berkas} {--sumber=} {--versi=}:
+  - Validasi sistem, file terbaca, header CSV kode,display,metadata (metadata opsional, JSON valid; trim BOM).
+  - Upsert per (sistem,kode) per chunk; metadata digabung dengan sumber/versi/tanggal_unduh.
+  - Baris invalid dilaporkan (nomor baris + alasan) dan dilewati; impor ulang idempoten
+    (tidak menggandakan, display/metadata diperbarui).
+  - JANGAN commit dataset penuh. File dibaca dari path lokal hasil unduhan resmi.
+  - KFA: pakai CSV dulu. Sinkron API resmi KFA hanya kalau dokumentasi endpoint resmi tersedia; kalau belum,
+    tulis TODO(verifikasi-resmi) dan jangan menebak URL/token.
+Tes: impor valid, idempoten, update display/metadata, sistem invalid, file hilang, baris rusak, tidak ada duplikat.
+Selesai bila: php artisan test lulus; model + command terdaftar; tidak ada dataset besar di repo.
+```
+
+#### 7.0d.2 Picker + validasi kode
+```
+Protokol sesi (PEMBUKA) berlaku.
+Tugas: tambahkan pencarian referensi dan validasi kode pada form master yang sudah punya kolom pemetaan.
+Dokumen: satusehat-fondasi.md §5.2 (manusia memilih; tidak ada auto-map), permissions.md, conventions.md.
+Backend:
+- Route GET satusehat/terminologi/cari name satusehat-terminologi.cari, middleware izin:satusehat.pemetaan,lihat;
+  controller SatuSehat\TerminologiController@cari (tipis) memakai TerminologiService::cari(); kembalikan JSON
+  [{kode,display,metadata}] maks 20, filter sistem + aktif, q minimal 2 karakter, escape wildcard LIKE.
+- Rule App\Rules\KodeTerminologi(sistem): kode harus ada di mtr_terminologi aktif; pesan menyebut sistem dan
+  perintah impor. Nullable tetap boleh (artinya belum terpetakan).
+- Pasang rule: SimpanObatRequest (kode_kfa, kode_kfa_virtual = kfa); SimpanPemeriksaanLabRequest
+  (kode_loinc + parameter.*.kode_loinc = loinc; kode_spesimen = snomed; parameter.*.satuan_ucum = ucum);
+  SimpanSatuanRequest (kode_ucum = ucum). kode_tipe_pelayanan poli TETAP manual (di luar empat sistem).
+- Jangan mengisi kode_kfa dari kode_kfa_virtual atau sebaliknya; dua field terpisah tanpa fallback.
+UI:
+- Partial resources/views/satusehat/terminologi/_tombol.blade.php: tombol Cari di samping input kode yang sudah ada
+  (name, old(), dan @error tidak berubah). Hanya tampil untuk @izin('satusehat.pemetaan','lihat').
+  Bungkus input + tombol dalam .input-group; JS mengambil input dari grup itu.
+- Partial _modal.blade.php: satu modal Bootstrap per form, di-include sekali di form (bukan di _baris_parameter).
+  Isi: input pencarian, daftar hasil, loading/empty state, fokus otomatis. Pilih hasil -> isi input kode + target display:
+  kode_loinc -> nama_loinc; kode_spesimen -> nama_spesimen; kode_kfa (aktual) -> nama_kfa + kode_bentuk_sediaan/
+  nama_bentuk_sediaan dari metadata bila ada; kode_kfa_virtual dan UCUM tidak mengisi display.
+  Target dicari lewat sufiks name di tr/form terdekat, bukan name ber-index global.
+- JS vanilla tanpa package baru; event delegation agar baris parameter dinamis ikut; debounce 300ms;
+  render hasil dengan textContent (bukan innerHTML data server); Enter pada hasil dan Esc untuk menutup.
+- Input manual tetap boleh; validasi saat simpan yang menentukan. Tidak ada auto-map atau pemilihan otomatis kode pertama.
+- Jika referensi suatu sistem kosong, form tetap terbuka; simpan kode ditolak dengan pesan "impor terminologi dulu"
+  (bukan dianggap valid). Catat di laporan akhir bahwa impor referensi harus dijalankan sebelum validasi dipakai di data lama.
+Tes: endpoint cari (kode/display, sistem, aktif, limit, izin), rule tiap field, kode tak dikenal/nonaktif ditolak,
+kode valid diterima, nullable boleh, render tombol/modal, dan tidak ada auto-map.
+Perbarui tes master yang memakai kode contoh agar mengisi mtr_terminologi lebih dulu (helper/fixture tes).
+Selesai bila: php artisan test lulus; grep tidak menemukan penulisan kode pemetaan tanpa validasi (kecuali kode_tipe_pelayanan).
+```
+
+#### 7.0d.3 Sinkron KFA via API resmi (hanya jika dokumentasi tersedia)
+```
+Protokol sesi (PEMBUKA) berlaku.
+Tugas: tambahkan command satusehat:sinkron-kfa untuk mengisi mtr_terminologi sistem kfa dari API resmi KFA.
+Syarat: baca dokumentasi resmi API KFA (URL, autentikasi, parameter, format respons) dan catat sumbernya.
+Jika dokumentasi tidak bisa diakses, JANGAN implementasi; akhiri dengan TODO(verifikasi-resmi) dan laporkan halaman yang dibutuhkan.
+Aturan:
+- Kredensial hanya dari .env (SATUSEHAT_KFA_*), tidak ditulis di kode/log.
+- Cache + rate limit; upsert per (kfa,kode) dengan metadata sumber/versi; idempoten.
+- Jangan memanggil API asli di tes; gunakan Http::fake. Tidak ada endpoint/format dari ingatan.
+Tes: sukses, respons kosong, 401/429/5xx, idempoten, metadata tersimpan, tidak ada panggilan jaringan asli.
+Selesai bila: tes lulus; command hanya ada jika dokumentasi resmi tersedia.
 ```
 
 ## 7A Fondasi + Tahap A (prasyarat, Encounter, Condition)

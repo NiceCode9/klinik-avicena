@@ -26,6 +26,8 @@ class SimpanPoliRequest extends FormRequest
                 Rule::unique('mtr_poli', 'kode')->ignore($this->route('poli')),
             ],
             'nama' => ['required', 'string', 'max:100'],
+            'kode_tipe_pelayanan' => ['nullable', 'string', 'max:30'],
+            'nama_tipe_pelayanan' => ['nullable', 'string', 'max:100'],
             'ihs_location_id' => ['nullable', 'string', 'max:64'],
             'aktif' => ['boolean'],
         ];

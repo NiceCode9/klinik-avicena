@@ -21,7 +21,15 @@ class Kunjungan extends ModelDasar
     {
         return [
             'tanggal_kunjungan' => 'date',
+            'waktu_datang' => 'datetime',
+            'waktu_mulai' => 'datetime',
+            'waktu_selesai' => 'datetime',
         ];
+    }
+
+    public function riwayatStatus(): HasMany
+    {
+        return $this->hasMany(KunjunganRiwayatStatus::class, 'kunjungan_id')->orderBy('waktu');
     }
 
     public function pasien(): BelongsTo

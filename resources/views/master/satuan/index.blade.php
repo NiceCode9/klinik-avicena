@@ -23,6 +23,7 @@
                     <tr>
                         <th class="text-center" style="width:60px">No</th>
                         <th>Nama</th>
+                        <th style="width:110px">UCUM</th>
                         <th class="text-end pe-3" style="width:180px">Aksi</th>
                     </tr>
                 </thead>
@@ -31,6 +32,7 @@
                         <tr>
                             <td class="text-center">{{ $data->firstItem() + $loop->index }}</td>
                             <td>{{ $satuan->nama }}</td>
+                            <td>{{ $satuan->kode_ucum ?? '-' }}</td>
                             <td class="text-end pe-3">
                                 @izin('master.satuan', 'ubah')
                                     <a href="{{ route('satuan.edit', $satuan) }}" class="btn btn-sm btn-warning">Ubah</a>
@@ -47,7 +49,7 @@
                         </tr>
                     @empty
                         <tr>
-                            <td colspan="3" class="text-center text-muted py-3">Belum ada data satuan.</td>
+                            <td colspan="4" class="text-center text-muted py-3">Belum ada data satuan.</td>
                         </tr>
                     @endforelse
                 </tbody>

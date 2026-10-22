@@ -3,7 +3,11 @@
         ? $pemeriksaanLab->parameterLab->map(fn ($p) => [
             'id' => $p->id,
             'nama_parameter' => $p->nama_parameter,
+            'kode_loinc' => $p->kode_loinc,
+            'nama_loinc' => $p->nama_loinc,
             'satuan' => $p->satuan,
+            'satuan_ucum' => $p->satuan_ucum,
+            'jenis_nilai' => $p->jenis_nilai,
             'nilai_rujukan_min' => $p->nilai_rujukan_min,
             'nilai_rujukan_max' => $p->nilai_rujukan_max,
             'keterangan_rujukan' => $p->keterangan_rujukan,
@@ -46,6 +50,50 @@
 
 <div class="row">
     <div class="col-md-4 mb-3">
+        <label for="kode_loinc" class="form-label">Kode LOINC (opsional)</label>
+        <input type="text" id="kode_loinc" name="kode_loinc" maxlength="20"
+            class="form-control @error('kode_loinc') is-invalid @enderror"
+            value="{{ old('kode_loinc', $pemeriksaanLab->kode_loinc ?? '') }}">
+        @error('kode_loinc')
+            <div class="invalid-feedback">{{ $message }}</div>
+        @enderror
+    </div>
+
+    <div class="col-md-8 mb-3">
+        <label for="nama_loinc" class="form-label">Nama LOINC (opsional)</label>
+        <input type="text" id="nama_loinc" name="nama_loinc" maxlength="255"
+            class="form-control @error('nama_loinc') is-invalid @enderror"
+            value="{{ old('nama_loinc', $pemeriksaanLab->nama_loinc ?? '') }}">
+        @error('nama_loinc')
+            <div class="invalid-feedback">{{ $message }}</div>
+        @enderror
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-md-4 mb-3">
+        <label for="kode_spesimen" class="form-label">Kode Spesimen SNOMED (opsional)</label>
+        <input type="text" id="kode_spesimen" name="kode_spesimen" maxlength="30"
+            class="form-control @error('kode_spesimen') is-invalid @enderror"
+            value="{{ old('kode_spesimen', $pemeriksaanLab->kode_spesimen ?? '') }}">
+        @error('kode_spesimen')
+            <div class="invalid-feedback">{{ $message }}</div>
+        @enderror
+    </div>
+
+    <div class="col-md-8 mb-3">
+        <label for="nama_spesimen" class="form-label">Nama Spesimen (opsional)</label>
+        <input type="text" id="nama_spesimen" name="nama_spesimen" maxlength="100"
+            class="form-control @error('nama_spesimen') is-invalid @enderror"
+            value="{{ old('nama_spesimen', $pemeriksaanLab->nama_spesimen ?? '') }}">
+        @error('nama_spesimen')
+            <div class="invalid-feedback">{{ $message }}</div>
+        @enderror
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-md-4 mb-3">
         <label for="tarif" class="form-label">Tarif (Rp)</label>
         <input type="number" id="tarif" name="tarif" min="0" step="0.01"
             class="form-control @error('tarif') is-invalid @enderror"
@@ -73,10 +121,14 @@
         <thead class="table-light">
             <tr>
                 <th>Nama Parameter</th>
-                <th style="width:130px">Satuan</th>
-                <th style="width:120px">Rujukan Min</th>
-                <th style="width:120px">Rujukan Max</th>
-                <th style="width:220px">Keterangan</th>
+                <th style="width:110px">Kode LOINC</th>
+                <th style="width:150px">Nama LOINC</th>
+                <th style="width:110px">Satuan</th>
+                <th style="width:90px">UCUM</th>
+                <th style="width:120px">Jenis</th>
+                <th style="width:110px">Rujukan Min</th>
+                <th style="width:110px">Rujukan Max</th>
+                <th style="width:200px">Keterangan</th>
                 <th style="width:70px"></th>
             </tr>
         </thead>
@@ -112,7 +164,7 @@
 
             document.getElementById('tambah-parameter').addEventListener('click', function () {
                 var baris = template.content.cloneNode(true);
-                baris.querySelectorAll('input').forEach(function (input) {
+                baris.querySelectorAll('input, select').forEach(function (input) {
                     input.name = input.name.replace('__INDEX__', berikutnya);
                 });
                 tabel.appendChild(baris);

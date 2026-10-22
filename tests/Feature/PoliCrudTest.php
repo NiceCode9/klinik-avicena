@@ -62,3 +62,21 @@ test('pengguna dengan hak dapat menghapus poli (soft delete)', function () {
 
     $this->assertSoftDeleted('mtr_poli', ['id' => $poli->id]);
 });
+
+test('kolom tipe pelayanan tersimpan', function () {
+    $this->actingAs(penggunaDenganIzin(['dasbor', 'master.poli']))
+        ->post(route('poli.store'), [
+            'kode' => 'INT',
+            'nama' => 'Poli Umum',
+            'kode_tipe_pelayanan' => '124',
+            'nama_tipe_pelayanan' => 'Pelayanan Medik Umum',
+            'aktif' => '1',
+        ])
+        ->assertRedirect(route('poli.index'));
+
+    $this->assertDatabaseHas('mtr_poli', [
+        'kode' => 'INT',
+        'kode_tipe_pelayanan' => '124',
+        'nama_tipe_pelayanan' => 'Pelayanan Medik Umum',
+    ]);
+});

@@ -3,7 +3,7 @@
 namespace App\Models\Registrasi;
 
 use App\Models\ModelDasar;
-use App\Models\Sys\Pengguna;
+use App\Models\User;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 class KunjunganRiwayatStatus extends ModelDasar
@@ -22,6 +22,6 @@ class KunjunganRiwayatStatus extends ModelDasar
 
     public function pembuat(): BelongsTo
     {
-        return $this->belongsTo(Pengguna::class, 'dibuat_oleh');
+        return $this->belongsTo(User::class, 'dibuat_oleh');
     }
 }

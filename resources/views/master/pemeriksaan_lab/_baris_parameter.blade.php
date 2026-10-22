@@ -5,8 +5,26 @@
             class="form-control form-control-sm" value="{{ $baris['nama_parameter'] ?? '' }}">
     </td>
     <td>
+        <input type="text" name="parameter[{{ $index }}][kode_loinc]" maxlength="20"
+            class="form-control form-control-sm" value="{{ $baris['kode_loinc'] ?? '' }}">
+    </td>
+    <td>
+        <input type="text" name="parameter[{{ $index }}][nama_loinc]" maxlength="255"
+            class="form-control form-control-sm" value="{{ $baris['nama_loinc'] ?? '' }}">
+    </td>
+    <td>
         <input type="text" name="parameter[{{ $index }}][satuan]" maxlength="50"
             class="form-control form-control-sm" value="{{ $baris['satuan'] ?? '' }}">
+    </td>
+    <td>
+        <input type="text" name="parameter[{{ $index }}][satuan_ucum]" maxlength="30"
+            class="form-control form-control-sm" value="{{ $baris['satuan_ucum'] ?? '' }}">
+    </td>
+    <td>
+        <select name="parameter[{{ $index }}][jenis_nilai]" class="form-select form-select-sm">
+            <option value="numerik" @selected(($baris['jenis_nilai'] ?? 'numerik') === 'numerik')>Numerik</option>
+            <option value="kualitatif" @selected(($baris['jenis_nilai'] ?? '') === 'kualitatif')>Kualitatif</option>
+        </select>
     </td>
     <td>
         <input type="number" step="0.001" name="parameter[{{ $index }}][nilai_rujukan_min]"

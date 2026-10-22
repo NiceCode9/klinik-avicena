@@ -14,6 +14,7 @@ use App\Models\Erm\Resep;
 use App\Models\Lab\Hasil;
 use App\Models\Lab\Permintaan;
 use App\Models\Master\Dokter;
+use App\Models\Master\Nakes;
 use App\Models\Registrasi\Kunjungan;
 use App\Models\Registrasi\Ttv;
 use App\Models\Sys\LogAktivitas;
@@ -25,6 +26,7 @@ use Illuminate\Database\Eloquent\Attributes\Table;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
@@ -59,6 +61,11 @@ class User extends Authenticatable
     public function dokter(): BelongsTo
     {
         return $this->belongsTo(Dokter::class, 'dokter_id');
+    }
+
+    public function nakes(): HasOne
+    {
+        return $this->hasOne(Nakes::class, 'pengguna_id');
     }
 
     public function logAktivitas(): HasMany

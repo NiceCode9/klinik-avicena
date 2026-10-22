@@ -29,6 +29,7 @@
         <env name="DB_DATABASE" value="klinik_test"/>
         <env name="DB_URL" value=""/>
         <env name="MAIL_MAILER" value="array"/>
+        <env name="NIK_HMAC_KEY" value="kunci-uji-nik-hmac-jangan-dipakai-produksi"/>
         <env name="QUEUE_CONNECTION" value="sync"/>
         <env name="SESSION_DRIVER" value="array"/>
         <env name="PULSE_ENABLED" value="false"/>

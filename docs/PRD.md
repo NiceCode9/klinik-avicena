@@ -1,12 +1,14 @@
 # PRODUCT REQUIREMENT DOCUMENT (PRD)
-## SISTEM INFORMASI MANAJEMEN (SIM) KLINIK AVICENA (v2.0)
+## SISTEM INFORMASI MANAJEMEN (SIM) KLINIK AVICENA (v2.1)
+
+> v2.1 (21 Okt 2026): selaras dengan keputusan D14–D22 dan `docs/satusehat-kebutuhan-data.md` — siklus Encounter, event SATUSEHAT, dosis terstruktur, pencatatan spesimen, dan penguncian data.
 
 ---
 
 ## 1. PENDAHULUAN & RINGKASAN EKSEKUTIF
 
 ### 1.1 Latar Belakang
-**SIM Klinik Avicena** adalah sistem berbasis web terintegrasi yang dirancang untuk mendigitalisasi seluruh operasional klinik mulai dari pendaftaran pasien secara onsite, manajemen antrean per poli, rekam medis elektronik, manajemen farmasi/apotek, hingga sistem kasir/billing. 
+**SIM Klinik Avicena** adalah sistem berbasis web terintegrasi yang dirancang untuk mendigitalisasi seluruh operasional klinik mulai dari pendaftaran pasien secara onsite, manajemen antrean per poli, rekam medis elektronik, manajemen farmasi/apotek, hingga sistem kasir/billing.
 
 ### 1.2 Tujuan Utama
 * Mencapai operasional bebas kertas (*paperless*) untuk efisiensi administrasi.
@@ -34,7 +36,8 @@
 
 ### 3.1 Modul Pendaftaran & Antrean (Onsite Only)
 * **Pencarian Pasien:** Validasi berbasis **NIK (Nomor Induk Kependudukan)**. Jika NIK belum terdaftar, perawat menginput data rekam medis baru pasien.
-* **Pemeriksaan TTV:** Sebelum masuk ke poli, perawat wajib menginput data Tanda-Tanda Vital (Tekanan Darah, Nadi, Suhu, Berat Badan) ke dalam sistem.
+* **Pemeriksaan TTV:** Sebelum masuk ke poli, perawat wajib menginput data Tanda-Tanda Vital (Tekanan Darah, Nadi, Suhu, Berat Badan) ke dalam sistem. Untuk lab mandiri, TTV bersifat opsional.
+* **Status Kunjungan:** Alur status `terdaftar → ttv → menunggu → diperiksa → lab/farmasi → kasir → selesai` (lab dan farmasi dapat berjalan paralel), atau `batal` dengan alasan. Setiap perubahan status dicatat beserta waktu dan petugas; waktu datang, mulai, dan selesai pemeriksaan tersimpan.
 * **Format Antrean Terpisah:** Antrean dipisah per jenis layanan dan otomatis di-reset menjadi `1` setiap hari. Format penomoran:
     * Poli Penyakit Dalam: `INT-001`
     * Poli Gigi: `GIG-001`
@@ -48,16 +51,22 @@
     * *Poli Gigi:* Integrasi grafik **Odontogram Digital** untuk mencatat kondisi per gigi pasien.
     * *Poli Saraf:* Form evaluasi motorik, sensorik, dan pemeriksaan saraf kranial.
 * **Output Dokter:** Dokter dapat menerbitkan e-Resep langsung ke Farmasi atau mengirim permintaan Pemeriksaan Lab internal secara digital.
+* **e-Resep:** Resep reguler dan racikan memuat dosis terstruktur (dosis, satuan, frekuensi, periode, rute, lama hari, aturan tambahan); teks aturan pakai tetap ditampilkan. Resep tidak dapat diubah setelah divalidasi apoteker.
+* **Penyelesaian Pemeriksaan:** Dokter wajib mengisi cara keluar saat menyimpan final; waktu mulai dan selesai pemeriksaan tercatat.
 
 ### 3.3 Modul Laboratorium
 * **Alur Pasien Rujukan:** Pasien yang dirujuk oleh dokter spesialis akan masuk ke antrean laboratorium (`LAB-X`) secara otomatis.
 * **Alur Pasien Mandiri (Walk-in):** Pasien yang datang langsung untuk tes lab (misal: Tes Darah Lengkap) didata oleh petugas lab menggunakan NIK, lalu masuk ke antrean laboratorium.
+* **Pencatatan Spesimen:** Pengambilan spesimen dicatat (jenis, waktu, petugas). Status: `menunggu_diambil → diambil → diterima | ditolak`; hasil hanya dapat diinput setelah spesimen diterima, dan penolakan wajib catatan.
+* **Permintaan per Pemeriksaan:** Setiap kode pemeriksaan dicatat sebagai satu baris detail permintaan; hasil per parameter menyimpan nilai rujukan dan penanda normal/rendah/tinggi.
 * **Billing:** Hasil pemeriksaan lab dikunci di sistem, dan rincian biayanya langsung dikirim ke modul Kasir.
 
 ### 3.4 Modul Inventaris Obat & Apotek (DIPERBARUI)
 Modul ini menangani sisi pemenuhan resep pasien (Farmasi), penjualan retail (Apotek), serta rantai pasok logistik obat (*Supply Chain*).
 
 * **Apotek Umum:** Melayani pembelian obat langsung secara retail untuk masyarakat umum tanpa resep dokter.
+* **Alur Resep:** Validasi apoteker memeriksa ketersediaan stok; penyerahan memotong stok FEFO per batch dan mencatat batch yang dipakai. Status resep: `diterbitkan → divalidasi → diracik (jika ada) → diserahkan | batal`.
+* **Pemetaan Obat:** Obat tanpa kode KFA tetap boleh diresepkan, tetapi ditandai "belum terpetakan" dan tidak dikirim ke SATUSEHAT sampai dipetakan.
 * **Manajemen Obat Masuk (Logistik Pengadaan):**
     * Mencatat penerimaan obat dari Supplier/PBF (Pedagang Besar Farmasi).
     * Pencatatan wajib menyertakan: **Nomor Faktur, Nama Supplier, Tanggal Kedaluwarsa (Expiry Date), Nomor Bets (Batch Number), dan Harga Beli**.
@@ -77,31 +86,30 @@ Modul ini menangani sisi pemenuhan resep pasien (Farmasi), penjualan retail (Apo
     * Biaya Tindakan Medis (jika ada)
     * Biaya Pemeriksaan Laboratorium
     * Biaya Obat (Reguler & Racikan) + Jasa Peracikan Flat
-* **Status Pembayaran:** Setelah kasir melakukan konfirmasi bayar, status antrean pasien diubah menjadi "Selesai" dan data rekam medis dikunci.
+* **Status Pembayaran:** Setelah kasir mengonfirmasi pembayaran lunas, status kunjungan menjadi "selesai"; data rekam medis dan hasil lab dikunci.
 
 ---
 
 ## 4. TEKNIS INTEGRASI SATUSEHAT (Mekanisme Queue)
 
-Untuk mencegah aplikasi lambat (*freezing*) saat dokter menekan tombol simpan, sistem menggunakan pustaka/library internal dan memanfaatkan **Laravel Queue** (Asinkronus / Background Job).
+Integrasi SATUSEHAT bersifat asinkron dan tidak menghambat pelayanan. Data medis selalu disimpan lokal lebih dulu; pengiriman ke SATUSEHAT dilakukan worker di latar belakang.
 
-### 4.1 Diagram Alur Pengiriman Data
-1. Dokter/Perawat klik tombol **"Simpan Data Medis"**.
-2. Aplikasi menyimpan data secara instan ke dalam basis data lokal (**MySQL**).
-3. Controller memicu (*dispatch*) event job ke antrean backend: `SatuSehatSyncJob::dispatch($encounterData)`.
-4. Sistem langsung memberikan respons sukses ke layar dokter, sehingga dokter bisa langsung melayani pasien berikutnya.
-5. Di latar belakang, worker Laravel (`php artisan queue:work`) memproses antrean:
-   * Mengemas data ke format JSON sesuai spesifikasi **FHIR (Fast Healthcare Interoperability Resources)**.
-   * Melakukan request API ke SATUSEHAT Kemenkes (`Encounter` & `Condition`).
-6. Jika sukses, response `IHS ID` disimpan kembali ke tabel MySQL lokal sebagai bukti sinkronisasi.
+### 4.1 Alur Pengiriman Data
+1. Layanan domain menyimpan data ke MySQL dan memancarkan event setelah transaksi commit (`afterCommit`). Event yang tersedia: `KunjunganDidaftarkan`, `TtvDisimpan`, `PemeriksaanDimulai`, `PemeriksaanSelesai`, `ResepDiterbitkan`, `ResepDiserahkan`, `LabDiminta`, `SpesimenDiambil`, `LabDikunci`.
+2. Listener SATUSEHAT membuat baris `sts_sinkronisasi` (satu baris = satu resource) dan mengantrekan `SatuSehatSyncJob` ke queue `satusehat`. Request web tidak memanggil API SATUSEHAT.
+3. Worker membentuk payload FHIR, memproses resource sesuai urutan ketergantungan, dan menyimpan `ihs_id` hasil respons. Encounter memiliki siklus: `arrived` saat pendaftaran, `in-progress` saat pemeriksaan dimulai, dan `finished` saat pemeriksaan selesai beserta Condition dan cara keluar.
+4. Resource yang dicakup: prasyarat Organization/Location/Practitioner/Patient; Encounter + Condition; MedicationRequest + MedicationDispense (data Medication menyatu, verifikasi saat implementasi); ServiceRequest + Specimen + Observation lab; Observation TTV; Composition (dikirim terakhir). DiagnosticReport menunggu verifikasi.
+5. Jika sukses, `IHS ID` disimpan di `sts_sinkronisasi` (Encounter/Condition tetap di kolom domain yang sudah ada) sebagai bukti sinkronisasi.
 
 ### 4.2 Skema Retry & Error Handling
-* Jika koneksi internet atau server SATUSEHAT mengalami gangguan (gagal kirim), job akan dimasukkan ke dalam daftar tunggu percobaan ulang otomatis (*Automatic Retry*) sebanyak **3 kali** dengan jeda waktu (*delay*).
-* Jika setelah 3 kali tetap gagal, data masuk ke tabel `failed_jobs` dan memicu notifikasi pada dashboard admin untuk dilakukan sinkronisasi ulang manual (*Manual Re-sync*).
+* Job memakai `tries = 3` dengan backoff bertahap; resource turunan menunggu induknya berhasil sebelum dikirim.
+* Jika tetap gagal, baris `sts_sinkronisasi` berstatus `gagal` dan job masuk `failed_jobs`; dashboard admin menampilkan notifikasi dan menyediakan Manual Re-sync tanpa menggandakan resource yang sudah berhasil.
+* Prasyarat yang belum lengkap (misalnya obat tanpa KFA atau lab tanpa LOINC/spesimen) ditandai `gagal` dengan pesan yang dapat diperbaiki, bukan error umum.
 
 ---
 
 ## 5. PERSYARATAN NON-FUNGSIONAL (Keamanan & Kinerja)
 
-* **Keamanan Data:** Enkripsi database menggunakan standar industri untuk perlindungan rekam medis pasien. Akses menu dibatasi ketat menggunakan *Role-Based Access Control* (RBAC).
+* **Keamanan Data:** NIK pasien, dokter, dan nakes disimpan terenkripsi dan dicari melalui hash (HMAC); data medis, hasil lab, dan payload SATUSEHAT tidak ditulis ke log. Akses menu dibatasi ketat menggunakan *Role-Based Access Control* (RBAC).
+* **Audit & Retensi:** Data medis dan hasil lab tidak dihapus; pembatalan menggunakan status dan alasan, dan aksi penting dicatat di log aktivitas.
 * **Performa UI:** Aplikasi harus memuat halaman kurang dari 2 detik pada jaringan area lokal (LAN) klinik menggunakan Bootstrap 5 yang ringan.

@@ -28,6 +28,7 @@ class SimpanSatuanRequest extends FormRequest
                 'max:50',
                 Rule::unique('mtr_satuan', 'nama')->ignore($this->route('satuan')),
             ],
+            'kode_ucum' => ['nullable', 'string', 'max:30'],
         ];
     }
 }

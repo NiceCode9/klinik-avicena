@@ -6,6 +6,7 @@ use App\Models\Apotek\PenjualanUmum;
 use App\Models\Apotek\ReturPasien;
 use App\Models\ModelDasar;
 use App\Models\Registrasi\Kunjungan;
+use App\Services\NikHasher;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\SoftDeletes;
 
@@ -21,6 +22,13 @@ class Pasien extends ModelDasar
             'nik' => 'encrypted',
             'tanggal_lahir' => 'date',
         ];
+    }
+
+    protected static function booted(): void
+    {
+        static::saving(function (Pasien $pasien) {
+            $pasien->nik_hash = NikHasher::hash($pasien->nik);
+        });
     }
 
     public function kunjungan(): HasMany

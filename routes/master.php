@@ -3,7 +3,9 @@
 use App\Http\Controllers\Master\DokterController;
 use App\Http\Controllers\Master\Icd10Controller;
 use App\Http\Controllers\Master\KategoriObatController;
+use App\Http\Controllers\Master\LokasiController;
 use App\Http\Controllers\Master\MetodeBayarController;
+use App\Http\Controllers\Master\NakesController;
 use App\Http\Controllers\Master\ObatController;
 use App\Http\Controllers\Master\PemeriksaanLabController;
 use App\Http\Controllers\Master\PoliController;
@@ -19,6 +21,9 @@ Route::middleware('auth')->prefix('master')->group(function () {
 
     Route::resource('poli', PoliController::class)->except('show');
     Route::resource('dokter', DokterController::class)->except('show');
+    Route::resource('nakes', NakesController::class)->except('show')
+        ->parameters(['nakes' => 'nakes']);
+    Route::resource('lokasi', LokasiController::class)->except('show');
     Route::resource('metode-bayar', MetodeBayarController::class)->except('show')
         ->parameters(['metode-bayar' => 'metodeBayar']);
     Route::resource('kategori-obat', KategoriObatController::class)->except('show')

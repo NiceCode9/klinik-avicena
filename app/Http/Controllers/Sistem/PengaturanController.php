@@ -25,7 +25,9 @@ class PengaturanController extends Controller implements HasMiddleware
     public function index(): View
     {
         return view('sistem.pengaturan.index', [
-            'pengaturan' => Pengaturan::orderBy('kunci')->get(),
+            'pengaturan' => Pengaturan::whereNotIn('kunci', Pengaturan::TERSEMBUNYI)
+                ->orderBy('kunci')
+                ->get(),
         ]);
     }
 
@@ -33,6 +35,10 @@ class PengaturanController extends Controller implements HasMiddleware
     {
         DB::transaction(function () use ($request) {
             foreach ($request->validated()['nilai'] ?? [] as $kunci => $nilai) {
+                if (in_array($kunci, Pengaturan::TERSEMBUNYI, true)) {
+                    continue;
+                }
+
                 Pengaturan::where('kunci', $kunci)->update(['nilai' => $nilai]);
             }
         });

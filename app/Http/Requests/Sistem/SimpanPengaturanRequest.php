@@ -21,7 +21,7 @@ class SimpanPengaturanRequest extends FormRequest
     {
         $aturan = ['nilai' => ['array']];
 
-        foreach (Pengaturan::orderBy('kunci')->pluck('kunci') as $kunci) {
+        foreach (Pengaturan::whereNotIn('kunci', Pengaturan::TERSEMBUNYI)->orderBy('kunci')->pluck('kunci') as $kunci) {
             $aturan["nilai.{$kunci}"] = match (Pengaturan::TIPE[$kunci] ?? 'teks') {
                 'uang' => ['nullable', 'numeric', 'min:0'],
                 'boolean' => ['nullable', 'in:0,1'],

@@ -1,6 +1,6 @@
 # Database — SIM Klinik Avicena
 
-- **56 tabel**, MySQL 8, InnoDB, `utf8mb4_unicode_ci`.
+- **60 tabel** (56 tabel dasar + 4 tabel pada migration pemetaan SATUSEHAT), MySQL 8, InnoDB, `utf8mb4_unicode_ci`.
 - Sumber kebenaran: folder `database/migrations/` (snapshot awal di `docs/schema.sql`; ERD & daftar di bawah dihasilkan dari snapshot itu — periksa migration jika ada perbedaan).
 - Konvensi: prefix modul + nama Indonesia; `created_at/updated_at/deleted_at` standar Laravel; `deleted_at` hanya master & `sys_pengguna`.
 - Kolom lengkap: lihat `docs/schema.sql` atau migration. Dokumen ini fokus pada peta, relasi, dan aturan.
@@ -9,15 +9,15 @@
 | Prefix | Namespace | Jumlah tabel |
 |---|---|---|
 | `sys_` | `App\Models\Sys` | 6 |
-| `mtr_` | `App\Models\Master` | 14 |
-| `reg_` | `App\Models\Registrasi` | 4 |
+| `mtr_` | `App\Models\Master` | 16 |
+| `reg_` | `App\Models\Registrasi` | 5 |
 | `erm_` | `App\Models\Erm` | 11 |
-| `lab_` | `App\Models\Lab` | 3 |
+| `lab_` | `App\Models\Lab` | 4 |
 | `apt_` | `App\Models\Apotek` | 13 |
 | `bil_` | `App\Models\Billing` | 3 |
 | `sts_` | `App\Models\SatuSehat` | 2 |
 
-> Catatan: tabel `sys_pengguna` memakai model `App\Models\User` (extends `Authenticatable`, atribut `#[Table('sys_pengguna')]`), bukan `App\Models\Sys\Pengguna` (lihat `decisions.md` D14).
+> Catatan: tabel `sys_pengguna` memakai model `App\Models\User` (extends `Authenticatable`, atribut `#[Table('sys_pengguna')]`), bukan `App\Models\Sys\Pengguna` (lihat `decisions.md` D21).
 
 ## Peta relasi per modul
 Panah: induk ||--o{ anak (satu-ke-banyak); `||--o|` = satu-ke-satu. Tabel modul lain yang dirujuk ikut tampil tanpa atribut.
@@ -57,6 +57,7 @@ erDiagram
   mtr_racikan ||--o{ mtr_racikan_bahan : "racikan_id"
   mtr_obat ||--o{ mtr_racikan_bahan : "obat_id"
   mtr_satuan ||--o{ mtr_racikan_bahan : "satuan_id"
+  sys_pengguna ||--o{ mtr_nakes : "pengguna_id"
 ```
 
 | Tabel | Induk (FK) | Unik |
@@ -75,6 +76,8 @@ erDiagram
 | `mtr_racikan` | — | — |
 | `mtr_racikan_bahan` | `racikan_id`→`mtr_racikan`, `obat_id`→`mtr_obat`, `satuan_id`→`mtr_satuan` | (racikan_id, obat_id) |
 | `mtr_metode_bayar` | — | (nama) |
+| `mtr_nakes` | `pengguna_id`→`sys_pengguna` | (nik_hash); (pengguna_id) |
+| `mtr_lokasi` | — | (kode) |
 
 ### reg_ — Registrasi
 Kunjungan, TTV, antrean per poli, dan penghitung nomor antrean harian. `reg_kunjungan` adalah poros: hampir semua tabel transaksi bergantung padanya.
@@ -88,6 +91,8 @@ erDiagram
   mtr_poli ||--o{ reg_penghitung_antrean : "poli_id"
   reg_kunjungan ||--o{ reg_antrean : "kunjungan_id"
   mtr_poli ||--o{ reg_antrean : "poli_id"
+  reg_kunjungan ||--o{ reg_kunjungan_riwayat_status : "kunjungan_id"
+  sys_pengguna ||--o{ reg_kunjungan_riwayat_status : "dibuat_oleh"
 ```
 
 | Tabel | Induk (FK) | Unik |
@@ -96,6 +101,7 @@ erDiagram
 | `reg_ttv` | `kunjungan_id`→`reg_kunjungan`, `perawat_id`→`sys_pengguna` | (kunjungan_id) |
 | `reg_penghitung_antrean` | `poli_id`→`mtr_poli` | (poli_id, tanggal) |
 | `reg_antrean` | `kunjungan_id`→`reg_kunjungan`, `poli_id`→`mtr_poli` | (poli_id, tanggal, nomor_urut) |
+| `reg_kunjungan_riwayat_status` | `kunjungan_id`→`reg_kunjungan`, `dibuat_oleh`→`sys_pengguna` | — |
 
 ### erm_ — Erm
 Pemeriksaan SOAP, diagnosis ICD-10, form khusus (penyakit dalam, saraf), odontogram, tindakan, e-resep (+item & bahan racikan), rujukan lab.
@@ -157,6 +163,9 @@ erDiagram
   lab_permintaan_detail ||--o{ lab_hasil : "permintaan_detail_id"
   mtr_parameter_lab ||--o{ lab_hasil : "parameter_lab_id"
   sys_pengguna ||--o{ lab_hasil : "diinput_oleh"
+  lab_permintaan ||--o{ lab_spesimen : "permintaan_id"
+  sys_pengguna ||--o{ lab_spesimen : "diambil_oleh"
+  lab_spesimen ||--o{ lab_permintaan_detail : "spesimen_id"
 ```
 
 | Tabel | Induk (FK) | Unik |
@@ -164,6 +173,7 @@ erDiagram
 | `lab_permintaan` | `kunjungan_id`→`reg_kunjungan`, `antrean_id`→`reg_antrean`, `rujukan_lab_id`→`erm_rujukan_lab`, `dokter_id`→`mtr_dokter`, `petugas_id`→`sys_pengguna` | (no_permintaan) |
 | `lab_permintaan_detail` | `permintaan_id`→`lab_permintaan`, `pemeriksaan_lab_id`→`mtr_pemeriksaan_lab` | (permintaan_id, pemeriksaan_lab_id) |
 | `lab_hasil` | `permintaan_detail_id`→`lab_permintaan_detail`, `parameter_lab_id`→`mtr_parameter_lab`, `diinput_oleh`→`sys_pengguna` | (permintaan_detail_id, parameter_lab_id) |
+| `lab_spesimen` | `permintaan_id`→`lab_permintaan`, `diambil_oleh`→`sys_pengguna` | — |
 
 ### apt_ — Apotek
 Obat masuk (faktur/bets/kedaluwarsa), stok per batch, buku besar mutasi stok, pengeluaran resep, penjualan umum, retur supplier/pasien, stock opname.
@@ -243,11 +253,11 @@ erDiagram
 ### sts_ — SatuSehat
 Status sinkronisasi SATUSEHAT per resource dan token akses.
 
-_Tidak ada relasi foreign key (tabel berdiri sendiri)._
+_Relasi: `sts_sinkronisasi.bergantung_pada_id` → `sts_sinkronisasi.id` (self-reference). Tidak ada FK ke tabel domain._
 
 | Tabel | Induk (FK) | Unik |
 |---|---|---|
-| `sts_sinkronisasi` | — | — |
+| `sts_sinkronisasi` | `bergantung_pada_id`→`sts_sinkronisasi` | (jenis_resource, aksi, referensi_tabel, referensi_id, sub_kunci) |
 | `sts_token` | — | — |
 
 ## Aturan yang TIDAK ditegakkan database (wajib di Service/Policy/tes)
@@ -284,6 +294,8 @@ Satu-satunya constraint `CHECK` di DB: `apt_stok_batch.jumlah_sisa >= 0`.
 
 ## Seed awal
 `DataAwalSeeder`: peran (admin, resepsionis, perawat, dokter, petugas_lab, apoteker, kasir), poli (INT, GIG, SRF, LAB), metode bayar, pengaturan (`biaya_jasa_racik`, `retur_pasien_diizinkan`, `batas_peringatan_kedaluwarsa_hari`), akun `admin`. `HakAksesAwalSeeder`: menu (`menu:sinkron`) + hak per peran.
+
+`PemetaanSatuSehatSeeder`: lokasi `APT` di `mtr_lokasi`. Saat ini belum dipanggil `DatabaseSeeder`; jalankan manual dengan `php artisan db:seed --class=PemetaanSatuSehatSeeder`.
 
 ## Migration `2026_10_21_000001_tambah_pemetaan_dan_kebutuhan_data_satusehat` menambah (total **60 tabel**):
 - **Tabel baru**: `mtr_nakes`, `mtr_lokasi`, `reg_kunjungan_riwayat_status`, `lab_spesimen`.

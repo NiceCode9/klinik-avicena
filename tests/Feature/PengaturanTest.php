@@ -126,3 +126,20 @@ test('kunci yang belum dikenal kode tampil sebagai teks dan tetap bisa diubah', 
 
     $this->assertDatabaseHas('sys_pengaturan', ['kunci' => 'kunci_baru', 'nilai' => 'sesudahnya']);
 });
+
+test('penghitung no rekam medis tidak tampil di pengaturan', function () {
+    $this->actingAs(penggunaDenganIzin(['dasbor', 'sistem.pengaturan']))
+        ->get(route('pengaturan.index'))
+        ->assertOk()
+        ->assertDontSee('no_rekam_medis_terakhir');
+});
+
+test('penghitung no rekam medis tidak bisa diubah lewat pengaturan', function () {
+    $this->actingAs(penggunaDenganIzin(['dasbor', 'sistem.pengaturan']))
+        ->put(route('pengaturan.update'), [
+            'nilai' => ['no_rekam_medis_terakhir' => '999'],
+        ])
+        ->assertRedirect(route('pengaturan.index'));
+
+    expect(Pengaturan::where('kunci', 'no_rekam_medis_terakhir')->value('nilai'))->toBe('0');
+});

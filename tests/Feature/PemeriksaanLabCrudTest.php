@@ -179,3 +179,52 @@ test('pengguna dengan hak dapat menghapus pemeriksaan (soft delete) tanpa mengha
     $this->assertSoftDeleted('mtr_pemeriksaan_lab', ['id' => $pemeriksaan->id]);
     $this->assertDatabaseHas('mtr_parameter_lab', ['id' => $parameter->id, 'deleted_at' => null]);
 });
+
+test('kolom LOINC, spesimen, UCUM, dan jenis nilai tersimpan', function () {
+    $data = dataPemeriksaan([
+        'kode_loinc' => '58410-2',
+        'nama_loinc' => 'CBC panel',
+        'kode_spesimen' => '119297000',
+        'nama_spesimen' => 'Blood specimen',
+        'parameter' => [
+            [
+                'nama_parameter' => 'Hemoglobin',
+                'kode_loinc' => '718-7',
+                'nama_loinc' => 'Hemoglobin',
+                'satuan' => 'g/dL',
+                'satuan_ucum' => 'g/dL',
+                'jenis_nilai' => 'numerik',
+            ],
+            [
+                'nama_parameter' => 'Leukosit',
+                'kode_loinc' => '6690-2',
+                'nama_loinc' => 'Leukocytes',
+                'satuan' => '10^3/uL',
+                'satuan_ucum' => '10*3/uL',
+                'jenis_nilai' => 'numerik',
+            ],
+        ],
+    ]);
+
+    $this->actingAs(penggunaDenganIzin(['dasbor', 'master.pemeriksaan_lab']))
+        ->post(route('pemeriksaan-lab.store'), $data)
+        ->assertRedirect(route('pemeriksaan-lab.index'));
+
+    $pemeriksaan = PemeriksaanLab::firstWhere('kode', 'LAB-001');
+
+    $this->assertDatabaseHas('mtr_pemeriksaan_lab', [
+        'id' => $pemeriksaan->id,
+        'kode_loinc' => '58410-2',
+        'nama_loinc' => 'CBC panel',
+        'kode_spesimen' => '119297000',
+        'nama_spesimen' => 'Blood specimen',
+    ]);
+
+    $this->assertDatabaseHas('mtr_parameter_lab', [
+        'pemeriksaan_lab_id' => $pemeriksaan->id,
+        'nama_parameter' => 'Hemoglobin',
+        'kode_loinc' => '718-7',
+        'satuan_ucum' => 'g/dL',
+        'jenis_nilai' => 'numerik',
+    ]);
+});

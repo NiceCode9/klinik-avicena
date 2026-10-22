@@ -19,6 +19,7 @@ class ResepItem extends ModelDasar
             'jumlah' => 'decimal:2',
             'harga_satuan' => 'decimal:2',
             'biaya_jasa_racik' => 'decimal:2',
+            'dosis' => 'decimal:3',
         ];
     }
 

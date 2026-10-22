@@ -16,4 +16,7 @@ class Pengaturan extends ModelDasar
         'retur_pasien_diizinkan' => 'boolean',
         'batas_peringatan_kedaluwarsa_hari' => 'angka',
     ];
+
+    /** Kunci yang dikelola sistem dan tidak boleh diubah dari halaman pengaturan. */
+    public const TERSEMBUNYI = ['no_rekam_medis_terakhir'];
 }

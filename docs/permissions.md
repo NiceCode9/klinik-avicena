@@ -56,11 +56,13 @@ L = lihat, T = tambah, U = ubah, H = hapus. Admin: semua menu penuh.
 | resepsionis | dasbor L · pendaftaran.pasien LTU · pendaftaran.kunjungan LTU |
 | perawat | dasbor L · pendaftaran.pasien LTU · pendaftaran.kunjungan LTU · pendaftaran.ttv LTU |
 | dokter | dasbor L · pendaftaran.pasien L · erm.pemeriksaan LTU · erm.resep LTU · erm.rujukan_lab LT · lab.hasil L · master.icd10 L |
-| petugas_lab | dasbor L · pendaftaran.pasien LT · pendaftaran.lab_mandiri LT · lab.antrean LU · lab.hasil LTU · master.pemeriksaan_lab L |
+| petugas_lab | dasbor L · pendaftaran.pasien LT · pendaftaran.lab_mandiri LT · lab.antrean LU · lab.hasil LTU · lab.spesimen LTU · master.pemeriksaan_lab L |
 | apoteker | dasbor L · apotek.resep LU · apotek.penjualan LTU · apotek.stok L · apotek.penerimaan LTU · apotek.retur_supplier LTU · apotek.retur_pasien LTU · apotek.opname LTU · master.obat LTU · master.racikan LTU · master.supplier LTU |
 | kasir | dasbor L · kasir.tagihan L · kasir.pembayaran LT · kasir.laporan L |
 
 Tidak ada peran selain admin yang diberi hak `hapus` (H) secara default — data medis/transaksi tidak dihapus.
+
+> **Status 21 Okt 2026:** `lab.spesimen` sudah diberikan ke `petugas_lab` (LTU), tetapi rutenya belum dibuat. Menu `master.nakes`, `master.lokasi`, `satusehat.sinkronisasi`, dan `satusehat.pemetaan` juga sudah terdaftar di `config/menu.php` tanpa rute/controller; sementara hanya `admin` yang memegang aksesnya lewat `menu:sinkron`.
 
 ## Policy (izin data) yang perlu dibuat
 | Policy | Aturan |

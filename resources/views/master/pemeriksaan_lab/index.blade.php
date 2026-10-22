@@ -35,7 +35,22 @@
                         <tr>
                             <td class="text-center">{{ $data->firstItem() + $loop->index }}</td>
                             <td><code>{{ $pemeriksaan->kode }}</code></td>
-                            <td>{{ $pemeriksaan->nama }}</td>
+                            <td>
+                                {{ $pemeriksaan->nama }}
+                                @if ($pemeriksaan->kode_loinc || $pemeriksaan->kode_spesimen)
+                                    <div class="small text-muted">
+                                        @if ($pemeriksaan->kode_loinc)
+                                            LOINC {{ $pemeriksaan->kode_loinc }}
+                                        @endif
+                                        @if ($pemeriksaan->kode_loinc && $pemeriksaan->kode_spesimen)
+                                            |
+                                        @endif
+                                        @if ($pemeriksaan->kode_spesimen)
+                                            Spesimen {{ $pemeriksaan->kode_spesimen }}
+                                        @endif
+                                    </div>
+                                @endif
+                            </td>
                             <td class="text-center">{{ $pemeriksaan->parameter_lab_count }}</td>
                             <td class="text-end">{{ number_format($pemeriksaan->tarif, 0, ',', '.') }}</td>
                             <td>

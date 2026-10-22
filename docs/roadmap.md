@@ -8,8 +8,8 @@ Status: ✅ selesai · 🔄 berjalan · ⬜ belum
 
 | Status | Item                                                                                           | Ukuran |
 | ------ | ---------------------------------------------------------------------------------------------- | ------ |
-| ✅     | PRD v2.0                                                                                       | —      |
-| ✅     | Rancangan infrastruktur & database (56 tabel), `schema.sql`                                    | —      |
+| ✅     | PRD v2.1                                                                                       | —      |
+| ✅     | Rancangan infrastruktur & database (56 tabel dasar), `schema.sql`                              | —      |
 | ✅     | Migration, model domain + `User` (`sys_pengguna`), `ModelDasar`, seeder awal                   | —      |
 | ✅     | Manajemen menu & hak akses (`sys_menu`, `IzinService`, `izin:*`, `menu:sinkron`, UI Hak Akses) | —      |
 | ✅     | Sidebar AdminLTE 4 dinamis per peran (rute yang belum ada aman jadi `#`)                       | —      |
@@ -77,9 +77,12 @@ Master dibutuhkan semua modul, kerjakan lebih dulu. Semua CRUD memakai pola yang
 | --------------------------------------------------------------------------------------------- | ------ |
 | Antrean lab dari rujukan (otomatis)                                                           | S      |
 | Pendaftaran lab mandiri (cari/daftar pasien via NIK, **pilih dokter lab**, pilih pemeriksaan) | M      |
+| Pencatatan spesimen (`lab_spesimen`: status, waktu, petugas) + tautan ke detail               | M      |
 | Input hasil per parameter + penanda normal/rendah/tinggi                                      | M      |
 | Kunci hasil → kirim komponen biaya ke tagihan                                                 | S      |
 | Cetak hasil lab                                                                               | S      |
+
+**Status 21 Okt 2026**: tabel `lab_spesimen`, model `Lab\Spesimen`, dan menu `lab.spesimen` sudah ada; alur/UI belum.
 
 **Selesai bila**: kedua alur (rujukan & mandiri) sampai tagihan; hasil terkunci tidak bisa diubah; `dokter_id` wajib sebelum kunci.
 
@@ -114,12 +117,14 @@ Fase paling berisiko: kerjakan `StokService` + tes dulu, baru UI.
 ## Fase 7 — Integrasi SATUSEHAT (dipecah)
 | Sub-fase | Isi | Ukuran |
 |---|---|---|
-| **7.0 Pemetaan terminologi** | kolom pemetaan di form master (obat→KFA, pemeriksaan/parameter lab→LOINC/SNOMED/UCUM, poli→tipe pelayanan), CRUD `mtr_nakes` & `mtr_lokasi`, laporan "master belum terpetakan" | L |
+| **7.0 Pemetaan terminologi** 🔄 | kolom pemetaan di form master (obat→KFA, pemeriksaan/parameter lab→LOINC/SNOMED/UCUM, poli→tipe pelayanan), CRUD `mtr_nakes` & `mtr_lokasi`, laporan "master belum terpetakan" | L |
 | **7A Fondasi + Tahap A** | client/token, sinkron IHS master, siklus Encounter, Condition, listener & ketergantungan | XL |
 | **7B Obat** | Medication/MedicationRequest/MedicationDispense | L |
 | **7C Lab + TTV** | ServiceRequest, Specimen, Observation lab, Observation TTV (+ DiagnosticReport bila diputuskan) | XL |
 | **7D Resume medis** | Composition | M |
 | **7E Monitor & uji sandbox** | monitor, Re-sync, rasio Composition:Encounter, checklist sandbox | M |
+
+**Status 21 Okt 2026**: 7.0 🔄 — migration pemetaan, model `Nakes`/`Lokasi`/`Spesimen`/`KunjunganRiwayatStatus`, menu `master.nakes`/`master.lokasi`/`satusehat.*`, dan seeder `APT` sudah ada; CRUD master, form pemetaan, dan laporan "belum terpetakan" belum.
 
 **Selesai bila**: simpan data medis tidak menunggu API; gangguan SATUSEHAT tidak mengganggu pelayanan; data gagal bisa disinkron ulang manual.
 
@@ -142,4 +147,4 @@ Fase paling berisiko: kerjakan `StokService` + tes dulu, baru UI.
 Pendaftaran online, BPJS/asuransi, multi-cabang, aplikasi mobile pasien, integrasi alat lab otomatis. Jangan dikerjakan tanpa keputusan baru di `decisions.md`.
 
 
-Catatan lintas fase (kerjakan di fase asalnya, bukan menunggu Fase 7): **Fase 2** mencatat `waktu_datang` + riwayat status; **Fase 3** form resep dosis terstruktur + `waktu_mulai/selesai` + cara keluar; **Fase 4** pencatatan spesimen; **Fase 5** event `ResepDiserahkan`. Lihat `prompts-fase7.md` (perubahan prompt).
+Catatan lintas fase (kerjakan di fase asalnya, bukan menunggu Fase 7): **Fase 2** mencatat `waktu_datang` + riwayat status; **Fase 3** form resep dosis terstruktur + `waktu_mulai/selesai` + cara keluar; **Fase 4** pencatatan spesimen; **Fase 5** event `ResepDiserahkan`. Lihat `prompts.md` (tambahan sudah disisipkan di 2.3, 3.1, 3.6, 3.7, 4.1–4.3, dan 5.4).

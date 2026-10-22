@@ -86,3 +86,11 @@ test('pengguna dengan hak dapat menghapus satuan (soft delete)', function () {
 
     $this->assertSoftDeleted('mtr_satuan', ['id' => $satuan->id]);
 });
+
+test('kode UCUM tersimpan', function () {
+    $this->actingAs(penggunaDenganIzin(['dasbor', 'master.satuan']))
+        ->post(route('satuan.store'), ['nama' => 'Tablet', 'kode_ucum' => '{tablet}'])
+        ->assertRedirect(route('satuan.index'));
+
+    $this->assertDatabaseHas('mtr_satuan', ['nama' => 'Tablet', 'kode_ucum' => '{tablet}']);
+});

@@ -99,6 +99,8 @@ return [
 
     'key' => env('APP_KEY'),
 
+    'nik_hmac_key' => env('NIK_HMAC_KEY'),
+
     'previous_keys' => [
         ...array_filter(
             explode(',', (string) env('APP_PREVIOUS_KEYS', ''))

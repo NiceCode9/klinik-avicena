@@ -36,7 +36,16 @@ class PemeriksaanLabService
      */
     private function atribut(array $data): array
     {
-        return Arr::only($data, ['kode', 'nama', 'tarif', 'aktif']);
+        return Arr::only($data, [
+            'kode',
+            'nama',
+            'kode_loinc',
+            'nama_loinc',
+            'kode_spesimen',
+            'nama_spesimen',
+            'tarif',
+            'aktif',
+        ]);
     }
 
     /**
@@ -44,13 +53,21 @@ class PemeriksaanLabService
      */
     private function atributParameter(array $baris): array
     {
-        return Arr::only($baris, [
+        $atribut = Arr::only($baris, [
             'nama_parameter',
+            'kode_loinc',
+            'nama_loinc',
             'satuan',
+            'satuan_ucum',
+            'jenis_nilai',
             'nilai_rujukan_min',
             'nilai_rujukan_max',
             'keterangan_rujukan',
         ]);
+
+        $atribut['jenis_nilai'] = ($atribut['jenis_nilai'] ?? null) ?: 'numerik';
+
+        return $atribut;
     }
 
     /**

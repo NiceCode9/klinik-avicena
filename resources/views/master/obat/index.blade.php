@@ -24,6 +24,7 @@
                         <th class="text-center" style="width:60px">No</th>
                         <th style="width:120px">Kode</th>
                         <th>Nama</th>
+                        <th style="width:150px">KFA</th>
                         <th style="width:100px">Satuan</th>
                         <th style="width:130px">Golongan</th>
                         <th class="text-end" style="width:120px">Harga Jual</th>
@@ -40,6 +41,16 @@
                                 {{ $obat->nama }}
                                 @if ($obat->kategoriObat)
                                     <div class="small text-muted">{{ $obat->kategoriObat->nama }}</div>
+                                @endif
+                            </td>
+                            <td>
+                                @if ($obat->kode_kfa)
+                                    <code>{{ $obat->kode_kfa }}</code>
+                                @else
+                                    <span class="text-muted">-</span>
+                                @endif
+                                @if ($obat->kode_kfa_virtual)
+                                    <div class="small text-muted">V: {{ $obat->kode_kfa_virtual }}</div>
                                 @endif
                             </td>
                             <td>{{ $obat->satuan?->nama ?? '-' }}</td>
@@ -68,7 +79,7 @@
                         </tr>
                     @empty
                         <tr>
-                            <td colspan="8" class="text-center text-muted py-3">Belum ada data obat.</td>
+                            <td colspan="9" class="text-center text-muted py-3">Belum ada data obat.</td>
                         </tr>
                     @endforelse
                 </tbody>

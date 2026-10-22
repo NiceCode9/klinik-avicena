@@ -8,9 +8,9 @@ Simpan sebagai `docs/prompts.md`. Fase 0 dan 1 sudah selesai, jadi dokumen ini m
 3. Setelah semua tugas satu fase selesai, jalankan **P-AUDIT** untuk fase itu.
 4. Jika AI melenceng, pakai **P-KOREKSI**. Jika sesi baru/konteks hilang, pakai **P-LANJUT**.
 5. Setiap prompt tugas menyebut dokumen dan bagian yang relevan. Jangan dihapus: itulah yang menjaga AI tetap pada aturan.
+6. Seluruh prompt Fase 7 ada di `docs/prompts-fase7.md`; tambahan Fase 2–5 sudah disisipkan ke prompt di bawah.
 
-Catatan: sebelum Fase 3, tambahkan keputusan ini ke `docs/decisions.md` (D14) karena prompt 3.1 dan 7.3 bergantung padanya:
-`D14 | Penyimpanan data medis memancarkan event PemeriksaanDisimpan (afterCommit). Listener SATUSEHAT (Fase 7) yang membuat baris sts_sinkronisasi dan mendispatch SatuSehatSyncJob. | Memisahkan ERM dari integrasi, ERM bisa selesai tanpa SATUSEHAT.`
+Catatan: keputusan event ada di `docs/decisions.md` D14; seluruh Fase 7 ada di `docs/prompts-fase7.md`.
 
 ---
 
@@ -21,7 +21,9 @@ Kamu mengembangkan SIM Klinik Avicena (Laravel 13, MySQL 8, AdminLTE 4 via Vite)
 
 SEBELUM melakukan apa pun, baca SELURUH file ini dan jadikan hukum proyek:
 AGENTS.md, docs/architecture.md, docs/database.md, docs/business-rules.md,
-docs/permissions.md, docs/conventions.md, docs/satusehat.md, docs/decisions.md, docs/roadmap.md.
+docs/permissions.md, docs/conventions.md, docs/satusehat.md, docs/satusehat-fondasi.md, docs/satusehat-kebutuhan-data.md,
+docs/decisions.md, docs/roadmap.md.
+Saat mengubah data/skema, baca juga docs/pembaruan-dokumen.md (paket awal; lihat banner status).
 Jika ada konflik antara instruksiku di chat dan dokumen-dokumen itu, BERHENTI dan tanyakan,
 jangan memilih sendiri.
 
@@ -42,7 +44,7 @@ PROTOKOL KERJA (berlaku untuk setiap tugas dalam sesi ini):
 
 PENUTUP (wajib di akhir setiap tugas, setelah kode selesai):
 a. Jalankan: php artisan test dan vendor/bin/pint; tampilkan ringkas hasilnya.
-b. Tampilkan CHECKLIST KEPATUHAN: untuk tiap 12 aturan "ATURAN WAJIB" di AGENTS.md tulis
+b. Tampilkan CHECKLIST KEPATUHAN: untuk tiap aturan "ATURAN WAJIB" di AGENTS.md tulis
    ✓ (patuh) / ✗ (melanggar, jelaskan) / – (tidak relevan), dan centang Definition of Done.
 c. Daftar: file yang dibuat/diubah, asumsi yang diambil, TODO(Qn) yang tersisa, dan
    hal yang perlu kuperiksa manual di browser.
@@ -60,8 +62,9 @@ aturan paling penting yang berlaku, lalu tunggu tugas pertamaku.
 ### P-AUDIT (setelah setiap fase selesai; ganti `<FASE N>`)
 ```
 Protokol sesi (PEMBUKA) berlaku. Tugas: AUDIT KEPATUHAN untuk <FASE N>. JANGAN mengubah file apa pun.
-1. Periksa seluruh kode fase ini terhadap AGENTS.md (12 aturan wajib + daftar JANGAN),
-   docs/business-rules.md (bagian terkait), docs/permissions.md, docs/conventions.md.
+1. Periksa seluruh kode fase ini terhadap AGENTS.md (seluruh aturan wajib + daftar JANGAN),
+   docs/business-rules.md (bagian terkait), docs/permissions.md, docs/conventions.md,
+   docs/satusehat.md dan docs/satusehat-kebutuhan-data.md (untuk data/event yang menyentuh SATUSEHAT).
 2. Cari pelanggaran spesifik: logika bisnis di controller/Blade/model; update stok/status langsung
    tanpa Service; route/controller tanpa middleware izin; menu tidak terdaftar di config/menu.php;
    float untuk uang; N+1 query; NIK/hasil lab/SOAP di log; data terkunci bisa diubah;
@@ -94,7 +97,9 @@ Periksa bahwa tes yang ada lulus (php artisan test) sebelum kita lanjut.
 ```
 Protokol sesi (PEMBUKA) berlaku. Perbarui dokumentasi agar sesuai kode terbaru. Jangan ubah kode.
 Periksa: docs/roadmap.md (status), docs/decisions.md (keputusan baru, pertanyaan yang terjawab),
-docs/business-rules.md, docs/database.md (jika ada migration baru), docs/permissions.md (menu/hak baru).
+docs/PRD.md (cakupan/fitur), docs/business-rules.md, docs/architecture.md (alur/komponen),
+docs/database.md (jika ada migration baru), docs/permissions.md (menu/hak baru),
+docs/satusehat.md dan docs/satusehat-kebutuhan-data.md (jika perubahan menyentuh event/skema SATUSEHAT).
 Tampilkan diff dokumen, tunggu persetujuanku, baru terapkan.
 ```
 
@@ -150,17 +155,24 @@ Selesai bila: tes lulus dan tidak ada kode lain yang membuat Antrean tanpa lewat
 Protokol sesi (PEMBUKA) berlaku.
 Tugas: buat KunjunganService (buatKunjunganPoli, simpanTtv) dan StatusKunjunganService
 (pindahkan(Kunjungan, status) berbasis tabel transisi, dan sinkron(Kunjungan) untuk status kasir).
-Dokumen: business-rules §1 (ikuti tabel transisi APA ADANYA), §4, decisions Q5, Q7, Q8.
+Dokumen: business-rules §1 (ikuti tabel transisi APA ADANYA), §4, §11, decisions D14, Q5, Q7, Q8.
 Aturan:
 - no_kunjungan format default Q8 (KJ-YYYYMMDD-0001), atomik.
 - simpanTtv: validasi sistolik/diastolik/nadi/suhu/berat badan terisi, satu TTV per kunjungan,
   status terdaftar→ttv; lalu AntreanService::ambilNomor dan status ttv→menunggu.
 - Semua perpindahan status HANYA lewat StatusKunjunganService (tolak transisi tidak sah dengan
   StatusTidakValidException). Tidak boleh ada update status langsung di tempat lain.
+- Setiap perpindahan status mencatat baris reg_kunjungan_riwayat_status (status, waktu, dibuat_oleh)
+  dalam transaksi yang sama. waktu_datang diisi saat kunjungan dibuat; waktu_mulai/selesai diisi oleh
+  PemeriksaanService (3.1) saat pemeriksaan dimulai/difinalkan.
+- Pancarkan KunjunganDidaftarkan saat kunjungan dibuat dan TtvDisimpan saat TTV disimpan (afterCommit).
+  JANGAN membuat listener SATUSEHAT atau memanggil API di fase ini.
 - sinkron(): implementasikan sesuai usulan paralel lab+farmasi di §1 (kasir hanya jika semua
   lab_permintaan terkunci DAN semua resep diserahkan/batal); karena Fase 3-5 belum ada, buat
   dengan data kosong lulus dan beri tes untuk skenario-skenario itu memakai factory.
 Tes: seluruh matriks transisi sah/tidak sah; TTV wajib; sinkron() berbagai kombinasi.
+Tes tambahan: riwayat status terisi untuk tiap transisi; event hanya terpancar setelah commit;
+waktu_datang terisi benar (waktu_mulai/selesai diuji di 3.1).
 Selesai bila: tes lulus; grep tidak menemukan "->status =" / update status kunjungan di luar service ini.
 ```
 
@@ -227,17 +239,21 @@ Dokumen utama: `business-rules.md` §5–§7, `permissions.md` (Policy), `databa
 ```
 Protokol sesi (PEMBUKA) berlaku.
 Tugas: App\Services\Erm\PemeriksaanService: mulai(Antrean|Kunjungan, Dokter), simpanDraf(), simpanFinal().
-Dokumen: business-rules §1 & §5, decisions D14 (event PemeriksaanDisimpan) & D13.
+Dokumen: business-rules §1 & §5, decisions D14 (event PemeriksaanDimulai & PemeriksaanSelesai) & D13.
 Aturan:
 - mulai(): status kunjungan menunggu→diperiksa (via StatusKunjunganService), antrean dilayani (AntreanService).
+  Pancarkan PemeriksaanDimulai (afterCommit) dan isi waktu_mulai. PemeriksaanDimulai dipicu otomatis saat
+  dokter pertama kali membuka form pemeriksaan (Q23).
 - simpanDraf/Final: SOAP + diagnosis ICD-10 (final wajib minimal 1 diagnosis primer); transaksi DB.
-- Setelah commit simpanFinal: pancarkan event App\Events\PemeriksaanDisimpan dengan afterCommit (tanpa
-  listener SATUSEHAT di fase ini; JANGAN memanggil API atau membuat job SATUSEHAT sekarang).
+- simpanFinal(): wajib mengisi cara keluar (kode_cara_keluar/nama_cara_keluar), isi waktu_selesai, lalu
+  pancarkan PemeriksaanSelesai (afterCommit). Tanpa listener SATUSEHAT di fase ini; JANGAN memanggil API
+  atau membuat job SATUSEHAT sekarang.
 - Setelah final dan tanpa lab/resep → status kunjungan ke kasir (sinkron()).
 - Pemeriksaan terkunci (dikunci=1) tidak bisa diubah: DataTerkunciException.
 - Catat sys_log_aktivitas.
-Tes: mulai→draf→final; final tanpa diagnosis primer ditolak; event terpancar setelah commit dan tidak
-terpancar jika transaksi gagal; terkunci menolak ubah; transisi status benar.
+Tes: mulai→draf→final; final tanpa diagnosis primer ditolak; final tanpa cara keluar ditolak; event
+PemeriksaanDimulai/PemeriksaanSelesai terpancar setelah commit dan tidak terpancar jika transaksi gagal;
+waktu_mulai/waktu_selesai terisi; terkunci menolak ubah; transisi status benar.
 ```
 
 ### 3.2 UI Pemeriksaan (SOAP + ICD-10)
@@ -285,31 +301,41 @@ ubah master tarif tidak mengubah tindakan lama. Lewat PemeriksaanService.
 Tes: snapshot tarif, ubah master tidak mempengaruhi, terkunci menolak.
 ```
 
-### 3.6 e-Resep (reguler + racikan)
+### 3.6 e-Resep (reguler + racikan, dosis terstruktur)
 ```
 Protokol sesi (PEMBUKA) berlaku.
-Tugas: App\Services\Erm\ResepService dan UI e-Resep (menu erm.resep).
-Dokumen: business-rules §6 & §8.5, database.md (erm_resep*, mtr_racikan*), decisions Q2, Q3.
+Tugas: App\Services\Erm\ResepService + UI e-Resep (menu erm.resep) dengan DOSIS TERSTRUKTUR.
+Dokumen: business-rules §6 & §8.5, database.md (erm_resep_item kolom baru), decisions D14, D15, Q2, Q3.
 Aturan:
 - buat resep dari pemeriksaan: no_resep sesuai Q8, status diterbitkan.
-- item reguler: obat_id wajib, jumlah > 0, aturan_pakai; harga_satuan DISNAPSHOT dari mtr_obat.harga_jual.
-- item racikan: minimal 1 bahan di erm_resep_racikan_bahan; bisa disalin dari template mtr_racikan
-  (salin, bukan referensi hidup); JANGAN memotong stok di fase ini.
-- tampilkan stok tersedia sebagai informasi (hanya baca, lewat query ringan; BELUM StokService).
+- tiap item resep memuat: obat (reguler) atau bahan (racikan), jumlah (> 0), dosis + satuan_dosis,
+  frekuensi + periode + satuan_periode (jam/hari/minggu), rute (kode_rute/nama_rute dari daftar
+  terminologi yang disetujui), lama_hari, aturan_tambahan, dan aturan_pakai (teks tampilan yang
+  dibangkitkan otomatis dari kolom terstruktur, boleh disunting). Harga_satuan DISNAPSHOT dari mtr_obat.harga_jual.
+- item reguler: obat_id wajib. Racikan: minimal 1 bahan; salin dari template mtr_racikan
+  (salin, bukan referensi hidup); dosis berlaku untuk racikan sebagai satu kesatuan.
+- obat tanpa kode KFA boleh diresepkan tetapi tampilkan peringatan "belum terpetakan ke KFA" (tidak memblokir).
+- tampilkan stok tersedia sebagai informasi (hanya baca; BELUM memotong stok).
 - resep tidak bisa diubah setelah divalidasi apoteker.
-Tes: validasi item reguler/racikan, snapshot harga, salin template, perubahan template tidak mengubah resep lama.
+- Pancarkan ResepDiterbitkan (afterCommit). JANGAN memotong stok.
+Langkah 1 (tanpa kode): usulkan daftar nilai rute dan cara pengisian terstruktur di form
+(mis. dropdown rute); tunggu persetujuanku. Daftar kode rute resmi diverifikasi di Fase 7.0.
+Tes: validasi struktur dosis, pembangkitan aturan_pakai, snapshot harga, peringatan KFA,
+resep terkunci setelah validasi, perubahan template tidak mengubah resep lama.
 ```
 
 ### 3.7 Rujukan Lab
 ```
 Protokol sesi (PEMBUKA) berlaku.
 Tugas: App\Services\Erm\RujukanLabService::buat(Pemeriksaan, array pemeriksaanLabIds, ?string catatan).
-Dokumen: business-rules §7 (rujukan), §1, decisions D8.
+Dokumen: business-rules §7 (rujukan), §1, decisions D8, D14.
 Aturan (satu transaksi): buat erm_rujukan_lab + detail; otomatis buat lab_permintaan (sumber=rujukan,
-rujukan_lab_id, dokter_id NULL) + lab_permintaan_detail (tarif DISNAPSHOT); buat antrean LAB-xxx lewat
-AntreanService pada kunjungan yang sama; status kunjungan diperiksa→lab lewat StatusKunjunganService.
+rujukan_lab_id, dokter_id NULL) + lab_permintaan_detail (tarif DISNAPSHOT, SATU BARIS per kode pemeriksaan);
+buat antrean LAB-xxx lewat AntreanService pada kunjungan yang sama; status kunjungan diperiksa→lab lewat
+StatusKunjunganService. Setelah commit, pancarkan LabDiminta (afterCommit).
 UI: pilih pemeriksaan lab di halaman pemeriksaan (menu erm.rujukan_lab).
-Tes: semua efek di atas, atomik (gagal sebagian → tidak ada yang tersimpan), nomor LAB-001 dst. benar.
+Tes: semua efek di atas, atomik (gagal sebagian → tidak ada yang tersimpan), satu detail per kode,
+event LabDiminta terpancar setelah commit, nomor LAB-001 dst. benar.
 ```
 
 ### 3.8 Riwayat Kunjungan Pasien
@@ -327,44 +353,55 @@ akses tercatat di sys_log_aktivitas (aksi "lihat") karena ini data medis sensiti
 ---
 
 # FASE 4 — Laboratorium
-Dokumen utama: `business-rules.md` §7, `permissions.md`, decision D8.
-> Sebelum menjalankan 4.1–4.3, baca "Tambahan untuk 4.1–4.3" di docs/prompts-fase7.md (bagian A) dan tempel bersama prompt.
+Dokumen utama: `business-rules.md` §7, `permissions.md`, decisions D8, D17, D22.
 
 ### 4.1 LabService
 ```
 Protokol sesi (PEMBUKA) berlaku.
-Tugas: App\Services\Lab\LabService: mulaiProses(), simpanHasil(), kunci(), tentukanPenanda().
-Dokumen: business-rules §7, §1, §10 no.6; database.md (lab_*).
+Tugas: App\Services\Lab\LabService: mulaiProses(), simpanHasil(), kunci(), tentukanPenanda();
+App\Services\Lab\SpesimenService: catat pengambilan, ubah status, tautkan ke lab_permintaan_detail.
+Dokumen: business-rules §7, §1, §10 no.6, decisions D14, D17, D22; database.md (lab_*).
 Aturan:
 - tentukanPenanda(): normal/rendah/tinggi dari nilai_rujukan_min/max (numerik) — bila bukan numerik, penanda null.
-- simpanHasil(): snapshot satuan & nilai rujukan dari mtr_parameter_lab; tolak jika dikunci.
+- simpanHasil(): snapshot satuan & nilai rujukan dari mtr_parameter_lab; tolak jika dikunci;
+  tolak jika spesimen belum diterima (D22). Pemeriksaan tanpa spesimen — usulkan aturan.
+- SpesimenService: catat pengambilan di lab_spesimen (jenis dari mtr_pemeriksaan_lab.kode_spesimen,
+  status menunggu_diambil→diambil→diterima|ditolak sesuai D22, waktu_pengambilan, diambil_oleh);
+  `ditolak` wajib catatan; tautkan lab_permintaan_detail.spesimen_id. Pancarkan SpesimenDiambil (afterCommit).
 - kunci(): semua lab_permintaan_detail punya hasil; untuk sumber=rujukan, dokter_id WAJIB terisi;
-  set dikunci & dikunci_pada; antrean selesai; panggil StatusKunjunganService::sinkron.
+  set dikunci & dikunci_pada; antrean selesai; panggil StatusKunjunganService::sinkron;
+  pancarkan LabDikunci (afterCommit).
 Tes: penanda berbagai kasus (batas tepat, di luar batas, non-numerik), kunci tanpa hasil lengkap ditolak,
-rujukan tanpa dokter ditolak, setelah kunci tidak bisa ubah, sinkron status terpicu.
+rujukan tanpa dokter ditolak, setelah kunci tidak bisa ubah, sinkron status terpicu, hasil ditolak jika
+spesimen belum diterima, penolakan tanpa catatan ditolak, SpesimenDiambil/LabDikunci terpancar setelah commit.
 ```
 
 ### 4.2 Pendaftaran Lab Mandiri
 ```
 Protokol sesi (PEMBUKA) berlaku.
 Tugas: menu pendaftaran.lab_mandiri: pendaftaran pasien langsung ke lab TANPA pemeriksaan dokter.
-Dokumen: business-rules §7 (mandiri) & §1, decisions D8, permissions.md (lookup dokter).
+Dokumen: business-rules §7 (mandiri) & §1, decisions D8, D14, permissions.md (lookup dokter).
 Aturan: gunakan PendaftaranService (cari NIK / daftar pasien baru) — DILARANG menduplikasi logika pasien;
 buat kunjungan jenis lab_mandiri (terdaftar→lab, tanpa TTV; TTV opsional sesuai Q7), antrean LAB-xxx,
-lab_permintaan (sumber=mandiri, rujukan_lab_id NULL), pilih pemeriksaan, snapshot tarif.
+lab_permintaan (sumber=mandiri, rujukan_lab_id NULL), pilih pemeriksaan, snapshot tarif (SATU BARIS
+lab_permintaan_detail per kode pemeriksaan). Setelah commit, pancarkan LabDiminta (afterCommit).
 Dokter lab WAJIB dipilih saat pendaftaran dari SEMUA dokter aktif, dokter berpoli LAB diurutkan paling
 atas; endpoint lookup dokter dilindungi izin:pendaftaran.lab_mandiri,tambah (BUKAN izin master.dokter).
 Hak petugas_lab: boleh tambah pasien baru, tidak boleh ubah pasien lama.
-Tes: alur lengkap; tanpa dokter ditolak; petugas_lab tidak bisa update pasien; lookup dokter 403 tanpa izin.
+Tes: alur lengkap; satu detail per kode; event LabDiminta terpancar setelah commit; tanpa dokter ditolak;
+petugas_lab tidak bisa update pasien; lookup dokter 403 tanpa izin.
 ```
 
 ### 4.3 UI Antrean & Input Hasil Lab
 ```
 Protokol sesi (PEMBUKA) berlaku.
-Tugas: menu lab.antrean dan lab.hasil: antrean lab (rujukan+mandiri), pilih/ubah dokter lab (rujukan),
-form hasil per parameter dengan penanda otomatis, tombol Kunci Hasil (konfirmasi).
-Semua logika lewat LabService. Hasil dokter (menu lab.hasil, hak L) read-only.
-Tes: izin per peran, dokter hanya baca, form menolak input saat terkunci, UI tidak bisa mengunci tanpa dokter (rujukan).
+Tugas: menu lab.antrean, lab.spesimen, dan lab.hasil: antrean lab (rujukan+mandiri), pilih/ubah dokter lab
+(rujukan), form pengambilan/status spesimen, form hasil per parameter dengan penanda otomatis, tombol Kunci
+Hasil (konfirmasi).
+Semua logika lewat LabService/SpesimenService. Hasil dokter (menu lab.hasil, hak L) read-only.
+Form hasil nonaktif sampai spesimen berstatus diterima (D22); pemeriksaan tanpa spesimen — usulkan aturan.
+Tes: izin per peran, dokter hanya baca, form menolak input saat terkunci/belum diterima, UI tidak bisa mengunci
+tanpa dokter (rujukan).
 ```
 
 ### 4.4 Cetak Hasil Lab
@@ -424,11 +461,15 @@ Tes: perhitungan stok, filter, batch kedaluwarsa tidak dihitung sebagai tersedia
 ```
 Protokol sesi (PEMBUKA) berlaku.
 Tugas: ResepApotekService + UI Validasi & Racik Resep (menu apotek.resep) untuk item REGULER dulu.
-Dokumen: business-rules §6, §8.2; status resep diterbitkan→divalidasi→diserahkan.
+Dokumen: business-rules §6, §8.2, decisions D14; status resep diterbitkan→divalidasi→diserahkan.
 Aturan: validasi memeriksa ketersediaan (tanpa mengurangi stok); penyerahan memanggil StokService::kurangi
 per item dalam SATU transaksi, mencatat apt_pengeluaran_resep (batch yang terpakai) dan mutasi 'resep';
 setelah semua resep kunjungan diserahkan → StatusKunjunganService::sinkron.
-Tes: stok kurang → tidak ada item yang terpotong; pengeluaran per batch tercatat; status valid.
+Setelah transaksi penyerahan commit, pancarkan ResepDiserahkan (afterCommit) berisi resep_id dan item yang
+diserahkan beserta batch (apt_pengeluaran_resep). Peringatkan apoteker bila ada obat belum terpetakan ke KFA
+aktual (tidak memblokir penyerahan).
+Tes: stok kurang → tidak ada item yang terpotong; pengeluaran per batch tercatat; status valid;
+event ResepDiserahkan terpancar sekali per penyerahan dan tidak terpancar saat rollback.
 ```
 
 ### 5.5 Racikan (potong stok atomik + jasa racik)
@@ -553,6 +594,8 @@ Tes: total laporan = Σ bil_pembayaran pada tanggal itu; izin.
 ---
 
 # FASE 7 — Integrasi SATUSEHAT
+> **Digantikan:** seluruh isi Fase 7 di bawah ini sudah digantikan oleh `docs/prompts-fase7.md` (7.0–7E). Jangan memakai 7.1–7.6.
+
 Dokumen utama: `satusehat.md`. **Jangan menebak URL/format API; semua detail teknis yang belum ada di dokumen harus berupa TODO yang diverifikasi dari dokumentasi resmi Kemenkes.**
 
 ### 7.1 Client, Konfigurasi, Token
@@ -578,7 +621,7 @@ jelas (mis. "NIK pasien tidak ditemukan di SATUSEHAT") untuk ditampilkan di moni
 ### 7.3 Listener + SatuSehatSyncJob
 ```
 Protokol sesi (PEMBUKA) berlaku.
-Tugas: listener PemeriksaanDisimpan (decisions D14) yang membuat baris sts_sinkronisasi (Encounter & Condition,
+Tugas: listener PemeriksaanSelesai (decisions D14) yang membuat baris sts_sinkronisasi (Encounter & Condition,
 status menunggu) lalu dispatch SatuSehatSyncJob ke queue 'satusehat'; job: tries=3, backoff [60,300,900],
 ShouldBeUnique per (jenis_resource, referensi), idempotent.
 Dokumen: satusehat.md (alur, retry, klasifikasi error [USULAN]), PRD §4.

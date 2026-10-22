@@ -118,3 +118,26 @@ test('pengguna dengan hak dapat menghapus obat (soft delete)', function () {
 
     $this->assertSoftDeleted('mtr_obat', ['id' => $obat->id]);
 });
+
+test('kolom pemetaan KFA tersimpan', function () {
+    $satuan = Satuan::create(['nama' => 'Tablet']);
+
+    $this->actingAs(penggunaDenganIzin(['dasbor', 'master.obat']))
+        ->post(route('obat.store'), dataObat($satuan, [
+            'kode_kfa' => '93000001',
+            'kode_kfa_virtual' => '91000001',
+            'nama_kfa' => 'Paracetamol 500 mg',
+            'kode_bentuk_sediaan' => 'TAB',
+            'nama_bentuk_sediaan' => 'Tablet',
+        ]))
+        ->assertRedirect(route('obat.index'));
+
+    $this->assertDatabaseHas('mtr_obat', [
+        'kode' => 'OBT-001',
+        'kode_kfa' => '93000001',
+        'kode_kfa_virtual' => '91000001',
+        'nama_kfa' => 'Paracetamol 500 mg',
+        'kode_bentuk_sediaan' => 'TAB',
+        'nama_bentuk_sediaan' => 'Tablet',
+    ]);
+});

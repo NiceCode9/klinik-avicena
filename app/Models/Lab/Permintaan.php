@@ -52,4 +52,9 @@ class Permintaan extends ModelDasar
     {
         return $this->hasMany(PermintaanDetail::class, 'permintaan_id');
     }
+
+    public function spesimen(): HasMany
+    {
+        return $this->hasMany(Spesimen::class, 'permintaan_id');
+    }
 }

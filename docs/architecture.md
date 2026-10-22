@@ -113,22 +113,24 @@ stateDiagram-v2
 ```
 Lab mandiri dan apotek umum membuat kunjungan sendiri (`jenis_kunjungan = lab_mandiri | apotek_umum`) dan melewati TTV/poli. Catatan desain tentang lab + farmasi paralel ada di `business-rules.md` §1.
 
-## 8. Alur simpan data medis → SATUSEHAT
+## 8. Alur event domain → SATUSEHAT
+Aksi domain yang relevan memancarkan event `afterCommit`; listener SATUSEHAT yang membuat baris sinkronisasi dan job, bukan controller.
 ```mermaid
 sequenceDiagram
-  participant D as Dokter
+  participant U as Petugas/Dokter
   participant W as Web (Laravel)
   participant DB as MySQL
   participant Q as Queue (Redis)
   participant K as Worker
   participant S as SATUSEHAT
-  D->>W: Simpan Data Medis
-  W->>DB: simpan pemeriksaan + diagnosis (transaksi)
-  W->>DB: buat sts_sinkronisasi (menunggu)
+  U->>W: aksi domain (daftar, TTV, mulai/final, resep, lab)
+  W->>DB: simpan data + riwayat/status (transaksi)
+  W->>DB: event afterCommit → listener buat sts_sinkronisasi
   W->>Q: dispatch SatuSehatSyncJob
-  W-->>D: sukses (langsung, tanpa menunggu API)
+  W-->>U: sukses (langsung, tanpa menunggu API)
   K->>Q: ambil job
-  K->>S: kirim Encounter & Condition (FHIR JSON)
+  K->>DB: cek induk (bergantung_pada_id)
+  K->>S: kirim resource (Encounter/Condition/Observation/...)
   alt berhasil
     S-->>K: IHS ID
     K->>DB: simpan ihs_id, status = berhasil
