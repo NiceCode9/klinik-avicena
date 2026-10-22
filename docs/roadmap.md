@@ -45,16 +45,17 @@ Master dibutuhkan semua modul, kerjakan lebih dulu. Semua CRUD memakai pola yang
 
 ## Fase 2 — Pendaftaran & antrean
 
-| Item                                                                                | Ukuran |
-| ----------------------------------------------------------------------------------- | ------ |
-| `PendaftaranService`: cari pasien via `nik_hash`, daftar pasien baru, buat nomor RM | M      |
-| `AntreanService`: nomor harian per poli dengan lock (+ tes konkurensi)              | M      |
-| Form pendaftaran kunjungan poli + cetak nomor antrean (thermal/print browser)       | M      |
-| Input TTV (wajib sebelum poli)                                                      | S      |
-| Daftar/panggil antrean per poli, ubah status                                        | M      |
-| (Opsional) layar TV antrean                                                         | S      |
+| Status | Item                                                                                | Ukuran |
+| ------ | ----------------------------------------------------------------------------------- | ------ |
+| ✅     | `PendaftaranService`: cari pasien via `nik_hash`, daftar pasien baru, buat nomor RM | M      |
+| ✅     | `AntreanService`: nomor harian per poli dengan lock (+ tes konkurensi)              | M      |
+| ⬜     | Form pendaftaran kunjungan poli + cetak nomor antrean (thermal/print browser)       | M      |
+| ⬜     | Input TTV (wajib sebelum poli)                                                      | S      |
+| ⬜     | Daftar/panggil antrean per poli, ubah status                                        | M      |
+| ⬜     | (Opsional) layar TV antrean                                                         | S      |
 
 **Selesai bila**: pasien baru/lama bisa didaftarkan, nomor `INT-001` dst. unik & reset harian meski 2 petugas mendaftar bersamaan, TTV tersimpan, status kunjungan berpindah benar.
+**Tercapai sebagian** (23 Okt 2026): `PendaftaranService` dan `AntreanService` selesai; 221 tes hijau. Berikutnya form pendaftaran + cetak nomor, lalu daftar/panggil antrean.
 
 ## Fase 3 — Rekam medis & e-resep
 

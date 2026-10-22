@@ -33,6 +33,9 @@ Sumber: `PRD.md` + keputusan di `decisions.md`. Item bertanda **[USULAN]** adala
 - Unique index `(poli_id, tanggal, nomor_urut)` sebagai jaring pengaman terakhir.
 - Kode: Penyakit Dalam `INT`, Gigi `GIG`, Saraf `SRF`, Lab `LAB`. Rujukan lab membuat antrean `LAB-xxx` baru pada kunjungan yang sama (satu kunjungan boleh punya >1 antrean).
 - Status antrean: `menunggu → dipanggil → dilayani → selesai | batal`.
+- `batal` boleh dari `menunggu`, `dipanggil`, atau `dilayani`. `selesai` dan `batal` terminal dan tidak dapat diubah lagi.
+- `waktu_panggil` diisi saat `panggil`; `waktu_selesai` diisi saat `selesai` atau `batal`.
+- Transisi di luar alur melempar `StatusAntreanTidakValidException`.
 
 ## 4. TTV
 - Wajib untuk kunjungan poli sebelum masuk ke poli: tekanan darah (sistolik/diastolik), nadi, suhu, berat badan. Satu TTV per kunjungan.
