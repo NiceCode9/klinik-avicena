@@ -18,7 +18,8 @@ Sumber: `PRD.md` + keputusan di `decisions.md`. Item bertanda **[USULAN]** adala
 
 - Perpindahan status HANYA lewat Service yang memvalidasi tabel di atas. Dilarang `update(['status' => ...])` langsung dari controller.
 - Jenis `lab_mandiri` dan `apotek_umum` tidak melewati ttv/poli: `terdaftar → lab → kasir → selesai` dan `terdaftar → kasir → selesai`.
-- **[USULAN] Lab dan farmasi bisa berjalan paralel** (pasien dirujuk lab sekaligus diberi resep). Satu kolom status tidak bisa mewakili paralel, jadi: status menjadi `kasir` ketika SEMUA unit terkait selesai (semua `lab_permintaan` terkunci DAN semua `erm_resep` diserahkan/batal). `StatusKunjunganService::sinkron($kunjungan)` dipanggil setiap unit selesai dan menghitung ulang status.
+- **[USULAN] Lab dan farmasi bisa berjalan paralel** (pasien dirujuk lab sekaligus diberi resep). Satu kolom status tidak bisa mewakili paralel, jadi: status menjadi `kasir` ketika SEMUA unit terkait selesai (semua `lab_permintaan` terkunci DAN semua `erm_resep` diserahkan/batal). `StatusKunjunganService::sinkron($kunjungan, $oleh)` dipanggil setiap unit selesai dan menghitung ulang status.
+- `sinkron()` mengunci `reg_kunjungan`, lalu `lab_permintaan` dan `erm_resep` terkait dengan `FOR UPDATE` agar membaca data terbaru (bukan snapshot lama transaksi pemanggil). Service lab/farmasi harus mengunci baris `reg_kunjungan` sebelum mengubah data unitnya agar urutan lock konsisten dan tidak deadlock.
 - setiap perpindahan status mencatat baris `reg_kunjungan_riwayat_status` (status, waktu, pengguna). `waktu_datang` terisi saat dibuat, `waktu_mulai` saat `diperiksa`/mulai dilayani, `waktu_selesai` saat selesai pemeriksaan. Cara keluar (`kode_cara_keluar`) wajib diisi saat pemeriksaan difinalkan.
 
 ## 2. Pasien & NIK

@@ -9,12 +9,15 @@ use App\Models\Lab\Permintaan;
 use App\Models\Master\Pasien;
 use App\Models\ModelDasar;
 use App\Models\User;
+use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\HasOne;
 
 class Kunjungan extends ModelDasar
 {
+    use HasFactory;
+
     protected $table = 'reg_kunjungan';
 
     protected function casts(): array
@@ -29,7 +32,9 @@ class Kunjungan extends ModelDasar
 
     public function riwayatStatus(): HasMany
     {
-        return $this->hasMany(KunjunganRiwayatStatus::class, 'kunjungan_id')->orderBy('waktu');
+        return $this->hasMany(KunjunganRiwayatStatus::class, 'kunjungan_id')
+            ->orderBy('waktu')
+            ->orderBy('id');
     }
 
     public function pasien(): BelongsTo

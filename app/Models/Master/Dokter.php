@@ -8,12 +8,14 @@ use App\Models\Erm\RujukanLab;
 use App\Models\Lab\Permintaan;
 use App\Models\ModelDasar;
 use App\Models\User;
+use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\SoftDeletes;
 
 class Dokter extends ModelDasar
 {
+    use HasFactory;
     use SoftDeletes;
 
     protected $table = 'mtr_dokter';

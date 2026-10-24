@@ -154,7 +154,8 @@ Selesai bila: tes lulus dan tidak ada kode lain yang membuat Antrean tanpa lewat
 ```
 Protokol sesi (PEMBUKA) berlaku.
 Tugas: buat KunjunganService (buatKunjunganPoli, simpanTtv) dan StatusKunjunganService
-(pindahkan(Kunjungan, status) berbasis tabel transisi, dan sinkron(Kunjungan) untuk status kasir).
+(pindahkan(Kunjungan, status, User $oleh, ?string $alasan) berbasis tabel transisi, dan
+sinkron(Kunjungan, User $oleh) untuk status kasir).
 Dokumen: business-rules §1 (ikuti tabel transisi APA ADANYA), §4, §11, decisions D14, Q5, Q7, Q8.
 Aturan:
 - no_kunjungan format default Q8 (KJ-YYYYMMDD-0001), atomik.

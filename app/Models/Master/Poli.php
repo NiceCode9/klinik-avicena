@@ -6,11 +6,13 @@ use App\Models\Erm\Pemeriksaan;
 use App\Models\ModelDasar;
 use App\Models\Registrasi\Antrean;
 use App\Models\Registrasi\PenghitungAntrean;
+use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\SoftDeletes;
 
 class Poli extends ModelDasar
 {
+    use HasFactory;
     use SoftDeletes;
 
     protected $table = 'mtr_poli';

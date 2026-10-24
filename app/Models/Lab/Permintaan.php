@@ -8,11 +8,14 @@ use App\Models\ModelDasar;
 use App\Models\Registrasi\Antrean;
 use App\Models\Registrasi\Kunjungan;
 use App\Models\User;
+use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class Permintaan extends ModelDasar
 {
+    use HasFactory;
+
     protected $table = 'lab_permintaan';
 
     protected function casts(): array

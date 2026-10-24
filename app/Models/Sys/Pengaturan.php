@@ -18,5 +18,5 @@ class Pengaturan extends ModelDasar
     ];
 
     /** Kunci yang dikelola sistem dan tidak boleh diubah dari halaman pengaturan. */
-    public const TERSEMBUNYI = ['no_rekam_medis_terakhir'];
+    public const TERSEMBUNYI = ['no_rekam_medis_terakhir', 'no_kunjungan_terakhir'];
 }

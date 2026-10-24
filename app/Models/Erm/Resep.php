@@ -6,11 +6,14 @@ use App\Models\Apotek\ReturPasien;
 use App\Models\Master\Dokter;
 use App\Models\ModelDasar;
 use App\Models\User;
+use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class Resep extends ModelDasar
 {
+    use HasFactory;
+
     protected $table = 'erm_resep';
 
     protected function casts(): array

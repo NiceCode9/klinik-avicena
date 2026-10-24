@@ -7,12 +7,15 @@ use App\Models\Master\Poli;
 use App\Models\ModelDasar;
 use App\Models\Registrasi\Antrean;
 use App\Models\Registrasi\Kunjungan;
+use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\HasOne;
 
 class Pemeriksaan extends ModelDasar
 {
+    use HasFactory;
+
     protected $table = 'erm_pemeriksaan';
 
     protected function casts(): array

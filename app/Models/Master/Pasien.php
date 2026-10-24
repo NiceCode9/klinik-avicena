@@ -7,11 +7,13 @@ use App\Models\Apotek\ReturPasien;
 use App\Models\ModelDasar;
 use App\Models\Registrasi\Kunjungan;
 use App\Services\NikHasher;
+use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\SoftDeletes;
 
 class Pasien extends ModelDasar
 {
+    use HasFactory;
     use SoftDeletes;
 
     protected $table = 'mtr_pasien';
