@@ -6,6 +6,9 @@
 @section('content')
     <div class="card">
         <div class="card-body">
+            @if (! empty($nikError))
+                <div class="alert alert-danger">{{ $nikError }}</div>
+            @endif
             <form method="get" action="{{ route('kunjungan.create') }}" class="row g-2 mb-3">
                 <div class="col-md-6">
                     <label for="nik" class="form-label">Cari Pasien (NIK)</label>

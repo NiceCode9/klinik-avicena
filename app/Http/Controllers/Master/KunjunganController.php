@@ -3,8 +3,10 @@
 namespace App\Http\Controllers\Master;
 
 use App\Http\Controllers\Controller;
+use App\Http\Requests\Master\SimpanKunjunganRequest;
 use App\Models\Master\Pasien;
 use App\Models\Registrasi\Kunjungan;
+use App\Services\Registrasi\Exceptions\NikTidakValidException;
 use App\Services\Registrasi\KunjunganService;
 use App\Services\Registrasi\PendaftaranService;
 use Illuminate\Http\RedirectResponse;
@@ -46,10 +48,15 @@ class KunjunganController extends Controller implements HasMiddleware
         $nik = trim((string) $request->query('nik', ''));
         $pasien = null;
         $tidakDitemukan = false;
+        $nikError = null;
 
         if ($nik !== '') {
-            $pasien = app(PendaftaranService::class)->cariByNik($nik);
-            if ($pasien === null) {
+            try {
+                $pasien = app(PendaftaranService::class)->cariByNik($nik);
+            } catch (NikTidakValidException $e) {
+                $nikError = $e->getMessage();
+            }
+            if ($nikError === null && $pasien === null) {
                 $tidakDitemukan = true;
             }
         }
@@ -58,13 +65,12 @@ class KunjunganController extends Controller implements HasMiddleware
             'nik' => $nik,
             'pasien' => $pasien,
             'tidakDitemukan' => $tidakDitemukan,
+            'nikError' => $nikError,
         ]);
     }
 
-    public function store(Request $request, KunjunganService $layanan): RedirectResponse
+    public function store(SimpanKunjunganRequest $request, KunjunganService $layanan): RedirectResponse
     {
-        $request->validate(['pasien_id' => ['required', 'exists:mtr_pasien,id']]);
-
         $pasien = Pasien::findOrFail($request->input('pasien_id'));
         $kunjungan = $layanan->buatKunjunganPoli($pasien, $request->user());
 

@@ -29,7 +29,14 @@
                 const data = await res.json();
                 const grid = document.getElementById('layar-grid');
                 grid.innerHTML = '';
-                // group by poli not in json; show all items as cards
+                if (!data.items || data.items.length === 0) {
+                    const p = document.createElement('p');
+                    p.style.textAlign = 'center';
+                    p.style.color = '#94a3b8';
+                    p.textContent = 'Belum ada antrean hari ini.';
+                    grid.appendChild(p);
+                    return;
+                }
                 (data.items || []).forEach(function (item) {
                     const card = document.createElement('div');
                     card.className = 'card';
