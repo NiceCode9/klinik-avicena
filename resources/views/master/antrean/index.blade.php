@@ -87,24 +87,12 @@
                     if (!res.ok) return;
                     const data = await res.json();
                     badge.textContent = (data.menunggu || 0) + ' menunggu';
-                    if (!tbody) return;
-                    tbody.innerHTML = '';
-                    if (!data.items || data.items.length === 0) {
-                        const tr = document.createElement('tr');
-                        tr.innerHTML = '<td colspan="5" class="text-center text-muted py-3">Belum ada antrean hari ini.</td>';
-                        tbody.appendChild(tr);
-                        return;
-                    }
+                    if (!tbody || !data.items) return;
                     data.items.forEach(function (item) {
-                        const tr = document.createElement('tr');
-                        tr.setAttribute('data-id', item.id);
-                        tr.innerHTML =
-                            '<td>' + item.nomor + '</td>' +
-                            '<td>-</td>' +
-                            '<td><span class="badge text-bg-secondary">' + item.status + '</span></td>' +
-                            '<td>' + (item.inisial || '-') + '</td>' +
-                            '<td class="text-end pe-3">-</td>';
-                        tbody.appendChild(tr);
+                        const tr = tbody.querySelector('tr[data-id="' + item.id + '"]');
+                        if (!tr) return;
+                        const sel = tr.querySelector('td:nth-child(3) .badge');
+                        if (sel) sel.textContent = item.status;
                     });
                 } catch (e) { /* ignore */ }
             }
