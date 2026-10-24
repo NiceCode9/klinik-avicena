@@ -24,16 +24,19 @@ class HakAksesAwalSeeder extends Seeder
                 'dasbor' => 'L',
                 'pendaftaran.pasien' => 'LTU',
                 'pendaftaran.kunjungan' => 'LTU',
+                'pendaftaran.antrean' => 'LU',
             ],
             'perawat' => [
                 'dasbor' => 'L',
                 'pendaftaran.pasien' => 'LTU',
                 'pendaftaran.kunjungan' => 'LTU',
                 'pendaftaran.ttv' => 'LTU',
+                'pendaftaran.antrean' => 'LU',
             ],
             'dokter' => [
                 'dasbor' => 'L',
                 'pendaftaran.pasien' => 'L',
+                'pendaftaran.antrean' => 'L',
                 'erm.pemeriksaan' => 'LTU',
                 'erm.resep' => 'LTU',
                 'erm.rujukan_lab' => 'LT',
@@ -43,6 +46,7 @@ class HakAksesAwalSeeder extends Seeder
             'petugas_lab' => [
                 'dasbor' => 'L',
                 'pendaftaran.pasien' => 'LT',          // boleh mendaftarkan pasien baru, tidak boleh ubah identitas
+                'pendaftaran.antrean' => 'L',
                 'pendaftaran.lab_mandiri' => 'LT',
                 'lab.antrean' => 'LU',
                 'lab.hasil' => 'LTU',

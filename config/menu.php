@@ -12,6 +12,7 @@ return [
     ['kode' => 'pendaftaran', 'nama' => 'Pendaftaran', 'ikon' => 'bi-person-plus', 'anak' => [
         ['kode' => 'pendaftaran.pasien',      'nama' => 'Data Pasien',             'rute' => 'pasien.index'],
         ['kode' => 'pendaftaran.kunjungan',   'nama' => 'Kunjungan & Antrean',     'rute' => 'kunjungan.index'],
+        ['kode' => 'pendaftaran.antrean',     'nama' => 'Antrean per Poli',        'rute' => 'antrean.index'],
         ['kode' => 'pendaftaran.ttv',         'nama' => 'Pemeriksaan TTV',         'rute' => 'ttv.index'],
         ['kode' => 'pendaftaran.lab_mandiri', 'nama' => 'Pendaftaran Lab Mandiri', 'rute' => 'lab-mandiri.index'],
     ]],
