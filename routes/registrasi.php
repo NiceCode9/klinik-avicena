@@ -3,6 +3,7 @@
 use App\Http\Controllers\Master\AntreanController;
 use App\Http\Controllers\Master\KunjunganController;
 use App\Http\Controllers\Master\PasienController;
+use App\Http\Controllers\Master\PemeriksaanController;
 use App\Http\Controllers\Master\TtvController;
 use Illuminate\Support\Facades\Route;
 
@@ -26,4 +27,10 @@ Route::middleware('auth')->prefix('pendaftaran')->group(function () {
     Route::post('antrean/{antrean}/layani', [AntreanController::class, 'layani'])->name('antrean.layani');
     Route::post('antrean/{antrean}/selesai', [AntreanController::class, 'selesai'])->name('antrean.selesai');
     Route::post('antrean/{antrean}/batal', [AntreanController::class, 'batal'])->name('antrean.batal');
+
+    Route::get('pemeriksaan', [PemeriksaanController::class, 'index'])->name('pemeriksaan.index');
+    Route::get('pemeriksaan/icd10', [PemeriksaanController::class, 'icd10'])->name('pemeriksaan.icd10');
+    Route::post('kunjungan/{kunjungan}/pemeriksaan/mulai', [PemeriksaanController::class, 'mulai'])->name('pemeriksaan.mulai');
+    Route::get('pemeriksaan/{pemeriksaan}/edit', [PemeriksaanController::class, 'edit'])->name('pemeriksaan.edit');
+    Route::put('pemeriksaan/{pemeriksaan}', [PemeriksaanController::class, 'update'])->name('pemeriksaan.update');
 });
