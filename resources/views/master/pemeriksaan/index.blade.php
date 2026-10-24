@@ -29,11 +29,11 @@
                         <tr>
                             <td>{{ $kunjungan->no_kunjungan }}</td>
                             <td>{{ $kunjungan->pasien?->nama_lengkap ?? '-' }}</td>
-                            <td>{{ $kunjungan->pemeriksaan?->poli?->nama ?? ($kunjungan->antrean->first()?->poli?->nama ?? '-') }}</td>
+                            <td>{{ $kunjungan->pemeriksaan->first()?->poli?->nama ?? ($kunjungan->antrean->first()?->poli?->nama ?? '-') }}</td>
                             <td><span class="badge text-bg-secondary">{{ $kunjungan->status }}</span></td>
                             <td class="text-end pe-3">
-                                @if ($kunjungan->pemeriksaan)
-                                    <a href="{{ route('pemeriksaan.edit', $kunjungan->pemeriksaan) }}" class="btn btn-sm btn-warning">Lanjut</a>
+                                @if ($kunjungan->pemeriksaan->isNotEmpty())
+                                    <a href="{{ route('pemeriksaan.edit', $kunjungan->pemeriksaan->first()) }}" class="btn btn-sm btn-warning">Lanjut</a>
                                 @else
                                     @izin('erm.pemeriksaan', 'tambah')
                                         <form method="post" action="{{ route('pemeriksaan.mulai', $kunjungan) }}" class="d-inline">

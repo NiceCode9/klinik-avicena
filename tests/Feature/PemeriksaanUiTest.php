@@ -4,6 +4,7 @@ use App\Models\Master\Dokter;
 use App\Models\Master\Icd10;
 use App\Models\Master\Pasien;
 use App\Models\Master\Poli;
+use App\Models\Registrasi\Kunjungan;
 use App\Models\Sys\HakAkses;
 use App\Models\Sys\Peran;
 use App\Models\User;
@@ -13,6 +14,16 @@ use App\Services\Registrasi\KunjunganService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 
 uses(RefreshDatabase::class);
+
+test('halaman pemeriksaan dapat dibuka', function () {
+    $poli = Poli::factory()->create(['kode' => 'INT', 'nama' => 'Poli Penyakit Dalam', 'aktif' => true]);
+    $pasien = Pasien::factory()->create();
+    Kunjungan::factory()->create(['pasien_id' => $pasien->id, 'status' => 'menunggu', 'tanggal_kunjungan' => today()]);
+
+    $this->actingAs(penggunaDenganIzin(['dasbor', 'erm.pemeriksaan']))
+        ->get(route('pemeriksaan.index'))
+        ->assertOk();
+});
 
 beforeEach(function () {
     $this->withoutVite();
