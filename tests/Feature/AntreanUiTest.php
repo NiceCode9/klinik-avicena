@@ -22,6 +22,23 @@ test('pengguna dengan hak dapat membuka halaman antrean', function () {
         ->assertOk();
 });
 
+test('layar antrean hanya menampilkan nomor dan status, tanpa data pribadi', function () {
+    $pasien = Pasien::factory()->create(['nama_lengkap' => 'Siti Rahasia', 'nik' => '3201234567890009']);
+    $poli = Poli::factory()->create(['kode' => 'INT', 'nama' => 'Poli Penyakit Dalam', 'aktif' => true]);
+    $user = User::factory()->create();
+    $kunjungan = app(KunjunganService::class)->buatKunjunganPoli($pasien, $user);
+    app(AntreanService::class)->ambilNomor($poli, $kunjungan);
+
+    $aktor = penggunaDenganIzin(['dasbor', 'pendaftaran.antrean']);
+
+    $this->actingAs($aktor)->get(route('antrean.layar'))->assertOk();
+
+    $respons = $this->actingAs($aktor)->getJson(route('antrean.json'));
+    $json = $respons->getContent();
+    expect($json)->not->toContain('Siti Rahasia')
+        ->and($json)->not->toContain('3201234567890009');
+});
+
 test('pengguna tanpa hak ditolak membuka halaman antrean', function () {
     $this->actingAs(penggunaDenganIzin(['dasbor']))
         ->get(route('antrean.index'))

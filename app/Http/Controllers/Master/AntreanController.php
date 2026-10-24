@@ -18,9 +18,16 @@ class AntreanController extends Controller implements HasMiddleware
     public static function middleware(): array
     {
         return [
-            new Middleware('izin:pendaftaran.antrean,lihat', only: ['index', 'json']),
+            new Middleware('izin:pendaftaran.antrean,lihat', only: ['index', 'json', 'layar']),
             new Middleware('izin:pendaftaran.antrean,ubah', only: ['panggil', 'layani', 'selesai', 'batal']),
         ];
+    }
+
+    public function layar(Request $request): View
+    {
+        $poliList = Poli::where('aktif', true)->orderBy('nama')->get();
+
+        return view('master.antrean.layar', ['poliList' => $poliList]);
     }
 
     public function index(Request $request): View

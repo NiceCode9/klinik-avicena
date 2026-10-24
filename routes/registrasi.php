@@ -20,6 +20,7 @@ Route::middleware('auth')->prefix('pendaftaran')->group(function () {
     Route::post('kunjungan/{kunjungan}/ttv', [TtvController::class, 'store'])->name('ttv.store');
 
     Route::get('antrean', [AntreanController::class, 'index'])->name('antrean.index');
+    Route::get('antrean/layar', [AntreanController::class, 'layar'])->name('antrean.layar');
     Route::get('antrean/json', [AntreanController::class, 'json'])->name('antrean.json');
     Route::post('antrean/{antrean}/panggil', [AntreanController::class, 'panggil'])->name('antrean.panggil');
     Route::post('antrean/{antrean}/layani', [AntreanController::class, 'layani'])->name('antrean.layani');
