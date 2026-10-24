@@ -29,3 +29,4 @@ Route::middleware('auth')->group(function () {
 
 require __DIR__.'/sistem.php';
 require __DIR__.'/master.php';
+require __DIR__.'/registrasi.php';

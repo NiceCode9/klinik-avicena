@@ -60,6 +60,27 @@ class PendaftaranService
         });
     }
 
+    public function perbaruiPasien(Pasien $pasien, array $data, User $oleh): Pasien
+    {
+        $nik = $this->nikValid((string) ($data['nik'] ?? ''));
+        $nikHash = NikHasher::hash($nik);
+
+        return DB::transaction(function () use ($pasien, $data, $nik, $nikHash, $oleh) {
+            if (Pasien::withTrashed()->where('nik_hash', $nikHash)->whereKeyNot($pasien->id)->exists()) {
+                throw new NikSudahTerdaftarException('NIK sudah terdaftar.');
+            }
+
+            $pasien->fill($this->atribut($data) + ['nik' => $nik]);
+            $pasien->save();
+
+            LogAktivitas::catat($oleh, 'ubah_pasien', 'mtr_pasien', $pasien->id, [
+                'no_rekam_medis' => $pasien->no_rekam_medis,
+            ]);
+
+            return $pasien;
+        });
+    }
+
     private function nikValid(string $nik): string
     {
         $nik = trim($nik);
