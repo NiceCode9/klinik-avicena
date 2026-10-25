@@ -4,6 +4,8 @@ namespace App\Services\Erm;
 
 use App\Events\PemeriksaanDimulai;
 use App\Events\PemeriksaanSelesai;
+use App\Models\Erm\DetailPenyakitDalam;
+use App\Models\Erm\DetailSaraf;
 use App\Models\Erm\Diagnosis;
 use App\Models\Erm\Pemeriksaan;
 use App\Models\Master\Dokter;
@@ -135,6 +137,93 @@ class PemeriksaanService
 
             return $terkunci->fresh();
         });
+    }
+
+    public function simpanDetailPenyakitDalam(Pemeriksaan $pemeriksaan, array $data, User $oleh): DetailPenyakitDalam
+    {
+        $this->pastikanTidakTerkunci($pemeriksaan);
+
+        return DB::transaction(function () use ($pemeriksaan, $data, $oleh) {
+            $terkunci = Pemeriksaan::whereKey($pemeriksaan->id)->lockForUpdate()->firstOrFail();
+            $this->pastikanTidakTerkunci($terkunci);
+
+            $rso = $this->validasiStruktur($data['review_sistem_organ'] ?? null, [
+                'kardiovaskular', 'respirasi', 'gastrointestinal', 'genitourinari',
+                'neurologi', 'endokrin', 'hematologi', 'muskuloskeletal',
+            ]);
+
+            $detail = DetailPenyakitDalam::updateOrCreate(
+                ['pemeriksaan_id' => $terkunci->id],
+                [
+                    'riwayat_penyakit_kronis' => $data['riwayat_penyakit_kronis'] ?? null,
+                    'status_metabolik' => $data['status_metabolik'] ?? null,
+                    'review_sistem_organ' => $rso,
+                ],
+            );
+
+            LogAktivitas::catat($oleh, 'simpan_detail_penyakit_dalam', 'erm_detail_penyakit_dalam', $detail->id);
+
+            return $detail->fresh();
+        });
+    }
+
+    public function simpanDetailSaraf(Pemeriksaan $pemeriksaan, array $data, User $oleh): DetailSaraf
+    {
+        $this->pastikanTidakTerkunci($pemeriksaan);
+
+        return DB::transaction(function () use ($pemeriksaan, $data, $oleh) {
+            $terkunci = Pemeriksaan::whereKey($pemeriksaan->id)->lockForUpdate()->firstOrFail();
+            $this->pastikanTidakTerkunci($terkunci);
+
+            $motorik = $this->validasiStruktur($data['evaluasi_motorik'] ?? null, [
+                'kekuatan_otot', 'tonus', 'refleks', 'koordinasi', 'catatan',
+            ]);
+            $sensorik = $this->validasiStruktur($data['evaluasi_sensorik'] ?? null, [
+                'nyeri', 'suhu', 'getar', 'posisi', 'catatan',
+            ]);
+            $kranial = $this->validasiStruktur($data['saraf_kranial'] ?? null, [
+                'I', 'II', 'III', 'IV', 'V', 'VI', 'VII', 'VIII', 'IX', 'X', 'XI', 'XII',
+            ]);
+
+            $detail = DetailSaraf::updateOrCreate(
+                ['pemeriksaan_id' => $terkunci->id],
+                [
+                    'evaluasi_motorik' => $motorik,
+                    'evaluasi_sensorik' => $sensorik,
+                    'saraf_kranial' => $kranial,
+                ],
+            );
+
+            LogAktivitas::catat($oleh, 'simpan_detail_saraf', 'erm_detail_saraf', $detail->id);
+
+            return $detail->fresh();
+        });
+    }
+
+    /**
+     * @param  array<int, string>  $kunciDiizinkan
+     * @return array<string, mixed>|null
+     */
+    private function validasiStruktur(mixed $data, array $kunciDiizinkan): ?array
+    {
+        if ($data === null) {
+            return null;
+        }
+        if (! is_array($data)) {
+            throw new \InvalidArgumentException('Data detail harus berupa objek/array.');
+        }
+        $hasil = [];
+        foreach ($data as $kunci => $nilai) {
+            if (! in_array((string) $kunci, $kunciDiizinkan, true)) {
+                throw new \InvalidArgumentException("Kunci tidak diizinkan: {$kunci}.");
+            }
+            if ($nilai !== null && ! is_string($nilai) && ! is_numeric($nilai)) {
+                throw new \InvalidArgumentException("Nilai untuk {$kunci} harus teks/angka.");
+            }
+            $hasil[(string) $kunci] = $nilai;
+        }
+
+        return $hasil;
     }
 
     private function pastikanTidakTerkunci(Pemeriksaan $pemeriksaan): void
