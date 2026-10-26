@@ -4,6 +4,7 @@ use App\Http\Controllers\Master\AntreanController;
 use App\Http\Controllers\Master\KunjunganController;
 use App\Http\Controllers\Master\PasienController;
 use App\Http\Controllers\Master\PemeriksaanController;
+use App\Http\Controllers\Master\ResepController;
 use App\Http\Controllers\Master\TtvController;
 use Illuminate\Support\Facades\Route;
 
@@ -37,4 +38,9 @@ Route::middleware('auth')->prefix('pendaftaran')->group(function () {
     Route::post('pemeriksaan/{pemeriksaan}/detail-saraf', [PemeriksaanController::class, 'simpanDetailSaraf'])->name('pemeriksaan.detail-saraf');
     Route::post('pemeriksaan/{pemeriksaan}/odontogram', [PemeriksaanController::class, 'simpanOdontogram'])->name('pemeriksaan.odontogram');
     Route::post('pemeriksaan/{pemeriksaan}/tindakan', [PemeriksaanController::class, 'simpanTindakan'])->name('pemeriksaan.tindakan');
+
+    Route::get('resep', [ResepController::class, 'index'])->name('resep.index');
+    Route::get('resep/create', [ResepController::class, 'create'])->name('resep.create');
+    Route::post('resep', [ResepController::class, 'store'])->name('resep.store');
+    Route::get('resep/{resep}', [ResepController::class, 'show'])->name('resep.show');
 });
