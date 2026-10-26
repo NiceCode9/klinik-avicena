@@ -36,4 +36,5 @@ Route::middleware('auth')->prefix('pendaftaran')->group(function () {
     Route::post('pemeriksaan/{pemeriksaan}/detail-pd', [PemeriksaanController::class, 'simpanDetailPd'])->name('pemeriksaan.detail-pd');
     Route::post('pemeriksaan/{pemeriksaan}/detail-saraf', [PemeriksaanController::class, 'simpanDetailSaraf'])->name('pemeriksaan.detail-saraf');
     Route::post('pemeriksaan/{pemeriksaan}/odontogram', [PemeriksaanController::class, 'simpanOdontogram'])->name('pemeriksaan.odontogram');
+    Route::post('pemeriksaan/{pemeriksaan}/tindakan', [PemeriksaanController::class, 'simpanTindakan'])->name('pemeriksaan.tindakan');
 });

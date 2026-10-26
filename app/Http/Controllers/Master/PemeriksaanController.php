@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Master;
 use App\Http\Controllers\Controller;
 use App\Models\Erm\Pemeriksaan;
 use App\Models\Master\Icd10;
+use App\Models\Master\Tindakan;
 use App\Models\Registrasi\Kunjungan;
 use App\Models\User;
 use App\Services\Erm\Exceptions\DataTerkunciException;
@@ -53,7 +54,14 @@ class PemeriksaanController extends Controller implements HasMiddleware
 
     public function edit(Pemeriksaan $pemeriksaan, Request $request): View
     {
-        $pemeriksaan->load(['kunjungan.pasien', 'kunjungan.ttv', 'diagnosis.icd10', 'detailPenyakitDalam', 'detailSaraf', 'poli']);
+        $pemeriksaan->load(['kunjungan.pasien', 'kunjungan.ttv', 'diagnosis.icd10', 'detailPenyakitDalam', 'detailSaraf', 'poli', 'tindakan.tindakan']);
+
+        $tindakanMaster = Tindakan::where('aktif', true)
+            ->where(function ($q) use ($pemeriksaan) {
+                $q->whereNull('poli_id')->orWhere('poli_id', $pemeriksaan->poli_id);
+            })
+            ->orderBy('nama')
+            ->get();
         $kunjungan = $pemeriksaan->kunjungan;
         $pasien = $kunjungan?->pasien;
 
@@ -69,6 +77,7 @@ class PemeriksaanController extends Controller implements HasMiddleware
             'pasien' => $pasien,
             'riwayat' => $riwayat,
             'bolehUbah' => $bolehUbah,
+            'tindakanMaster' => $tindakanMaster,
         ]);
     }
 
@@ -184,6 +193,28 @@ class PemeriksaanController extends Controller implements HasMiddleware
         }
 
         return back()->with('sukses', 'Odontogram disimpan.');
+    }
+
+    public function simpanTindakan(Pemeriksaan $pemeriksaan, Request $request, PemeriksaanService $layanan): RedirectResponse
+    {
+        if (! $this->bolehUbah($pemeriksaan, $request->user())) {
+            abort(403);
+        }
+
+        $items = $request->input('items', []);
+        if (is_string($items)) {
+            $items = json_decode($items, true) ?: [];
+        }
+
+        try {
+            $layanan->simpanTindakan($pemeriksaan, $items, $request->user());
+        } catch (DataTerkunciException $e) {
+            return back()->with('galat', $e->getMessage());
+        } catch (\InvalidArgumentException $e) {
+            return back()->withErrors(['tindakan' => $e->getMessage()])->withInput();
+        }
+
+        return back()->with('sukses', 'Tindakan disimpan.');
     }
 
     private function bolehUbah(Pemeriksaan $pemeriksaan, ?User $user): bool

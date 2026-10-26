@@ -10,6 +10,7 @@ use App\Models\Erm\Diagnosis;
 use App\Models\Erm\Odontogram;
 use App\Models\Erm\Pemeriksaan;
 use App\Models\Master\Dokter;
+use App\Models\Master\Tindakan;
 use App\Models\Registrasi\Antrean;
 use App\Models\Registrasi\Kunjungan;
 use App\Models\Sys\LogAktivitas;
@@ -298,6 +299,46 @@ class PemeriksaanService
         }
 
         return $gigi;
+    }
+
+    public function simpanTindakan(Pemeriksaan $pemeriksaan, array $items, User $oleh): void
+    {
+        $this->pastikanTidakTerkunci($pemeriksaan);
+
+        DB::transaction(function () use ($pemeriksaan, $items, $oleh) {
+            $terkunci = Pemeriksaan::whereKey($pemeriksaan->id)->lockForUpdate()->firstOrFail();
+            $this->pastikanTidakTerkunci($terkunci);
+
+            $terkunci->tindakan()->delete();
+
+            foreach ($items as $row) {
+                $tindakanId = $row['tindakan_id'] ?? null;
+                $jumlah = (int) ($row['jumlah'] ?? 0);
+                if (! $tindakanId || $jumlah <= 0) {
+                    continue;
+                }
+
+                $master = Tindakan::where('id', $tindakanId)
+                    ->where('aktif', true)
+                    ->first();
+                if (! $master) {
+                    throw new \InvalidArgumentException('Tindakan tidak ditemukan atau nonaktif.');
+                }
+                if ($master->poli_id !== null && $master->poli_id !== $terkunci->poli_id) {
+                    throw new \InvalidArgumentException('Tindakan tidak sesuai poli pemeriksaan.');
+                }
+
+                \App\Models\Erm\Tindakan::create([
+                    'pemeriksaan_id' => $terkunci->id,
+                    'tindakan_id' => $master->id,
+                    'jumlah' => $jumlah,
+                    'tarif' => $master->tarif,
+                    'catatan' => $row['catatan'] ?? null,
+                ]);
+            }
+
+            LogAktivitas::catat($oleh, 'simpan_tindakan', 'erm_tindakan', $terkunci->id);
+        });
     }
 
     private function pastikanTidakTerkunci(Pemeriksaan $pemeriksaan): void

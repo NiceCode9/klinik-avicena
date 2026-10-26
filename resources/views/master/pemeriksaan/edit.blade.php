@@ -147,6 +147,48 @@
                             </form>
                         @endif
 
+                        <hr>
+                        <h6>Tindakan Medis</h6>
+                        <form method="post" action="{{ route('pemeriksaan.tindakan', $pemeriksaan) }}">
+                            @csrf
+                            @php
+                                $itemsTindakan = $pemeriksaan->tindakan->map(fn ($t) => [
+                                    'tindakan_id' => $t->tindakan_id,
+                                    'jumlah' => $t->jumlah,
+                                    'catatan' => $t->catatan,
+                                ])->values();
+                            @endphp
+                            <div class="mb-2">
+                                <select id="tindakan-pilih" class="form-select form-select-sm" style="width:260px;display:inline-block">
+                                    @foreach ($tindakanMaster as $tm)
+                                        <option value="{{ $tm->id }}" data-tarif="{{ $tm->tarif }}">{{ $tm->nama }} (Rp {{ number_format($tm->tarif, 0, ',', '.') }})</option>
+                                    @endforeach
+                                </select>
+                                <input type="number" id="tindakan-jumlah" class="form-control form-control-sm" style="width:80px;display:inline-block" value="1" min="1">
+                                <button type="button" class="btn btn-sm btn-outline-primary" id="tindakan-tambah">Tambah</button>
+                            </div>
+                            <textarea name="items" id="tindakan-items" class="form-control" rows="4" {{ $bolehUbah ? '' : 'readonly' }}>{{ old('items', json_encode($itemsTindakan, JSON_UNESCAPED_UNICODE)) }}</textarea>
+                            @if ($bolehUbah)
+                                <button type="submit" class="btn btn-sm btn-secondary mt-2">Simpan Tindakan</button>
+                            @endif
+                        </form>
+
+                        <script>
+                            (function () {
+                                const btn = document.getElementById('tindakan-tambah');
+                                if (!btn) return;
+                                btn.addEventListener('click', function () {
+                                    const sel = document.getElementById('tindakan-pilih');
+                                    const jumlah = parseInt(document.getElementById('tindakan-jumlah').value || '1', 10);
+                                    const ta = document.getElementById('tindakan-items');
+                                    let arr = [];
+                                    try { arr = JSON.parse(ta.value || '[]'); } catch (e) { arr = []; }
+                                    arr.push({ tindakan_id: parseInt(sel.value, 10), jumlah: jumlah, catatan: null });
+                                    ta.value = JSON.stringify(arr);
+                                });
+                            })();
+                        </script>
+
                         @if ($bolehUbah)
                             <div class="d-flex gap-2">
                                 <button type="submit" class="btn btn-primary" onclick="document.getElementById('aksi').value='draf'">Simpan Draf</button>
