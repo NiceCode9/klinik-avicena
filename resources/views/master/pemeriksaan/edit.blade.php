@@ -122,6 +122,29 @@
                                     <button type="submit" class="btn btn-sm btn-secondary mb-3">Simpan Detail Saraf</button>
                                 @endif
                             </form>
+                        @elseif ($kodePoli === 'GIG')
+                            <hr>
+                            <h6>Odontogram (notasi FDI)</h6>
+                            <form method="post" action="{{ route('pemeriksaan.odontogram', $pemeriksaan) }}">
+                                @csrf
+                                @php
+                                    $items = $pemeriksaan->odontogram->map(fn ($o) => [
+                                        'nomor_gigi' => $o->nomor_gigi,
+                                        'permukaan' => $o->permukaan,
+                                        'kondisi' => $o->kondisi,
+                                        'tindakan' => $o->tindakan,
+                                        'catatan' => $o->catatan,
+                                    ])->values();
+                                @endphp
+                                <div class="mb-3">
+                                    <label class="form-label">Data Odontogram (JSON array)</label>
+                                    <textarea name="items" class="form-control" rows="8" {{ $bolehUbah ? '' : 'readonly' }}>{{ old('items', json_encode($items, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE)) }}</textarea>
+                                    <div class="form-text">Contoh: [{"nomor_gigi":"11","permukaan":["oklusal"],"kondisi":"karies","tindakan":"","catatan":""}]</div>
+                                </div>
+                                @if ($bolehUbah)
+                                    <button type="submit" class="btn btn-sm btn-secondary mb-3">Simpan Odontogram</button>
+                                @endif
+                            </form>
                         @endif
 
                         @if ($bolehUbah)

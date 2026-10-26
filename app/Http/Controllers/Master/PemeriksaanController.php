@@ -164,6 +164,28 @@ class PemeriksaanController extends Controller implements HasMiddleware
         return back()->with('sukses', 'Detail saraf disimpan.');
     }
 
+    public function simpanOdontogram(Pemeriksaan $pemeriksaan, Request $request, PemeriksaanService $layanan): RedirectResponse
+    {
+        if (! $this->bolehUbah($pemeriksaan, $request->user())) {
+            abort(403);
+        }
+
+        $items = $request->input('items', []);
+        if (is_string($items)) {
+            $items = json_decode($items, true) ?: [];
+        }
+
+        try {
+            $layanan->simpanOdontogram($pemeriksaan, ['items' => $items], $request->user());
+        } catch (DataTerkunciException $e) {
+            return back()->with('galat', $e->getMessage());
+        } catch (\InvalidArgumentException $e) {
+            return back()->withErrors(['odontogram' => $e->getMessage()])->withInput();
+        }
+
+        return back()->with('sukses', 'Odontogram disimpan.');
+    }
+
     private function bolehUbah(Pemeriksaan $pemeriksaan, ?User $user): bool
     {
         if (! $user || ! $user->aktif) {

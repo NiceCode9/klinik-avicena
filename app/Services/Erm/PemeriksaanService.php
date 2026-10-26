@@ -7,6 +7,7 @@ use App\Events\PemeriksaanSelesai;
 use App\Models\Erm\DetailPenyakitDalam;
 use App\Models\Erm\DetailSaraf;
 use App\Models\Erm\Diagnosis;
+use App\Models\Erm\Odontogram;
 use App\Models\Erm\Pemeriksaan;
 use App\Models\Master\Dokter;
 use App\Models\Registrasi\Antrean;
@@ -224,6 +225,79 @@ class PemeriksaanService
         }
 
         return $hasil;
+    }
+
+    public function simpanOdontogram(Pemeriksaan $pemeriksaan, array $data, User $oleh): void
+    {
+        $this->pastikanTidakTerkunci($pemeriksaan);
+
+        if ($pemeriksaan->poli?->kode !== 'GIG') {
+            throw new \InvalidArgumentException('Odontogram hanya untuk poli Gigi.');
+        }
+
+        DB::transaction(function () use ($pemeriksaan, $data, $oleh) {
+            $terkunci = Pemeriksaan::whereKey($pemeriksaan->id)->lockForUpdate()->firstOrFail();
+            $this->pastikanTidakTerkunci($terkunci);
+
+            $terkunci->odontogram()->delete();
+
+            $kondisiDiizinkan = ['karies', 'tambalan', 'hilang', 'mahkota', 'sehat', 'lainnya'];
+            $permukaanDiizinkan = ['mesial', 'distal', 'oklusal', 'bukal', 'lingual', 'palatal', 'seluruh'];
+            $gigiValid = $this->daftarGigiFdi();
+
+            foreach (($data['items'] ?? []) as $item) {
+                $nomor = (string) ($item['nomor_gigi'] ?? '');
+                if (! in_array($nomor, $gigiValid, true)) {
+                    throw new \InvalidArgumentException("Nomor gigi FDI tidak valid: {$nomor}.");
+                }
+                $kondisi = (string) ($item['kondisi'] ?? '');
+                if (! in_array($kondisi, $kondisiDiizinkan, true)) {
+                    throw new \InvalidArgumentException("Kondisi tidak valid: {$kondisi}.");
+                }
+                $permukaan = $item['permukaan'] ?? [];
+                if (! is_array($permukaan)) {
+                    throw new \InvalidArgumentException('Permukaan harus berupa array.');
+                }
+                foreach ($permukaan as $p) {
+                    if (! in_array((string) $p, $permukaanDiizinkan, true)) {
+                        throw new \InvalidArgumentException("Permukaan tidak valid: {$p}.");
+                    }
+                }
+
+                Odontogram::create([
+                    'pemeriksaan_id' => $terkunci->id,
+                    'nomor_gigi' => $nomor,
+                    'permukaan' => empty($permukaan) ? null : $permukaan,
+                    'kondisi' => $kondisi,
+                    'tindakan' => $item['tindakan'] ?? null,
+                    'catatan' => $item['catatan'] ?? null,
+                ]);
+            }
+
+            LogAktivitas::catat($oleh, 'simpan_odontogram', 'erm_odontogram', $terkunci->id);
+        });
+    }
+
+    /**
+     * @return array<int, string>
+     */
+    private function daftarGigiFdi(): array
+    {
+        $gigi = [];
+        // dewasa
+        foreach ([1, 2, 3, 4] as $kuadran) {
+            for ($i = 1; $i <= 8; $i++) {
+                $gigi[] = $kuadran.$i;
+            }
+        }
+        // susu
+        foreach ([5, 6, 7, 8] as $kuadran) {
+            for ($i = 1; $i <= 5; $i++) {
+                $gigi[] = $kuadran.$i;
+            }
+        }
+
+        return $gigi;
     }
 
     private function pastikanTidakTerkunci(Pemeriksaan $pemeriksaan): void
