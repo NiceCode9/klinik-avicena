@@ -70,6 +70,60 @@
                             </div>
                         </div>
 
+                        @php
+                            $kodePoli = $pemeriksaan->poli?->kode;
+                            $dpd = $pemeriksaan->detailPenyakitDalam;
+                            $ds = $pemeriksaan->detailSaraf;
+                            $rsoKeys = ['kardiovaskular','respirasi','gastrointestinal','genitourinari','neurologi','endokrin','hematologi','muskuloskeletal'];
+                            $motorikKeys = ['kekuatan_otot','tonus','refleks','koordinasi','catatan'];
+                            $sensorikKeys = ['nyeri','suhu','getar','posisi','catatan'];
+                            $kranialKeys = ['I','II','III','IV','V','VI','VII','VIII','IX','X','XI','XII'];
+                        @endphp
+
+                        @if ($kodePoli === 'INT')
+                            <hr>
+                            <h6>Detail Penyakit Dalam</h6>
+                            <form method="post" action="{{ route('pemeriksaan.detail-pd', $pemeriksaan) }}">
+                                @csrf
+                                <div class="mb-3">
+                                    <label class="form-label">Riwayat Penyakit Kronis</label>
+                                    <textarea name="riwayat_penyakit_kronis" class="form-control" rows="2" {{ $bolehUbah ? '' : 'readonly' }}>{{ old('riwayat_penyakit_kronis', $dpd?->riwayat_penyakit_kronis) }}</textarea>
+                                </div>
+                                <div class="mb-3">
+                                    <label class="form-label">Status Metabolik</label>
+                                    <textarea name="status_metabolik" class="form-control" rows="2" {{ $bolehUbah ? '' : 'readonly' }}>{{ old('status_metabolik', $dpd?->status_metabolik) }}</textarea>
+                                </div>
+                                <div class="mb-3">
+                                    <label class="form-label">Review Sistem Organ (JSON)</label>
+                                    <textarea name="review_sistem_organ" class="form-control" rows="6" {{ $bolehUbah ? '' : 'readonly' }}>{{ old('review_sistem_organ', json_encode($dpd?->review_sistem_organ, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE)) }}</textarea>
+                                </div>
+                                @if ($bolehUbah)
+                                    <button type="submit" class="btn btn-sm btn-secondary mb-3">Simpan Detail PD</button>
+                                @endif
+                            </form>
+                        @elseif ($kodePoli === 'SRF')
+                            <hr>
+                            <h6>Detail Saraf</h6>
+                            <form method="post" action="{{ route('pemeriksaan.detail-saraf', $pemeriksaan) }}">
+                                @csrf
+                                <div class="mb-3">
+                                    <label class="form-label">Evaluasi Motorik (JSON)</label>
+                                    <textarea name="evaluasi_motorik" class="form-control" rows="4" {{ $bolehUbah ? '' : 'readonly' }}>{{ old('evaluasi_motorik', json_encode($ds?->evaluasi_motorik, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE)) }}</textarea>
+                                </div>
+                                <div class="mb-3">
+                                    <label class="form-label">Evaluasi Sensorik (JSON)</label>
+                                    <textarea name="evaluasi_sensorik" class="form-control" rows="4" {{ $bolehUbah ? '' : 'readonly' }}>{{ old('evaluasi_sensorik', json_encode($ds?->evaluasi_sensorik, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE)) }}</textarea>
+                                </div>
+                                <div class="mb-3">
+                                    <label class="form-label">Saraf Kranial N I–XII (JSON)</label>
+                                    <textarea name="saraf_kranial" class="form-control" rows="6" {{ $bolehUbah ? '' : 'readonly' }}>{{ old('saraf_kranial', json_encode($ds?->saraf_kranial, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE)) }}</textarea>
+                                </div>
+                                @if ($bolehUbah)
+                                    <button type="submit" class="btn btn-sm btn-secondary mb-3">Simpan Detail Saraf</button>
+                                @endif
+                            </form>
+                        @endif
+
                         @if ($bolehUbah)
                             <div class="d-flex gap-2">
                                 <button type="submit" class="btn btn-primary" onclick="document.getElementById('aksi').value='draf'">Simpan Draf</button>

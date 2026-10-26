@@ -53,7 +53,7 @@ class PemeriksaanController extends Controller implements HasMiddleware
 
     public function edit(Pemeriksaan $pemeriksaan, Request $request): View
     {
-        $pemeriksaan->load(['kunjungan.pasien', 'kunjungan.ttv', 'diagnosis.icd10']);
+        $pemeriksaan->load(['kunjungan.pasien', 'kunjungan.ttv', 'diagnosis.icd10', 'detailPenyakitDalam', 'detailSaraf', 'poli']);
         $kunjungan = $pemeriksaan->kunjungan;
         $pasien = $kunjungan?->pasien;
 
@@ -114,6 +114,54 @@ class PemeriksaanController extends Controller implements HasMiddleware
         $hasil = $query->orderBy('kode')->limit(20)->get(['id', 'kode', 'nama_diagnosis']);
 
         return response()->json($hasil);
+    }
+
+    public function simpanDetailPd(Pemeriksaan $pemeriksaan, Request $request, PemeriksaanService $layanan): RedirectResponse
+    {
+        if (! $this->bolehUbah($pemeriksaan, $request->user())) {
+            abort(403);
+        }
+
+        $data = $request->only(['riwayat_penyakit_kronis', 'status_metabolik', 'review_sistem_organ']);
+
+        if (is_string($data['review_sistem_organ'] ?? null)) {
+            $data['review_sistem_organ'] = json_decode($data['review_sistem_organ'], true);
+        }
+
+        try {
+            $layanan->simpanDetailPenyakitDalam($pemeriksaan, $data, $request->user());
+        } catch (DataTerkunciException $e) {
+            return back()->with('galat', $e->getMessage());
+        } catch (\InvalidArgumentException $e) {
+            return back()->withErrors(['detail' => $e->getMessage()])->withInput();
+        }
+
+        return back()->with('sukses', 'Detail penyakit dalam disimpan.');
+    }
+
+    public function simpanDetailSaraf(Pemeriksaan $pemeriksaan, Request $request, PemeriksaanService $layanan): RedirectResponse
+    {
+        if (! $this->bolehUbah($pemeriksaan, $request->user())) {
+            abort(403);
+        }
+
+        $data = $request->only(['evaluasi_motorik', 'evaluasi_sensorik', 'saraf_kranial']);
+
+        foreach (['evaluasi_motorik', 'evaluasi_sensorik', 'saraf_kranial'] as $k) {
+            if (is_string($data[$k] ?? null)) {
+                $data[$k] = json_decode($data[$k], true);
+            }
+        }
+
+        try {
+            $layanan->simpanDetailSaraf($pemeriksaan, $data, $request->user());
+        } catch (DataTerkunciException $e) {
+            return back()->with('galat', $e->getMessage());
+        } catch (\InvalidArgumentException $e) {
+            return back()->withErrors(['detail' => $e->getMessage()])->withInput();
+        }
+
+        return back()->with('sukses', 'Detail saraf disimpan.');
     }
 
     private function bolehUbah(Pemeriksaan $pemeriksaan, ?User $user): bool

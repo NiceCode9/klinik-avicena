@@ -33,4 +33,6 @@ Route::middleware('auth')->prefix('pendaftaran')->group(function () {
     Route::post('kunjungan/{kunjungan}/pemeriksaan/mulai', [PemeriksaanController::class, 'mulai'])->name('pemeriksaan.mulai');
     Route::get('pemeriksaan/{pemeriksaan}/edit', [PemeriksaanController::class, 'edit'])->name('pemeriksaan.edit');
     Route::put('pemeriksaan/{pemeriksaan}', [PemeriksaanController::class, 'update'])->name('pemeriksaan.update');
+    Route::post('pemeriksaan/{pemeriksaan}/detail-pd', [PemeriksaanController::class, 'simpanDetailPd'])->name('pemeriksaan.detail-pd');
+    Route::post('pemeriksaan/{pemeriksaan}/detail-saraf', [PemeriksaanController::class, 'simpanDetailSaraf'])->name('pemeriksaan.detail-saraf');
 });
