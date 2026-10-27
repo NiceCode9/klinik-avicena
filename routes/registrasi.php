@@ -5,6 +5,7 @@ use App\Http\Controllers\Master\KunjunganController;
 use App\Http\Controllers\Master\PasienController;
 use App\Http\Controllers\Master\PemeriksaanController;
 use App\Http\Controllers\Master\ResepController;
+use App\Http\Controllers\Master\RujukanLabController;
 use App\Http\Controllers\Master\TtvController;
 use Illuminate\Support\Facades\Route;
 
@@ -43,4 +44,9 @@ Route::middleware('auth')->prefix('pendaftaran')->group(function () {
     Route::get('resep/create', [ResepController::class, 'create'])->name('resep.create');
     Route::post('resep', [ResepController::class, 'store'])->name('resep.store');
     Route::get('resep/{resep}', [ResepController::class, 'show'])->name('resep.show');
+
+    Route::get('rujukan-lab', [RujukanLabController::class, 'index'])->name('rujukan-lab.index');
+    Route::get('rujukan-lab/create', [RujukanLabController::class, 'create'])->name('rujukan-lab.create');
+    Route::post('rujukan-lab', [RujukanLabController::class, 'store'])->name('rujukan-lab.store');
+    Route::get('rujukan-lab/{rujukanLab}', [RujukanLabController::class, 'show'])->name('rujukan-lab.show');
 });
