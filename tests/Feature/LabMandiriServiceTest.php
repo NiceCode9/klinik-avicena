@@ -4,10 +4,11 @@ use App\Events\LabDiminta;
 use App\Models\Master\Dokter;
 use App\Models\Master\Pasien;
 use App\Models\Master\PemeriksaanLab;
-use App\Models\Master\ParameterLab;
 use App\Models\Master\Poli;
+use App\Models\Registrasi\Antrean;
 use App\Models\User;
 use App\Services\Lab\LabMandiriService;
+use App\Services\NikHasher;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Event;
 
@@ -38,7 +39,7 @@ test('daftarkan mandiri membuat kunjungan lab_mandiri, antrean LAB, permintaan m
         ->and($permintaan->dokter_id)->toBe($dokter->id)
         ->and($permintaan->permintaanDetail()->count())->toBe(1);
 
-    $antreanLab = \App\Models\Registrasi\Antrean::where('kunjungan_id', $permintaan->kunjungan_id)
+    $antreanLab = Antrean::where('kunjungan_id', $permintaan->kunjungan_id)
         ->whereHas('poli', fn ($q) => $q->where('kode', 'LAB'))->first();
     expect($antreanLab)->not->toBeNull()
         ->and($antreanLab->nomor_antrean)->toMatch('/^LAB-\d{3}$/');
@@ -58,7 +59,7 @@ test('daftarkan without dokter ditolak', function () {
     expect(fn () => app(LabMandiriService::class)->daftarkan($user, [
         'pasien_id' => $pasien->id,
         'pemeriksaan_lab_ids' => [$lab->id],
-    ]))->toThrow(\InvalidArgumentException::class);
+    ]))->toThrow(InvalidArgumentException::class);
 });
 
 test('pendaftaran pasien baru terpakai (cari NIK)', function () {
@@ -77,7 +78,7 @@ test('pendaftaran pasien baru terpakai (cari NIK)', function () {
         'pemeriksaan_lab_ids' => [$lab->id],
     ]);
 
-    expect(\App\Models\Master\Pasien::where('nik_hash', \App\Services\NikHasher::hash($nik))->exists())->toBeTrue();
+    expect(Pasien::where('nik_hash', NikHasher::hash($nik))->exists())->toBeTrue();
 
     // second time same nik reuses patient
     $permintaan2 = app(LabMandiriService::class)->daftarkan($user, [

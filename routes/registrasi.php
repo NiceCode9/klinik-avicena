@@ -2,12 +2,15 @@
 
 use App\Http\Controllers\Master\AntreanController;
 use App\Http\Controllers\Master\KunjunganController;
+use App\Http\Controllers\Master\LabAntreanController;
+use App\Http\Controllers\Master\LabHasilController;
 use App\Http\Controllers\Master\LabMandiriController;
 use App\Http\Controllers\Master\PasienController;
 use App\Http\Controllers\Master\PemeriksaanController;
 use App\Http\Controllers\Master\ResepController;
 use App\Http\Controllers\Master\RiwayatKunjunganController;
 use App\Http\Controllers\Master\RujukanLabController;
+use App\Http\Controllers\Master\SpesimenController;
 use App\Http\Controllers\Master\TtvController;
 use Illuminate\Support\Facades\Route;
 
@@ -59,4 +62,19 @@ Route::middleware('auth')->prefix('pendaftaran')->group(function () {
     Route::get('lab-mandiri/create', [LabMandiriController::class, 'create'])->name('lab-mandiri.create');
     Route::post('lab-mandiri', [LabMandiriController::class, 'store'])->name('lab-mandiri.store');
     Route::get('lab-mandiri/dokter', [LabMandiriController::class, 'dokter'])->name('lab-mandiri.dokter');
+
+    Route::get('lab-antrean', [LabAntreanController::class, 'index'])->name('lab-antrean.index');
+    Route::post('lab-antrean/{permintaan}/mulai', [LabAntreanController::class, 'mulai'])->name('lab-antrean.mulai');
+    Route::post('lab-antrean/{permintaan}/dokter', [LabAntreanController::class, 'ubahDokter'])->name('lab-antrean.ubah-dokter');
+
+    Route::get('spesimen', [SpesimenController::class, 'index'])->name('spesimen.index');
+    Route::get('spesimen/create', [SpesimenController::class, 'create'])->name('spesimen.create');
+    Route::post('spesimen', [SpesimenController::class, 'store'])->name('spesimen.store');
+    Route::get('spesimen/{spesimen}/edit', [SpesimenController::class, 'edit'])->name('spesimen.edit');
+    Route::match(['post', 'patch'], 'spesimen/{spesimen}', [SpesimenController::class, 'update'])->name('spesimen.update');
+
+    Route::get('lab-hasil', [LabHasilController::class, 'index'])->name('lab-hasil.index');
+    Route::get('lab-hasil/{permintaan}/edit', [LabHasilController::class, 'edit'])->name('lab-hasil.edit');
+    Route::match(['post', 'patch'], 'lab-hasil/{permintaan}', [LabHasilController::class, 'update'])->name('lab-hasil.update');
+    Route::post('lab-hasil/{permintaan}/kunci', [LabHasilController::class, 'kunci'])->name('lab-hasil.kunci');
 });
