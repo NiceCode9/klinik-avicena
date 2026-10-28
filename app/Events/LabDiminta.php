@@ -2,7 +2,6 @@
 
 namespace App\Events;
 
-use App\Models\Erm\RujukanLab;
 use Illuminate\Contracts\Events\ShouldDispatchAfterCommit;
 use Illuminate\Foundation\Events\Dispatchable;
 use Illuminate\Queue\SerializesModels;
@@ -11,5 +10,5 @@ class LabDiminta implements ShouldDispatchAfterCommit
 {
     use Dispatchable, SerializesModels;
 
-    public function __construct(public RujukanLab $rujukanLab) {}
+    public function __construct(public mixed $sumber) {}
 }

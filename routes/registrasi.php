@@ -2,6 +2,7 @@
 
 use App\Http\Controllers\Master\AntreanController;
 use App\Http\Controllers\Master\KunjunganController;
+use App\Http\Controllers\Master\LabMandiriController;
 use App\Http\Controllers\Master\PasienController;
 use App\Http\Controllers\Master\PemeriksaanController;
 use App\Http\Controllers\Master\ResepController;
@@ -53,4 +54,9 @@ Route::middleware('auth')->prefix('pendaftaran')->group(function () {
     Route::get('rujukan-lab/create', [RujukanLabController::class, 'create'])->name('rujukan-lab.create');
     Route::post('rujukan-lab', [RujukanLabController::class, 'store'])->name('rujukan-lab.store');
     Route::get('rujukan-lab/{rujukanLab}', [RujukanLabController::class, 'show'])->name('rujukan-lab.show');
+
+    Route::get('lab-mandiri', [LabMandiriController::class, 'index'])->name('lab-mandiri.index');
+    Route::get('lab-mandiri/create', [LabMandiriController::class, 'create'])->name('lab-mandiri.create');
+    Route::post('lab-mandiri', [LabMandiriController::class, 'store'])->name('lab-mandiri.store');
+    Route::get('lab-mandiri/dokter', [LabMandiriController::class, 'dokter'])->name('lab-mandiri.dokter');
 });

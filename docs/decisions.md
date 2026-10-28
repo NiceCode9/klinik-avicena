@@ -54,3 +54,4 @@ Perbarui file ini setiap ada keputusan baru. Agen AI wajib memeriksanya sebelum 
 | Q21 | DiagnosticReport perlu atau tidak (default: tunda sampai halaman resmi dibaca). | — |
 | Q22 | section wajib & kode `Composition` (default: ikuti halaman resmi saat Tahap D). | — |
 | Q23 | kapan Encounter `in-progress` dikirim bila dokter lupa menekan "mulai" (default: `PemeriksaanDimulai` dipicu otomatis saat dokter membuka form pemeriksaan pertama kali). | — |
+| Q24 | (Usulan) Pemeriksaan tanpa spesimen: boleh simpan hasil langsung atau wajib catat spesimen dulu (D22)? | Default sementara: boleh jika `spesimen_id = null` (TODO(Q9) di `LabService::simpanHasil`); finalkan sebelum rilis Lab. |

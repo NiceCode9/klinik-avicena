@@ -86,6 +86,7 @@ Master dibutuhkan semua modul, kerjakan lebih dulu. Semua CRUD memakai pola yang
 | Cetak hasil lab                                                                               | S      |
 
 **Status 21 Okt 2026**: tabel `lab_spesimen`, model `Lab\Spesimen`, dan menu `lab.spesimen` sudah ada; alur/UI belum.
+**Status 28 Okt 2026**: layanan domain Lab selesai — `LabService` (mulaiProses, simpanHasil snapshot + penanda, kunci + sinkron status, event `LabDikunci`), `SpesimenService` (catat pengambilan, ubah status D22, tautan ke detail, event `SpesimenDiambil`), dan `LabMandiriService` (pendaftaran lab mandiri, antrean LAB, event `LabDiminta`). UI Lab/pendaftaran masih ⬜.
 
 **Selesai bila**: kedua alur (rujukan & mandiri) sampai tagihan; hasil terkunci tidak bisa diubah; `dokter_id` wajib sebelum kunci.
 
