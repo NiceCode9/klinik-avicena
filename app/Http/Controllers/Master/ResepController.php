@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Master;
 
 use App\Http\Controllers\Controller;
+use App\Http\Requests\Master\SimpanResepRequest;
 use App\Models\Erm\Pemeriksaan;
 use App\Models\Erm\Resep;
 use App\Services\Erm\ResepService;
@@ -39,10 +40,8 @@ class ResepController extends Controller implements HasMiddleware
         return view('master.resep.create', ['pemeriksaan' => $pemeriksaan]);
     }
 
-    public function store(Request $request, ResepService $layanan): RedirectResponse
+    public function store(SimpanResepRequest $request, ResepService $layanan): RedirectResponse
     {
-        $request->validate(['pemeriksaan_id' => ['required', 'exists:erm_pemeriksaan,id']]);
-
         $pemeriksaan = Pemeriksaan::findOrFail($request->input('pemeriksaan_id'));
         $resep = $layanan->buatResep($pemeriksaan, $request->user());
 

@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Master;
 
 use App\Http\Controllers\Controller;
+use App\Http\Requests\Master\SimpanRujukanLabRequest;
 use App\Models\Erm\Pemeriksaan;
 use App\Models\Erm\RujukanLab;
 use App\Models\Master\PemeriksaanLab;
@@ -45,14 +46,8 @@ class RujukanLabController extends Controller implements HasMiddleware
         ]);
     }
 
-    public function store(Request $request, RujukanLabService $layanan): RedirectResponse
+    public function store(SimpanRujukanLabRequest $request, RujukanLabService $layanan): RedirectResponse
     {
-        $request->validate([
-            'pemeriksaan_id' => ['required', 'exists:erm_pemeriksaan,id'],
-            'pemeriksaan_lab_ids' => ['required', 'array', 'min:1'],
-            'pemeriksaan_lab_ids.*' => ['exists:mtr_pemeriksaan_lab,id'],
-        ]);
-
         $pemeriksaan = Pemeriksaan::findOrFail($request->input('pemeriksaan_id'));
         $layanan->buat($pemeriksaan, $request->input('pemeriksaan_lab_ids'), $request->input('catatan'), $request->user());
 

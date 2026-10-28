@@ -30,7 +30,7 @@ class PemeriksaanController extends Controller implements HasMiddleware
 
     public function index(Request $request): View
     {
-        $data = Kunjungan::with(['pasien', 'antrean', 'pemeriksaan'])
+        $data = Kunjungan::with(['pasien', 'antrean', 'pemeriksaan.poli'])
             ->whereDate('tanggal_kunjungan', today())
             ->whereIn('status', ['menunggu', 'diperiksa'])
             ->orderByDesc('waktu_datang')
