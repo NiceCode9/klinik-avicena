@@ -77,4 +77,6 @@ Route::middleware('auth')->prefix('pendaftaran')->group(function () {
     Route::get('lab-hasil/{permintaan}/edit', [LabHasilController::class, 'edit'])->name('lab-hasil.edit');
     Route::match(['post', 'patch'], 'lab-hasil/{permintaan}', [LabHasilController::class, 'update'])->name('lab-hasil.update');
     Route::post('lab-hasil/{permintaan}/kunci', [LabHasilController::class, 'kunci'])->name('lab-hasil.kunci');
+
+    Route::get('lab-hasil/{permintaan}/cetak', [LabHasilController::class, 'cetak'])->name('lab-hasil.cetak');
 });

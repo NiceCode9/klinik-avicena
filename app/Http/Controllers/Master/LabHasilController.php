@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Models\Lab\Permintaan;
 use App\Models\Lab\PermintaanDetail;
 use App\Models\Master\Dokter;
+use App\Models\Sys\LogAktivitas;
 use App\Services\Lab\LabService;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -18,7 +19,7 @@ class LabHasilController extends Controller implements HasMiddleware
     public static function middleware(): array
     {
         return [
-            new Middleware('izin:lab.hasil,lihat', only: ['index', 'edit']),
+            new Middleware('izin:lab.hasil,lihat', only: ['index', 'edit', 'cetak']),
             new Middleware('izin:lab.hasil,tambah', only: ['store', 'update']),
             new Middleware('izin:lab.hasil,ubah', only: ['kunci']),
         ];
@@ -83,5 +84,18 @@ class LabHasilController extends Controller implements HasMiddleware
         }
 
         return redirect()->route('lab-hasil.index')->with('sukses', 'Hasil dikunci.');
+    }
+
+    public function cetak(Permintaan $permintaan): View
+    {
+        if (! $permintaan->dikunci) {
+            abort(403, 'Hasil lab belum dikunci.');
+        }
+
+        $permintaan->load(['kunjungan.pasien', 'dokter', 'permintaanDetail.pemeriksaanLab.parameterLab', 'permintaanDetail.hasil', 'permintaanDetail.spesimen']);
+
+        LogAktivitas::catat(request()->user(), 'cetak_hasil_lab', 'lab_permintaan', $permintaan->id);
+
+        return view('lab.hasil.cetak', compact('permintaan'));
     }
 }
