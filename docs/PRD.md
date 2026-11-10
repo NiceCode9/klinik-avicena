@@ -1,6 +1,7 @@
 # PRODUCT REQUIREMENT DOCUMENT (PRD)
-## SISTEM INFORMASI MANAJEMEN (SIM) KLINIK AVICENA (v2.1)
+## SISTEM INFORMASI MANAJEMEN (SIM) KLINIK AVICENA (v2.2)
 
+> v2.2 (29 Okt 2026): cakupan SATUSEHAT dipangkas ke Encounter, Observation (TTV dan hasil lab), Composition, ServiceRequest, dan Specimen (D33); Condition dan Medication* tidak dikirim.
 > v2.1 (21 Okt 2026): selaras dengan keputusan D14–D22 dan `docs/satusehat-kebutuhan-data.md` — siklus Encounter, event SATUSEHAT, dosis terstruktur, pencatatan spesimen, dan penguncian data.
 
 ---
@@ -66,7 +67,7 @@ Modul ini menangani sisi pemenuhan resep pasien (Farmasi), penjualan retail (Apo
 
 * **Apotek Umum:** Melayani pembelian obat langsung secara retail untuk masyarakat umum tanpa resep dokter.
 * **Alur Resep:** Validasi apoteker memeriksa ketersediaan stok; penyerahan memotong stok FEFO per batch dan mencatat batch yang dipakai. Status resep: `diterbitkan → divalidasi → diracik (jika ada) → diserahkan | batal`.
-* **Pemetaan Obat:** Obat tanpa kode KFA tetap boleh diresepkan, tetapi ditandai "belum terpetakan" dan tidak dikirim ke SATUSEHAT sampai dipetakan.
+* **Pemetaan Obat:** Obat tanpa kode KFA tetap boleh diresepkan dan diserahkan. Selama MedicationRequest/MedicationDispense di luar cakupan SATUSEHAT (D33), pemetaan KFA tidak menghambat layanan.
 * **Manajemen Obat Masuk (Logistik Pengadaan):**
     * Mencatat penerimaan obat dari Supplier/PBF (Pedagang Besar Farmasi).
     * Pencatatan wajib menyertakan: **Nomor Faktur, Nama Supplier, Tanggal Kedaluwarsa (Expiry Date), Nomor Bets (Batch Number), dan Harga Beli**.
@@ -97,14 +98,14 @@ Integrasi SATUSEHAT bersifat asinkron dan tidak menghambat pelayanan. Data medis
 ### 4.1 Alur Pengiriman Data
 1. Layanan domain menyimpan data ke MySQL dan memancarkan event setelah transaksi commit (`afterCommit`). Event yang tersedia: `KunjunganDidaftarkan`, `TtvDisimpan`, `PemeriksaanDimulai`, `PemeriksaanSelesai`, `ResepDiterbitkan`, `ResepDiserahkan`, `LabDiminta`, `SpesimenDiambil`, `LabDikunci`.
 2. Listener SATUSEHAT membuat baris `sts_sinkronisasi` (satu baris = satu resource) dan mengantrekan `SatuSehatSyncJob` ke queue `satusehat`. Request web tidak memanggil API SATUSEHAT.
-3. Worker membentuk payload FHIR, memproses resource sesuai urutan ketergantungan, dan menyimpan `ihs_id` hasil respons. Encounter memiliki siklus: `arrived` saat pendaftaran, `in-progress` saat pemeriksaan dimulai, dan `finished` saat pemeriksaan selesai beserta Condition dan cara keluar.
-4. Resource yang dicakup: prasyarat Organization/Location/Practitioner/Patient; Encounter + Condition; MedicationRequest + MedicationDispense (data Medication menyatu, verifikasi saat implementasi); ServiceRequest + Specimen + Observation lab; Observation TTV; Composition (dikirim terakhir). DiagnosticReport menunggu verifikasi.
-5. Jika sukses, `IHS ID` disimpan di `sts_sinkronisasi` (Encounter/Condition tetap di kolom domain yang sudah ada) sebagai bukti sinkronisasi.
+3. Worker membentuk payload FHIR, memproses resource sesuai urutan ketergantungan, dan menyimpan `ihs_id` hasil respons. Encounter memiliki siklus: `arrived` saat pendaftaran, `in-progress` saat pemeriksaan dimulai, dan `finished` saat pemeriksaan selesai beserta cara keluar.
+4. Resource yang dicakup (D33): prasyarat Organization/Location/Practitioner/Patient; Encounter; ServiceRequest + Specimen + Observation hasil lab; Observation TTV; Composition (dikirim terakhir). Condition, Medication, MedicationRequest, MedicationDispense, dan DiagnosticReport tidak dikirim.
+5. Jika sukses, `IHS ID` disimpan di `sts_sinkronisasi`; khusus Encounter juga tetap di `reg_kunjungan.ihs_encounter_id` sebagai bukti sinkronisasi.
 
 ### 4.2 Skema Retry & Error Handling
 * Job memakai `tries = 3` dengan backoff bertahap; resource turunan menunggu induknya berhasil sebelum dikirim.
 * Jika tetap gagal, baris `sts_sinkronisasi` berstatus `gagal` dan job masuk `failed_jobs`; dashboard admin menampilkan notifikasi dan menyediakan Manual Re-sync tanpa menggandakan resource yang sudah berhasil.
-* Prasyarat yang belum lengkap (misalnya obat tanpa KFA atau lab tanpa LOINC/spesimen) ditandai `gagal` dengan pesan yang dapat diperbaiki, bukan error umum.
+* Prasyarat yang belum lengkap (misalnya pemeriksaan lab tanpa LOINC atau spesimen tanpa kode SNOMED) ditandai `gagal` dengan pesan yang dapat diperbaiki, bukan error umum.
 
 ---
 

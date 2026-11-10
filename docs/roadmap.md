@@ -8,7 +8,7 @@ Status: ✅ selesai · 🔄 berjalan · ⬜ belum
 
 | Status | Item                                                                                           | Ukuran |
 | ------ | ---------------------------------------------------------------------------------------------- | ------ |
-| ✅     | PRD v2.1                                                                                       | —      |
+| ✅     | PRD v2.2                                                                                       | —      |
 | ✅     | Rancangan infrastruktur & database (56 tabel dasar), `schema.sql`                              | —      |
 | ✅     | Migration, model domain + `User` (`sys_pengguna`), `ModelDasar`, seeder awal                   | —      |
 | ✅     | Manajemen menu & hak akses (`sys_menu`, `IzinService`, `izin:*`, `menu:sinkron`, UI Hak Akses) | —      |
@@ -121,14 +121,15 @@ Fase paling berisiko: kerjakan `StokService` + tes dulu, baru UI.
 ## Fase 7 — Integrasi SATUSEHAT (dipecah)
 | Sub-fase | Isi | Ukuran |
 |---|---|---|
-| **7.0 Pemetaan terminologi** 🔄 | kolom pemetaan di form master (obat→KFA, pemeriksaan/parameter lab→LOINC/SNOMED/UCUM, poli→tipe pelayanan), CRUD `mtr_nakes` & `mtr_lokasi`, laporan "master belum terpetakan" | L |
-| **7A Fondasi + Tahap A** | client/token, sinkron IHS master, siklus Encounter, Condition, listener & ketergantungan | XL |
-| **7B Obat** | Medication/MedicationRequest/MedicationDispense | L |
-| **7C Lab + TTV** | ServiceRequest, Specimen, Observation lab, Observation TTV (+ DiagnosticReport bila diputuskan) | XL |
-| **7D Resume medis** | Composition | M |
+| **7.0 Pemetaan terminologi** 🔄 | kolom pemetaan di form master (pemeriksaan/parameter lab→LOINC/SNOMED/UCUM, poli→tipe pelayanan; obat→KFA opsional & tidak dipakai selama D33), CRUD `mtr_nakes` & `mtr_lokasi`, laporan "master belum terpetakan" | L |
+| **7A Fondasi + Tahap A** | client/token, sinkron IHS master, siklus Encounter, listener & ketergantungan | XL |
+| **7B Obat** | ⬜ ditunda: Medication/MedicationRequest/MedicationDispense di luar cakupan (D33) | — |
+| **7C Lab + TTV** | ServiceRequest, Specimen, Observation lab, Observation TTV | XL |
+| **7D Resume medis** | Composition (referensi Encounter, Observation, ServiceRequest, Specimen + narasi SOAP) | M |
 | **7E Monitor & uji sandbox** | monitor, Re-sync, rasio Composition:Encounter, checklist sandbox | M |
 
 **Status 21 Okt 2026**: 7.0 🔄 — migration pemetaan, model `Nakes`/`Lokasi`/`Spesimen`/`KunjunganRiwayatStatus`, menu `master.nakes`/`master.lokasi`/`satusehat.*`, dan seeder `APT` sudah ada; CRUD master, form pemetaan, dan laporan "belum terpetakan" belum.
+**Status 29 Okt 2026**: cakupan dikunci ke Encounter, Observation, Composition, ServiceRequest, Specimen (D33). Condition dan Medication* tidak dikerjakan; jangan menambahkan kolom/Job untuk keduanya.
 
 **Selesai bila**: simpan data medis tidak menunggu API; gangguan SATUSEHAT tidak mengganggu pelayanan; data gagal bisa disinkron ulang manual.
 

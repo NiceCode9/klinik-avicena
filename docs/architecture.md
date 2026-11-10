@@ -130,7 +130,7 @@ sequenceDiagram
   W-->>U: sukses (langsung, tanpa menunggu API)
   K->>Q: ambil job
   K->>DB: cek induk (bergantung_pada_id)
-  K->>S: kirim resource (Encounter/Condition/Observation/...)
+  K->>S: kirim resource (Encounter/Observation/ServiceRequest/Specimen/Composition)
   alt berhasil
     S-->>K: IHS ID
     K->>DB: simpan ihs_id, status = berhasil

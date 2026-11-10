@@ -2,6 +2,8 @@
 
 Simpan sebagai `docs/satusehat-kebutuhan-data.md`. Dokumen ini menjawab: **untuk sebuah KLINIK (bukan RS) yang menjalankan ERM, e-resep, dan laboratorium, resource FHIR apa yang perlu dikirim ke SATUSEHAT, dan data apa di sistem kita yang belum cukup untuk itu.**
 
+> **REVISI 29 Okt 2026 (D33): cakupan dipangkas.** Yang dikirim hanya **Encounter, Observation (TTV + hasil lab), Composition, ServiceRequest, dan Specimen**. Condition, Medication, MedicationRequest, MedicationDispense, dan DiagnosticReport **tidak dikirim**. Analisis Condition/Medication/DiagnosticReport di bawah adalah riwayat perencanaan, bukan target implementasi. Prasyarat Organization, Location, Practitioner, dan Patient tetap berlaku.
+
 ## 0. Cara membaca & tingkat keyakinan
 Setiap klaim diberi label:
 - **[RESMI]** — dari portal dokumentasi SATUSEHAT (`satusehat.kemkes.go.id/platform/docs`): playbook *Resume Medis – Rawat Jalan*, *Pelayanan Kefarmasian*, halaman resource MedicationRequest dan Specimen, halaman terminologi.
@@ -19,6 +21,8 @@ Setiap klaim diberi label:
 6. **[RESMI]** Klinik tanpa radiologi tidak memerlukan ImagingStudy/DICOM. Rawat inap-spesifik (MedicationAdministration, NutritionOrder, EpisodeOfCare untuk program) tidak relevan.
 
 ## 2. Resource yang perlu dikirim (klasifikasi untuk klinik Anda)
+
+> Status target per 29 Okt 2026: hanya **Encounter, Observation, ServiceRequest, Specimen, Composition**. Baris **Condition**, **Medication/MedicationRequest/MedicationDispense**, dan **DiagnosticReport** di tabel ini disimpan sebagai analisis awal dan **tidak diimplementasikan** (D33).
 
 | Lapis | Resource | Sumber data kita | Keyakinan | Catatan |
 |---|---|---|---|---|

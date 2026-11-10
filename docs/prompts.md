@@ -306,7 +306,7 @@ Tes: snapshot tarif, ubah master tidak mempengaruhi, terkunci menolak.
 ```
 Protokol sesi (PEMBUKA) berlaku.
 Tugas: App\Services\Erm\ResepService + UI e-Resep (menu erm.resep) dengan DOSIS TERSTRUKTUR.
-Dokumen: business-rules §6 & §8.5, database.md (erm_resep_item kolom baru), decisions D14, D15, Q2, Q3.
+Dokumen: business-rules §6 & §8.5, database.md (erm_resep_item kolom baru), decisions D14, D33, Q2, Q3.
 Aturan:
 - buat resep dari pemeriksaan: no_resep sesuai Q8, status diterbitkan.
 - tiap item resep memuat: obat (reguler) atau bahan (racikan), jumlah (> 0), dosis + satuan_dosis,
@@ -315,13 +315,13 @@ Aturan:
   dibangkitkan otomatis dari kolom terstruktur, boleh disunting). Harga_satuan DISNAPSHOT dari mtr_obat.harga_jual.
 - item reguler: obat_id wajib. Racikan: minimal 1 bahan; salin dari template mtr_racikan
   (salin, bukan referensi hidup); dosis berlaku untuk racikan sebagai satu kesatuan.
-- obat tanpa kode KFA boleh diresepkan tetapi tampilkan peringatan "belum terpetakan ke KFA" (tidak memblokir).
+- KFA tidak lagi menjadi prasyarat SATUSEHAT (D33); jangan memblokir atau memberi peringatan KFA.
 - tampilkan stok tersedia sebagai informasi (hanya baca; BELUM memotong stok).
 - resep tidak bisa diubah setelah divalidasi apoteker.
 - Pancarkan ResepDiterbitkan (afterCommit). JANGAN memotong stok.
 Langkah 1 (tanpa kode): usulkan daftar nilai rute dan cara pengisian terstruktur di form
 (mis. dropdown rute); tunggu persetujuanku. Daftar kode rute resmi diverifikasi di Fase 7.0.
-Tes: validasi struktur dosis, pembangkitan aturan_pakai, snapshot harga, peringatan KFA,
+Tes: validasi struktur dosis, pembangkitan aturan_pakai, snapshot harga,
 resep terkunci setelah validasi, perubahan template tidak mengubah resep lama.
 ```
 
@@ -467,8 +467,7 @@ Aturan: validasi memeriksa ketersediaan (tanpa mengurangi stok); penyerahan mema
 per item dalam SATU transaksi, mencatat apt_pengeluaran_resep (batch yang terpakai) dan mutasi 'resep';
 setelah semua resep kunjungan diserahkan → StatusKunjunganService::sinkron.
 Setelah transaksi penyerahan commit, pancarkan ResepDiserahkan (afterCommit) berisi resep_id dan item yang
-diserahkan beserta batch (apt_pengeluaran_resep). Peringatkan apoteker bila ada obat belum terpetakan ke KFA
-aktual (tidak memblokir penyerahan).
+diserahkan beserta batch (apt_pengeluaran_resep). KFA tidak lagi menjadi prasyarat SATUSEHAT (D33).
 Tes: stok kurang → tidak ada item yang terpotong; pengeluaran per batch tercatat; status valid;
 event ResepDiserahkan terpancar sekali per penyerahan dan tidak terpancar saat rollback.
 ```

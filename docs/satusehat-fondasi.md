@@ -2,7 +2,9 @@
 
 Status: **disetujui 22 Oktober 2026** (D23–D27). Belum ada package yang dipasang dan belum ada kode yang ditulis.
 Tanggal: 22 Oktober 2026.
-Rujukan: `satusehat.md`, `satusehat-kebutuhan-data.md`, `decisions.md` (D14–D27), `prompts-fase7.md` (7.0a–7E.2).
+Rujukan: `satusehat.md`, `satusehat-kebutuhan-data.md`, `decisions.md` (D14–D33), `prompts-fase7.md` (7.0a–7E.2).
+
+> **Revisi 29 Okt 2026 (D33):** cakupan SATUSEHAT hanya Encounter, Observation, Composition, ServiceRequest, Specimen. Bagian dokumen ini yang membahas Condition, Medication/KFA, MedicationRequest/Dispense, dan DiagnosticReport disimpan sebagai arsip dan tidak dikerjakan selama D33 berlaku.
 
 Dokumen ini mengunci batas paket, lapisan, kontrak, alur, pemetaan terminologi, strategi snapshot, dan strategi tes. Keputusan §5 sudah dicatat sebagai D23–D27 di `decisions.md`.
 

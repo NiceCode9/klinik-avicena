@@ -53,7 +53,7 @@ Sumber: `PRD.md` + keputusan di `decisions.md`. Item bertanda **[USULAN]** adala
 - Status: `diterbitkan → divalidasi → diracik (jika ada racikan) → diserahkan | batal`.
 - Item `jenis = reguler` wajib `obat_id`; item `racikan` wajib punya bahan di `erm_resep_racikan_bahan` (bisa disalin dari template `mtr_racikan`).
 - Validasi apoteker memeriksa ketersediaan stok (hanya batch belum kedaluwarsa).
-- item wajib memuat dosis terstruktur (`dosis`, `satuan_dosis`, `frekuensi`, `periode`, `satuan_periode`, `kode_rute`, `lama_hari`); `aturan_pakai` teks tetap disimpan untuk tampilan. Obat tanpa kode KFA boleh diresepkan tetapi akan ditandai "belum terpetakan" dan tidak terkirim ke SATUSEHAT.
+- item wajib memuat dosis terstruktur (`dosis`, `satuan_dosis`, `frekuensi`, `periode`, `satuan_periode`, `kode_rute`, `lama_hari`); `aturan_pakai` teks tetap disimpan untuk tampilan. KFA tidak lagi menjadi prasyarat SATUSEHAT karena MedicationRequest/MedicationDispense di luar cakupan (D33); obat tanpa KFA tetap bisa diresepkan dan diserahkan.
 
 ## 7. Laboratorium
 - **Rujukan**: `erm_rujukan_lab` → otomatis membuat `lab_permintaan` (`sumber = rujukan`) + antrean `LAB-xxx`.
@@ -121,4 +121,7 @@ Header `apt_opname` (`draf → final`), detail per batch: `stok_sistem`, `stok_f
 8. Izin: peran tanpa hak `tambah` mendapat 403 pada `store`, dst.
 
 ## 11. Event SATUSEHAT
-- daftar event pada D14; event dipancarkan hanya setelah transaksi commit.
+- Daftar event domain tetap pada D14; event dipancarkan hanya setelah transaksi commit.
+- Sesuai D33, listener SATUSEHAT hanya membuat `sts_sinkronisasi` untuk Encounter, Observation (TTV dan hasil lab), ServiceRequest, Specimen, dan Composition.
+- `ResepDiterbitkan` dan `ResepDiserahkan` tetap event domain untuk kebutuhan internal, tetapi tidak memicu sinkronisasi SATUSEHAT selama MedicationRequest/MedicationDispense di luar cakupan.
+- `PemeriksaanSelesai` hanya memperbarui Encounter menjadi `finished`; Condition tidak dikirim.

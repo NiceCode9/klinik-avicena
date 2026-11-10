@@ -4,6 +4,8 @@ Simpan sebagai `docs/prompts-fase7.md`. Semua prompt memakai protokol **PEMBUKA*
 
 > Perubahan prompt Fase 2–5 sudah dipindahkan ke `prompts.md` (2.3, 3.1, 3.6, 3.7, 4.1–4.3, 5.4). Dokumen ini hanya untuk Fase 7.
 
+> **REVISI 29 Okt 2026 (D33):** cakupan SATUSEHAT hanya **Encounter, Observation (TTV + hasil lab), Composition, ServiceRequest, Specimen**. **Jangan kerjakan** 7A.5 (Condition), 7B (Medication/MedicationRequest/MedicationDispense), dan 7C.4 (DiagnosticReport). Prompt bagian itu disimpan sebagai arsip dan tidak boleh dipakai.
+
 **Aturan tambahan untuk SEMUA prompt SATUSEHAT** (sudah dimasukkan ke tiap prompt di bawah):
 - Sebelum menulis payload suatu resource, baca halaman resmi resource itu di `satusehat.kemkes.go.id/platform/docs` (dan lampiran terminologinya), catat elemen wajib (tanda `*`), kode terminologi, dan sumbernya di `docs/satusehat-payload-<resource>.md`. Jika kamu tidak bisa mengakses dokumentasi, MINTA aku menempelkan halamannya. **Jangan menebak. Jangan memakai PDF playbook lama.**
 - Hal yang belum bisa diverifikasi → komentar `TODO(verifikasi-resmi)` + laporkan di akhir.
@@ -11,7 +13,7 @@ Simpan sebagai `docs/prompts-fase7.md`. Semua prompt memakai protokol **PEMBUKA*
 ---
 
 # Fase 7 — Integrasi SATUSEHAT (pengganti)
-Dokumen utama: `satusehat.md`, `satusehat-kebutuhan-data.md`, `decisions.md` (D14–D22, Q21–Q23).
+Dokumen utama: `satusehat.md`, `satusehat-kebutuhan-data.md`, `decisions.md` (D14–D33, Q21–Q23).
 
 ## 7.0 Pemetaan terminologi & master pendukung
 
@@ -49,15 +51,16 @@ Tes: simpan kolom pemetaan, NIK nakes terenkripsi, izin admin saja untuk nakes/l
 ```
 Protokol sesi (PEMBUKA) berlaku.
 Tugas: halaman Pemetaan Terminologi (menu satusehat.pemetaan, admin) yang menampilkan master yang BELUM lengkap untuk SATUSEHAT:
-obat tanpa kode_kfa, pemeriksaan lab tanpa kode_loinc/kode_spesimen, parameter lab tanpa kode_loinc/satuan_ucum,
+pemeriksaan lab tanpa kode_loinc/kode_spesimen, parameter lab tanpa kode_loinc/satuan_ucum,
 poli tanpa kode_tipe_pelayanan/ihs_location_id, dokter/nakes tanpa ihs_practitioner_id, lokasi tanpa ihs_location_id.
+KFA tidak dicek sebagai prasyarat (D33: Medication* di luar cakupan).
 Ringkasan jumlah per kategori + daftar dengan tautan ke form edit. Satu service PemetaanService::belumTerpetakan()
 yang dipakai juga oleh job (7A) untuk memvalidasi prasyarat. Query agregat di database, paginate.
 Tes: tiap kategori terdeteksi benar, item lengkap tidak muncul, izin admin.
 ```
 
 ### 7.0d Referensi terminologi + picker
-> Dikerjakan setelah laporan 7.0c terbukti dipakai. Jangan menggabungkan 7.0d.1–7.0d.3 dalam satu sesi.
+> Dikerjakan setelah laporan 7.0c terbukti dipakai. Jangan menggabungkan 7.0d.1–7.0d.3 dalam satu sesi. KFA bersifat opsional selama D33; jangan menjadikannya prasyarat.
 
 #### 7.0d.1 Tabel referensi + perintah impor
 ```
@@ -131,7 +134,7 @@ Tes: sukses, respons kosong, 401/429/5xx, idempoten, metadata tersimpan, tidak a
 Selesai bila: tes lulus; command hanya ada jika dokumentasi resmi tersedia.
 ```
 
-## 7A Fondasi + Tahap A (prasyarat, Encounter, Condition)
+## 7A Fondasi + Tahap A (prasyarat, Encounter)
 
 ### 7A.1 Client, konfigurasi, token
 ```
@@ -170,12 +173,13 @@ Protokol sesi (PEMBUKA) berlaku.
 Tugas: listener untuk KunjunganDidaftarkan, PemeriksaanDimulai, PemeriksaanSelesai + EncounterPayloadBuilder.
 Dokumen: satusehat.md §3. WAJIB baca halaman resmi Encounter dan bagian "Pendaftaran Kunjungan Pasien" & "Pembaharuan Data
 Kunjungan" pada modul Resume Medis – Rawat Jalan; catat elemen wajib di docs/satusehat-payload-encounter.md.
-Alur: POST (arrived) → simpan ihs_encounter_id; PUT in-progress; PUT finished memuat diagnosis & cara keluar.
+Alur: POST (arrived) → simpan ihs_encounter_id; PUT in-progress; PUT finished memuat cara keluar.
+Diagnosis TIDAK dikirim sebagai Condition (D33); diagnosis masuk narasi SOAP/Composition, bukan `Encounter.diagnosis`.
 statusHistory dari reg_kunjungan_riwayat_status; waktu dikonversi ke UTC+00; serviceType dari mtr_poli.
 Lab mandiri/apotek umum punya Encounter sendiri. Tes: tiap tahap, urutan PUT, konversi waktu, prasyarat belum terpetakan → gagal berpesan jelas.
 ```
 
-### 7A.5 Condition
+### 7A.5 Condition — ARSIP (jangan dikerjakan, D33)
 ```
 Protokol sesi (PEMBUKA) berlaku.
 Tugas: ConditionPayloadBuilder + listener PemeriksaanSelesai untuk tiap erm_diagnosis (ICD-10), induk = Encounter.
@@ -183,7 +187,7 @@ Baca halaman resmi Condition dan bagian Diagnosis; catat di docs/satusehat-paylo
 Simpan ihs_condition_id di erm_diagnosis dan sts_sinkronisasi. Tes: primer/sekunder, banyak diagnosis (sub_kunci), urutan sebelum PUT finished.
 ```
 
-## 7B Obat
+## 7B Obat — ARSIP (jangan dikerjakan, D33)
 
 ### 7B.1 MedicationRequest
 ```
@@ -233,7 +237,7 @@ halaman resmi (Pemeriksaan Fisik / Pelayanan Kefarmasian untuk BB-TB), catat di 
 Tes: empat ukuran, nilai kosong dilewati, urutan setelah Encounter.
 ```
 
-### 7C.4 (Opsional) DiagnosticReport
+### 7C.4 (Opsional) DiagnosticReport — ARSIP (jangan dikerjakan, D33)
 ```
 Protokol sesi (PEMBUKA) berlaku. JANGAN menulis kode dulu.
 Tugas: baca halaman resmi DiagnosticReport dan bagian laporan pemeriksaan laboratorium; ringkas elemen wajib dan hubungannya dengan
@@ -246,8 +250,9 @@ Observation/Specimen/ServiceRequest di docs/satusehat-payload-diagnosticreport.m
 ### 7D.1 Composition
 ```
 Protokol sesi (PEMBUKA) berlaku.
-Tugas: CompositionPayloadBuilder + listener yang berjalan setelah Encounter 'finished' dan resource lain (Condition, Observation,
-MedicationRequest, MedicationDispense, ServiceRequest, Specimen) berstatus berhasil atau tidak berlaku. Induk logis = semua itu.
+Tugas: CompositionPayloadBuilder + listener yang berjalan setelah Encounter 'finished' dan resource lain (Observation,
+ServiceRequest, Specimen) berstatus berhasil atau tidak berlaku. Induk logis = semua itu. Diagnosis dan obat masuk
+sebagai narasi section, bukan referensi Condition/MedicationRequest (D33).
 WAJIB baca halaman resmi Composition dan Bab "Pengiriman Data Resume Medis" (modul Resume Medis – Rawat Jalan) VERSI TERBARU;
 catat Composition.type (jangan pakai kode dari PDF lama), section wajib, kode LOINC section, format narasi (SOAP → narasi),
 author, custodian di docs/satusehat-payload-composition.md. Satu payload memuat referensi ID dari sts_sinkronisasi.
