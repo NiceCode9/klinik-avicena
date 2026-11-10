@@ -1,5 +1,7 @@
 # Pembaruan Dokumen — Pemetaan SATUSEHAT (tempel ke dokumen yang sudah ada)
 
+> **ARSIP (30 Okt 2026):** ini catatan historis paket D14–D20. **Jangan menempel ulang isinya.** Angka jumlah tabel, roadmap Fase 7, dan prompt Condition/Medication/DiagnosticReport di bawah sudah digantikan oleh `decisions.md` (D33, D34–D43), `satusehat.md`, `prompts-fase7.md`, dan `roadmap.md`.
+
 Dokumen Anda mungkin sudah Anda sunting, jadi perubahan di bawah diberikan sebagai potongan yang bisa ditempel. `satusehat.md` dan `satusehat-kebutuhan-data.md` di paket ini **menggantikan** versi lama pada saat paket dibuat; ganti seluruh file hanya jika file Anda masih versi lama. Setelah menempel, jalankan **P-DOKUMEN** dari `prompts.md` agar AI memeriksa konsistensinya.
 
 > **Status paket:** ini paket awal D14–D20. Jangan mengganti seluruh file docs yang sudah lebih baru, dan jangan menimpa D21–D22 (serta Q24 yang terjawab di D22) yang sudah ada di `docs/decisions.md`. Sumber kebenaran tetap `docs/decisions.md`, `docs/business-rules.md`, dan `docs/database.md`.

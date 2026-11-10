@@ -35,6 +35,7 @@ Klinik dengan ERM, e-resep, dan laboratorium. Akun SATUSEHAT klinik menampilkan 
 | Pemeriksaan selesai + cara keluar | `PemeriksaanSelesai`   | PUT Encounter (cara keluar)                                              | `finished`       |
 
 - `statusHistory` dibentuk dari `reg_kunjungan_riwayat_status`; `period.start/end` dari `waktu_mulai/waktu_selesai`; `serviceType` dari `mtr_poli.kode_tipe_pelayanan`; `location` dari `mtr_poli.ihs_location_id`; `class` rawat jalan = AMB (kode resmi: verifikasi).
+- `cara keluar` diambil dari `reg_kunjungan.kode_cara_keluar` (diisi dokter saat pemeriksaan difinalkan, D41). Encounter `finished` dikirim saat `PemeriksaanSelesai`, bukan saat kunjungan `selesai`; pembayaran farmasi/lab (D37–D43) tidak memengaruhi kiriman SATUSEHAT.
 - Lab mandiri & apotek umum membuat Encounter sendiri; praktisi = dokter lab (`lab_permintaan.dokter_id`) / apoteker (`mtr_nakes`).
 
 ## 4. Event & ketergantungan (graf)
@@ -51,7 +52,7 @@ Event: `KunjunganDidaftarkan`, `TtvDisimpan`, `PemeriksaanDimulai`, `Pemeriksaan
 
 ## 5. `sts_sinkronisasi` (satu baris = satu resource yang dikirim)
 
-Kolom kunci: `jenis_resource`, `aksi` (POST/PUT), `referensi_tabel`+`referensi_id`+`sub_kunci` (mis. satu `reg_ttv` → beberapa Observation: sub_kunci `tekanan_darah`, `nadi`, `suhu`, `berat_badan`), `status`, `bergantung_pada_id`, `ihs_id`, `jumlah_percobaan`, `payload`, `respons`, `pesan_galat`. Unik per `(jenis_resource, aksi, referensi_tabel, referensi_id, sub_kunci)`.
+Kolom kunci: `jenis_resource`, `aksi` (POST/PUT), `referensi_tabel`+`referensi_id`+`sub_kunci` (mis. satu `reg_ttv` → beberapa Observation: sub_kunci `tekanan_darah`, `nadi`, `frekuensi_napas`, `suhu`, `berat_badan`, `tinggi_badan`, `saturasi_oksigen`, `gula_darah`, `skala_nyeri`), `status`, `bergantung_pada_id`, `ihs_id`, `jumlah_percobaan`, `payload`, `respons`, `pesan_galat`. Unik per `(jenis_resource, aksi, referensi_tabel, referensi_id, sub_kunci)`.
 `ihs_id` resource baru (ServiceRequest, Specimen, Observation, Composition) disimpan **di tabel ini**, bukan kolom baru di tabel domain. Encounter tetap juga di `reg_kunjungan.ihs_encounter_id`. `erm_diagnosis.ihs_condition_id` tidak diisi selama Condition di luar cakupan.
 
 ## 6. Pemetaan data lokal → resource
@@ -62,7 +63,7 @@ Kolom kunci: `jenis_resource`, `aksi` (POST/PUT), `referensi_tabel`+`referensi_i
 | Practitioner                   | `mtr_dokter`, `mtr_nakes` `ihs_practitioner_id`    | —                                                 |
 | Location                       | `mtr_poli`, `mtr_lokasi` `ihs_location_id`         | —                                                 |
 | Encounter                      | `reg_kunjungan` + riwayat status                   | AMB, serviceType, cara keluar                     |
-| Observation TTV                | `reg_ttv`                                          | LOINC (konstanta di `config/satusehat.php`), UCUM |
+| Observation TTV                | `reg_ttv` (TD, nadi, frekuensi napas, suhu, BB, TB, SpO2, gula darah, skala nyeri) | LOINC (konstanta di `config/satusehat.php`), UCUM |
 | ServiceRequest                 | `lab_permintaan_detail` — **satu per kode**        | LOINC `mtr_pemeriksaan_lab.kode_loinc`            |
 | Specimen                       | `lab_spesimen`                                     | SNOMED CT `kode_spesimen`                         |
 | Observation hasil              | `lab_hasil` ← `mtr_parameter_lab`                  | LOINC parameter, UCUM, interpretasi               |

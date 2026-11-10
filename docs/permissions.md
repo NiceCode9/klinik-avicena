@@ -56,11 +56,13 @@ L = lihat, T = tambah, U = ubah, H = hapus. Admin: semua menu penuh.
 | resepsionis | dasbor L · pendaftaran.pasien LTU · pendaftaran.kunjungan LTU |
 | perawat | dasbor L · pendaftaran.pasien LTU · pendaftaran.kunjungan LTU · pendaftaran.ttv LTU |
 | dokter | dasbor L · pendaftaran.pasien L · erm.pemeriksaan LTU · erm.resep LTU · erm.rujukan_lab LT · lab.hasil L · master.icd10 L |
-| petugas_lab | dasbor L · pendaftaran.pasien LT · pendaftaran.lab_mandiri LT · lab.antrean LU · lab.hasil LTU · lab.spesimen LTU · master.pemeriksaan_lab L |
-| apoteker | dasbor L · apotek.resep LU · apotek.penjualan LTU · apotek.stok L · apotek.penerimaan LTU · apotek.retur_supplier LTU · apotek.retur_pasien LTU · apotek.opname LTU · master.obat LTU · master.racikan LTU · master.supplier LTU |
-| kasir | dasbor L · kasir.tagihan L · kasir.pembayaran LT · kasir.laporan L |
+| petugas_lab | dasbor L · pendaftaran.pasien LT · pendaftaran.lab_mandiri LT · lab.antrean LU · lab.hasil LTU · lab.spesimen LTU · lab.kasir LTU · lab.shift LTU · master.pemeriksaan_lab L |
+| apoteker | dasbor L · apotek.resep LU · apotek.penjualan LTU · apotek.stok L · apotek.penerimaan LTU · apotek.retur_supplier LTU · apotek.retur_pasien LTU · apotek.opname LTU · apotek.kasir LTU · apotek.shift LTU · apotek.setoran_dokter LTU · master.obat LTU · master.racikan LTU · master.supplier LTU · sistem.pengaturan L |
+| kasir | Tidak dipakai lagi (D37). |
 
 Tidak ada peran selain admin yang diberi hak `hapus` (H) secara default — data medis/transaksi tidak dihapus.
+
+> **Rencana 30 Okt 2026 (belum dikerjakan):** pembayaran pindah ke `apotek.kasir` dan `lab.kasir`; setoran dokter di `apotek.setoran_dokter`; shift di `apotek.shift` dan `lab.shift`. Kode menu ini belum ada di `config/menu.php`; tambahkan saat implementasi. Peran `kasir` tetap ada di database tetapi tidak diberi menu (D37/D38).
 
 > **Status 21 Okt 2026:** `lab.spesimen` sudah diberikan ke `petugas_lab` (LTU), tetapi rutenya belum dibuat. Menu `master.nakes`, `master.lokasi`, `satusehat.sinkronisasi`, dan `satusehat.pemetaan` juga sudah terdaftar di `config/menu.php` tanpa rute/controller; sementara hanya `admin` yang memegang aksesnya lewat `menu:sinkron`.
 
@@ -70,7 +72,9 @@ Tidak ada peran selain admin yang diberi hak `hapus` (H) secara default — data
 | `PemeriksaanPolicy` | ubah hanya oleh dokter pembuat selama `dikunci = 0`; lihat oleh semua dokter |
 | `LabPermintaanPolicy` | ubah hasil hanya jika `dikunci = 0` |
 | `ResepPolicy` | apoteker memvalidasi/menyerahkan hanya status yang sah |
-| `TagihanPolicy` | pembayaran hanya jika kunjungan `kasir`; tagihan lunas tidak bisa diubah |
+| `TagihanPolicy` | pembayaran hanya saat shift kasir terbuka; tagihan lunas tidak bisa diubah; tagihan farmasi vs lab dipisah |
+| `ShiftPolicy` | hanya pemilik akun yang boleh menutup shift; paksa tutup hanya admin dengan alasan |
+| `SetoranDokterPolicy` | hanya kasir apotek yang mencatat setoran pada shift-nya |
 | `PasienPolicy` | `petugas_lab` boleh `create`, tidak boleh `update` |
 
 ## Pengujian izin

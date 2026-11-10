@@ -37,7 +37,7 @@ Setiap klaim diberi label:
 | **C. Layanan Anda: lab** | **Observation** (hasil) | `lab_hasil` | RESMI | Kode LOINC + satuan baku |
 | **C. Layanan Anda: lab** | **DiagnosticReport** | `lab_permintaan` | RESMI | Merangkum Observation + Specimen |
 | **D. Resume medis** | **Composition** | referensi ke semua ID resource + narasi SOAP | RESMI + KONFIRMASI AKUN | Dikirim **terakhir**; `Composition.type` ikuti halaman resmi terbaru (LOINC) |
-| **Direkomendasikan** | **Observation TTV** (TD, nadi, suhu, BB) | `reg_ttv` | RESMI (pemeriksaan fisik/BB-TB) + SEKUNDER | Kita memang mengumpulkan TTV; ikut dikirim agar data klinis utuh |
+| **Direkomendasikan** | **Observation TTV** (TD, nadi, frekuensi napas, suhu, BB, TB, SpO2, gula darah, skala nyeri) | `reg_ttv` | RESMI (pemeriksaan fisik/BB-TB) + SEKUNDER | Kita memang mengumpulkan TTV; ikut dikirim agar data klinis utuh |
 | **Opsional / tunda** | Procedure (tindakan), AllergyIntolerance, ClinicalImpression, CarePlan, riwayat penyakit | `erm_tindakan` dll. | RESMI (ada di playbook) | Tidak tampil di akun; tunda sampai ada keputusan |
 | **Menunggu verifikasi** | DiagnosticReport (lab) | `lab_permintaan` | RESMI (playbook lab memuatnya) | Tidak tampil di akun; baca halaman resminya & konfirmasi apakah perlu |
 | **Tidak relevan** | ImagingStudy, MedicationAdministration, NutritionOrder, EpisodeOfCare (program), Immunization, dll. | — | INFERENSI | Tidak ada layanan terkait di PRD |
@@ -86,14 +86,14 @@ Dampaknya pada desain:
 | Nilai kualitatif hasil + interpretasi baku | `penanda` normal/rendah/tinggi | pemetaan ke kode interpretasi baku (konstanta di `config/satusehat.php`) |
 | `ihs_id` & ketergantungan per resource (ServiceRequest, Specimen, Observation, DiagnosticReport, MedicationRequest, MedicationDispense, Observation TTV) | hanya Encounter & Condition punya kolom | **pusatkan di `sts_sinkronisasi`**: tambah `sub_kunci` (untuk banyak Observation per TTV/hasil) dan `bergantung_pada_id` |
 
-Catatan: Observation TTV dan hasil lab **juga memakai LOINC**; untuk TTV cukup konstanta di config (empat jenis ukuran), bukan kolom master.
+Catatan: Observation TTV dan hasil lab **juga memakai LOINC**; untuk TTV cukup konstanta di config (sembilan ukuran), bukan kolom master.
 
 ## 5. Daftar verifikasi dari dokumentasi resmi (WAJIB sebelum coding)
 Baca halaman resmi tiap resource dan catat elemen bertanda `*` (wajib). Prioritas:
 1. **Encounter**: nilai `serviceType`, `dischargeDisposition`, isi `statusHistory`/`classHistory`, kapan `PUT`.
 2. **MedicationRequest & MedicationDispense & Medication**: elemen wajib; pemakaian kode KFA virtual vs aktual; cara kirim obat racikan; terminologi rute pemberian dan satuan.
 3. **ServiceRequest, Specimen, Observation, DiagnosticReport (lab)**: elemen wajib, kode kategori lab, aturan 1 ServiceRequest per kode, hubungan antar-resource, kode interpretasi, nilai kualitatif.
-4. **Observation TTV**: kode LOINC & satuan untuk tekanan darah, nadi, suhu, berat badan.
+4. **Observation TTV**: kode LOINC & satuan untuk tekanan darah, nadi, frekuensi napas, suhu, berat badan, tinggi badan, saturasi oksigen, gula darah, dan skala nyeri.
 5. Lampiran terminologi: *Resume Medis – Rawat Jalan*, *Pelayanan Kefarmasian*, *Rujukan Spesimen* (kode spesimen SNOMED).
 6. **Regulasi**: konfirmasi ke Dinkes/Kemenkes resource apa yang dinilai/wajib untuk **klinik** Anda dan tenggatnya.
 

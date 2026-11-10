@@ -17,7 +17,7 @@ Perbarui file ini setiap ada keputusan baru. Agen AI wajib memeriksanya sebelum 
 | D10 | Harga/tarif disnapshot ke baris transaksi. | Perubahan master tak mengubah transaksi lama |
 | D11 | Soft delete hanya untuk master & pengguna; transaksi/medis tidak dihapus. | Integritas & audit |
 | D12 | Setelah rilis pertama, migration adalah sumber kebenaran skema (bukan `schema.sql`). | Hindari drift |
-| D13 | Data medis & hasil lab dikunci setelah pembayaran lunas. | PRD §3.5 |
+| D13 | Data medis & hasil lab dikunci setelah pembayaran lunas. ~~Hasil lab: lihat D40 (dikunci saat verifikasi, bukan saat bayar).~~ | PRD §3.5 |
 | D14 | Layanan domain memancarkan event `afterCommit`: `KunjunganDidaftarkan`, `TtvDisimpan`, `PemeriksaanDimulai`, `PemeriksaanSelesai`, `ResepDiterbitkan`, `ResepDiserahkan`, `LabDiminta`, `SpesimenDiambil`, `LabDikunci`. Listener SATUSEHAT (Fase 7) membuat `sts_sinkronisasi` + job. | Encounter punya siklus (arrived → in-progress → finished); modul klinis bisa selesai tanpa SATUSEHAT |
 | D15 | ~~Cakupan SATUSEHAT: prasyarat; Tahap A Encounter+Condition; B MedicationRequest/Dispense/Medication; C ServiceRequest/Specimen/Observation lab + Observation TTV; D Composition. DiagnosticReport menunggu verifikasi. Procedure/alergi/ClinicalImpression ditunda.~~ **Digantikan D33.** | Akun SATUSEHAT klinik + analisis kebutuhan data |
 | D16 | Observation TTV ikut dikirim. | Data sudah dikumpulkan; pelengkap resume medis |
@@ -33,20 +33,30 @@ Perbarui file ini setiap ada keputusan baru. Agen AI wajib memeriksanya sebelum 
 | D26 | KFA disimpan di master `mtr_obat`, bukan di `apt_stok_batch`. | KFA identitas produk; batch hanya untuk FEFO/kedaluwarsa |
 | D27 | Composition menunggu induk yang masih `menunggu/diproses`; induk `gagal` tidak memblokir, Composition dikirim dengan resource yang tersedia dan alasannya dicatat. | Resume medis tidak tertahan selamanya; detail final saat 7D.1 |
 | D33 | Cakupan SATUSEHAT direvisi: hanya Encounter, Observation (TTV dan hasil lab), Composition, ServiceRequest, dan Specimen. Condition, Medication, MedicationRequest, MedicationDispense, dan DiagnosticReport keluar dari cakupan. Prasyarat Organization, Location, Practitioner, dan Patient tetap dikirim. | Instruksi pemilik 29 Okt 2026; resource yang dikirim dibatasi |
+| D34 | Stok hanya di satu lokasi: apotek. Tidak ada gudang, permintaan/distribusi, atau stok per lokasi. Model stok tetap per batch + FEFO. | Alur klinik kecil; barang langsung diterima apotek |
+| D35 | `harga_jual = (HNA + PPN faktur) × (1 + margin golongan)`, dibulatkan tidak (disimpan apa adanya). `apt_penerimaan.ppn_persen` nullable; kosong berarti HNA sudah termasuk PPN. Margin per golongan disimpan di `sys_pengaturan`. Harga disnapshot per batch; `mtr_obat.harga_jual` dihapus. | Rumus dari pemilik; PPN menempel di faktur, bukan satu angka global |
+| D36 | Tagihan farmasi = biaya periksa + harga obat + embalase + jasa racik + uang kopi + simpanan. Embalase per item reguler (racikan tidak); jasa racik per item racikan; uang kopi & simpanan sekali per transaksi. Uang kopi dan simpanan masuk kas apotek. Penjualan umum hanya harga jual. | Instruksi pemilik 30 Okt 2026 |
+| D37 | Apotek adalah loket pembayaran semua pasien poli, termasuk tanpa resep. Lab punya kasir sendiri. Satu kunjungan dapat punya dua tagihan: `bil_tagihan.jenis = farmasi` dan `lab`; unik `(kunjungan_id, jenis)`. | Biaya periksa selalu dibayar di apotek; lab terpisah |
+| D38 | Shift kasir dibuka/ditutup manual per akun. Satu akun hanya boleh punya satu shift terbuka. Shift yang lupa ditutup tidak memblokir kasir lain, ditandai di dasbor, dan dapat ditutup paksa admin dengan alasan. Pembayaran hanya boleh saat shift terbuka. | Menghindari layanan berhenti karena satu kasir lupa menutup shift |
+| D39 | Setoran dokter dihitung per dokter per shift dari biaya periksa yang sudah dibayar pada shift itu, apa pun metode bayar pasien. Setoran dicatat dengan metode tunai/transfer, referensi bila transfer, dan rincian porsi tunai/transfer. | Uang yang disetor berbeda dari cara pasien membayar |
+| D40 | Hasil lab dikunci saat diverifikasi petugas/dokter lab, sebelum pembayaran. Tagihan lab dibuat setelah hasil selesai dan dibayar di kasir lab. | Pasien membayar setelah hasil selesai; data tidak berubah setelah verifikasi |
+| D41 | Satu form ERM untuk poli penyakit dalam, dibuat otomatis saat pendaftaran. TTV diisi perawat di pendaftaran dan boleh diperbarui dokter. Diagnosis memakai ICD-10 select2 (satu primer, sekunder tak terbatas). Cara pulang: `pulang`, `dirujuk`, `kontrol_lagi`, disimpan di `reg_kunjungan.kode_cara_keluar`/`nama_cara_keluar`. Form khusus poli lain, odontogram, dan tindakan tidak dipakai. | Form contoh pemilik; fokus satu poli |
+| D42 | `reg_kunjungan.status` tidak lagi memakai `kasir`. `selesai` hanya tercapai bila tagihan farmasi lunas dan tagihan lab lunas/tidak ada; status `farmasi`/`lab` ditentukan `StatusKunjunganService::sinkron`. | Dua tagihan yang bisa dibayar dengan urutan bebas |
+| D43 | Pembayaran menerima tunai atau transfer. Transfer wajib nama bank dan nama pengirim; ID transfer opsional (`bil_pembayaran.no_referensi`). Diskon tidak ditampilkan di UI. | Instruksi pemilik 30 Okt 2026 |
 
 ## Pertanyaan terbuka (tanyakan ke pemilik proyek sebelum implementasi final)
 | # | Pertanyaan | Default sementara |
 |---|---|---|
 | Q1 | Apakah dokter lab memungut jasa (komponen tagihan sendiri)? | Tidak ada, hanya biaya pemeriksaan lab |
 | Q2 | `erm_resep_racikan_bahan.jumlah_bahan` = total yang dipakai per item racikan atau per bungkus/kapsul? | Total per item racikan |
-| Q3 | Jasa racik flat dikenakan per resep atau per item racikan? Harga obat racikan = Σ harga bahan? | Per item racikan; Σ(jumlah bahan × harga jual) |
+| Q3 | ~~Jasa racik flat dikenakan per resep atau per item racikan? Harga obat racikan = Σ harga bahan?~~ Terjawab D36: per item racikan; harga racikan = Σ(jumlah bahan × harga jual batch) + jasa racik. | — |
 | Q4 | Retur dari pasien setelah tagihan lunas: refund tunai, kredit, atau tidak diizinkan? Batas waktu? | Tidak diizinkan setelah lunas sampai ada keputusan |
-| Q5 | Status kunjungan saat lab & farmasi berjalan paralel | `StatusKunjunganService` menghitung ulang (lihat business-rules §1) |
+| Q5 | ~~Status kunjungan saat lab & farmasi berjalan paralel~~ Terjawab D42: `sinkron()` memilih `farmasi`/`lab`/`selesai` berdasarkan tagihan yang belum lunas. | — |
 | Q6 | Koreksi data medis/lab setelah terkunci (addendum? izin khusus + audit?) | Tidak ada koreksi; terkunci mutlak |
 | Q7 | TTV untuk lab mandiri wajib/opsional? | Opsional |
 | Q8 | Format `no_rekam_medis`, `no_kunjungan`, `no_resep`, `no_tagihan`, dll. | `RM-000001`, `KJ-YYYYMMDD-0001`, dst. (seq harian) |
-| Q9 | Pembayaran non-tunai/asuransi/BPJS, diskon, cicilan? PRD tidak menyebut. | Hanya metode di `mtr_metode_bayar`; diskon manual oleh kasir |
-| Q10 | Laporan apa saja yang dibutuhkan (kasir harian, stok/kedaluwarsa, kunjungan, 10 penyakit terbanyak)? | Kasir harian + kartu stok dulu |
+| Q9 | ~~Pembayaran non-tunai/asuransi/BPJS, diskon, cicilan?~~ Terjawab D43: tunai/transfer (nama bank, nama pengirim, ID transfer opsional); diskon tidak ditampilkan; asuransi/BPJS/cicilan di luar lingkup. | — |
+| Q10 | ~~Laporan apa saja yang dibutuhkan?~~ Terjawab D36–D39: penjualan apotek (poli/umum, per golongan), HPP & laba kotor, rekap shift & setoran dokter, laporan lab dipisah lab/radiologi, laporan harian per shift. | — |
 | Q11 | Perangkat cetak antrean/kwitansi (thermal merk/ukuran) & layar TV antrean? | Cetak via browser (CSS print) |
 | Q12 | Obat narkotika/psikotropika perlu pencatatan/pelaporan khusus? | Belum |
 | Q13 | Kebijakan retensi & arsip data rekam medis sesuai regulasi | Tidak ada penghapusan data medis; verifikasi regulasi |

@@ -155,12 +155,12 @@ Selesai bila: tes lulus dan tidak ada kode lain yang membuat Antrean tanpa lewat
 Protokol sesi (PEMBUKA) berlaku.
 Tugas: buat KunjunganService (buatKunjunganPoli, simpanTtv) dan StatusKunjunganService
 (pindahkan(Kunjungan, status, User $oleh, ?string $alasan) berbasis tabel transisi, dan
-sinkron(Kunjungan, User $oleh) untuk status kasir).
-Dokumen: business-rules §1 (ikuti tabel transisi APA ADANYA), §4, §11, decisions D14, Q5, Q7, Q8.
+sinkron(Kunjungan, User $oleh) untuk memilih farmasi/lab/selesai).
+Dokumen: business-rules §1 (ikuti tabel transisi APA ADANYA), §4, §11, decisions D14, D38, D42, Q7, Q8.
 Aturan:
 - no_kunjungan format default Q8 (KJ-YYYYMMDD-0001), atomik.
-- simpanTtv: validasi sistolik/diastolik/nadi/suhu/berat badan terisi, satu TTV per kunjungan,
-  status terdaftar→ttv; lalu AntreanService::ambilNomor dan status ttv→menunggu.
+- simpanTtv: validasi sistolik/diastolik/nadi/frekuensi napas/suhu/berat badan/tinggi/saturasi/gula darah/skala nyeri,
+  satu TTV per kunjungan, status terdaftar→ttv; lalu AntreanService::ambilNomor dan status ttv→menunggu.
 - Semua perpindahan status HANYA lewat StatusKunjunganService (tolak transisi tidak sah dengan
   StatusTidakValidException). Tidak boleh ada update status langsung di tempat lain.
 - Setiap perpindahan status mencatat baris reg_kunjungan_riwayat_status (status, waktu, dibuat_oleh)
@@ -168,9 +168,8 @@ Aturan:
   PemeriksaanService (3.1) saat pemeriksaan dimulai/difinalkan.
 - Pancarkan KunjunganDidaftarkan saat kunjungan dibuat dan TtvDisimpan saat TTV disimpan (afterCommit).
   JANGAN membuat listener SATUSEHAT atau memanggil API di fase ini.
-- sinkron(): implementasikan sesuai usulan paralel lab+farmasi di §1 (kasir hanya jika semua
-  lab_permintaan terkunci DAN semua resep diserahkan/batal); karena Fase 3-5 belum ada, buat
-  dengan data kosong lulus dan beri tes untuk skenario-skenario itu memakai factory.
+- sinkron(): lab pending → `lab`; selain itu tagihan farmasi belum lunas → `farmasi`; selain itu `selesai`.
+  Status `kasir` tidak ada (D42). Buat tes kombinasi memakai factory.
 Tes: seluruh matriks transisi sah/tidak sah; TTV wajib; sinkron() berbagai kombinasi.
 Tes tambahan: riwayat status terisi untuk tiap transisi; event hanya terpancar setelah commit;
 waktu_datang terisi benar (waktu_mulai/selesai diuji di 3.1).
@@ -246,13 +245,16 @@ Aturan:
   Pancarkan PemeriksaanDimulai (afterCommit) dan isi waktu_mulai. PemeriksaanDimulai dipicu otomatis saat
   dokter pertama kali membuka form pemeriksaan (Q23).
 - simpanDraf/Final: SOAP + diagnosis ICD-10 (final wajib minimal 1 diagnosis primer); transaksi DB.
-- simpanFinal(): wajib mengisi cara keluar (kode_cara_keluar/nama_cara_keluar), isi waktu_selesai, lalu
-  pancarkan PemeriksaanSelesai (afterCommit). Tanpa listener SATUSEHAT di fase ini; JANGAN memanggil API
-  atau membuat job SATUSEHAT sekarang.
-- Setelah final dan tanpa lab/resep → status kunjungan ke kasir (sinkron()).
+- simpanFinal(): wajib mengisi cara pulang (`kode_cara_keluar`/`nama_cara_keluar` di `reg_kunjungan`:
+  pulang/dirujuk/kontrol_lagi), isi `tarif_konsultasi`
+  (default mtr_dokter.tarif_konsultasi, boleh diubah), isi waktu_selesai, buat/segarkan tagihan farmasi
+  (TagihanService::susunFarmasi) lalu pancarkan PemeriksaanSelesai (afterCommit). Tanpa listener SATUSEHAT
+  di fase ini; JANGAN memanggil API atau membuat job SATUSEHAT sekarang.
+- Setelah final: status dihitung `sinkron()` → `lab` bila ada rujukan, selain itu `farmasi`
+  (bukan `kasir`, D42).
 - Pemeriksaan terkunci (dikunci=1) tidak bisa diubah: DataTerkunciException.
 - Catat sys_log_aktivitas.
-Tes: mulai→draf→final; final tanpa diagnosis primer ditolak; final tanpa cara keluar ditolak; event
+Tes: mulai→draf→final; final tanpa diagnosis primer ditolak; final tanpa cara pulang ditolak; event
 PemeriksaanDimulai/PemeriksaanSelesai terpancar setelah commit dan tidak terpancar jika transaksi gagal;
 waktu_mulai/waktu_selesai terisi; terkunci menolak ubah; transisi status benar.
 ```
@@ -268,38 +270,36 @@ PemeriksaanPolicy: ubah hanya oleh dokter pembuat saat dikunci=0; dokter lain ha
 Tes: 403 untuk non-dokter, dokter lain tidak bisa mengubah, autocomplete ICD-10 membatasi hasil.
 ```
 
-### 3.3 Form Khusus Penyakit Dalam & Saraf
+### 3.3 Form ERM Penyakit Dalam (satu form)
 ```
 Protokol sesi (PEMBUKA) berlaku.
-Tugas: form khusus poli (erm_detail_penyakit_dalam, erm_detail_saraf).
-Dokumen: PRD §3.2, business-rules §5, database.md.
-Langkah 1 (tanpa kode): usulkan struktur JSON untuk review_sistem_organ, evaluasi_motorik,
-evaluasi_sensorik, saraf_kranial (N I–XII) beserta tampilan form; tunggu persetujuanku.
-Langkah 2: implementasi lewat PemeriksaanService (bukan controller), validasi struktur JSON, tampilan
-terpisah per poli (Penyakit Dalam: riwayat penyakit kronis, status metabolik, review sistem organ;
-Saraf: motorik, sensorik, saraf kranial). Tes: validasi struktur, data tersimpan/terbaca ulang, terkunci menolak.
+Tugas: form ERM tunggal untuk poli penyakit dalam (D41), dibuat otomatis saat pendaftaran.
+Dokumen: PRD §3.2, business-rules §5, database.md (erm_pemeriksaan kolom baru).
+Aturan:
+- Header: identitas pasien, No. RM, tanggal lahir/umur, judul unit = nama poli; tombol Riwayat Lab
+  dan Riwayat Radiologi (lintas kunjungan, read-only).
+- Isi: subjektif (textarea Subjektif dan Objektif), TTV terisi perawat + boleh diubah dokter,
+  riwayat_kesehatan, objektif (Pemeriksaan Fisik), diagnosis ICD-10 select2 (satu primer,
+  sekunder tak terbatas), planning lab/radiologi/e-resep/catatan, cara pulang
+  (`reg_kunjungan.kode_cara_keluar`: pulang/dirujuk/kontrol_lagi).
+- Tarif periksa: default mtr_dokter.tarif_konsultasi, boleh diubah dokter, snapshot ke
+  erm_pemeriksaan.tarif_konsultasi.
+- Simpan lewat PemeriksaanService; terkunci setelah tagihan farmasi lunas.
+- Form khusus penyakit dalam/saraf, odontogram, dan tindakan TIDAK dipakai (jangan hapus tabelnya).
+Tes: validasi ICD-10, satu primer, sekunder banyak, cara pulang wajib, TTV dokter tersimpan,
+terkunci menolak, tarif snapshot tidak berubah saat master diubah.
 ```
 
-### 3.4 Odontogram Digital (Poli Gigi)
+### 3.4 Odontogram Digital (Poli Gigi) — tidak dipakai
 ```
-Protokol sesi (PEMBUKA) berlaku.
-Tugas: odontogram digital → tabel erm_odontogram (notasi FDI, permukaan, kondisi, tindakan, catatan).
-Dokumen: PRD §3.2, business-rules §5, AGENTS.md (jangan tambah package tanpa izin).
-Langkah 1: usulkan desain komponen (SVG + JavaScript vanilla/modul Vite, gigi dewasa 11–48 dan susu
-51–85, klik gigi → pilih permukaan & kondisi) tanpa library baru; tunggu persetujuanku.
-Langkah 2: implementasi: komponen Blade + JS kecil, endpoint simpan lewat PemeriksaanService
-(replace-all atau diff per gigi, jelaskan pilihanmu), tampilan riwayat odontogram kunjungan sebelumnya.
-Tes (backend): nomor gigi FDI valid saja, permukaan valid, terkunci menolak, hanya poli GIG yang boleh.
+Sesuai D41, odontogram dan poli gigi di luar cakupan saat ini. Jangan dikerjakan.
+Tabel erm_odontogram dibiarkan tidak dipakai.
 ```
 
-### 3.5 Tindakan Medis
+### 3.5 Tindakan Medis — tidak dipakai
 ```
-Protokol sesi (PEMBUKA) berlaku.
-Tugas: input tindakan medis pada pemeriksaan (erm_tindakan) dari mtr_tindakan.
-Dokumen: business-rules §5 & §9, decisions D10 (snapshot tarif).
-Aturan: tarif DISNAPSHOT dari mtr_tindakan saat input; tindakan difilter per poli; jumlah > 0;
-ubah master tarif tidak mengubah tindakan lama. Lewat PemeriksaanService.
-Tes: snapshot tarif, ubah master tidak mempengaruhi, terkunci menolak.
+Sesuai D36/D41, tindakan medis tidak dipakai. Jangan mengerjakan form tindakan.
+Tabel erm_tindakan dibiarkan tidak dipakai.
 ```
 
 ### 3.6 e-Resep (reguler + racikan, dosis terstruktur)
@@ -312,17 +312,22 @@ Aturan:
 - tiap item resep memuat: obat (reguler) atau bahan (racikan), jumlah (> 0), dosis + satuan_dosis,
   frekuensi + periode + satuan_periode (jam/hari/minggu), rute (kode_rute/nama_rute dari daftar
   terminologi yang disetujui), lama_hari, aturan_tambahan, dan aturan_pakai (teks tampilan yang
-  dibangkitkan otomatis dari kolom terstruktur, boleh disunting). Harga_satuan DISNAPSHOT dari mtr_obat.harga_jual.
+  dibangkitkan otomatis dari kolom terstruktur, boleh disunting). Harga TIDAK diisi saat meresepkan;
+  harga_satuan/biaya_jasa_racik baru diisi apoteker saat penyerahan (D36).
 - item reguler: obat_id wajib. Racikan: minimal 1 bahan; salin dari template mtr_racikan
   (salin, bukan referensi hidup); dosis berlaku untuk racikan sebagai satu kesatuan.
+- Sediakan "Copy Riwayat e-Resep": salin item dari resep kunjungan sebelumnya ke resep baru
+  (obat, jumlah, dosis, aturan pakai); apoteker tetap memvalidasi. Paket obat ditunda.
 - KFA tidak lagi menjadi prasyarat SATUSEHAT (D33); jangan memblokir atau memberi peringatan KFA.
 - tampilkan stok tersedia sebagai informasi (hanya baca; BELUM memotong stok).
+- Harga dan subtotal tidak ditampilkan di form dokter.
 - resep tidak bisa diubah setelah divalidasi apoteker.
 - Pancarkan ResepDiterbitkan (afterCommit). JANGAN memotong stok.
 Langkah 1 (tanpa kode): usulkan daftar nilai rute dan cara pengisian terstruktur di form
 (mis. dropdown rute); tunggu persetujuanku. Daftar kode rute resmi diverifikasi di Fase 7.0.
-Tes: validasi struktur dosis, pembangkitan aturan_pakai, snapshot harga,
-resep terkunci setelah validasi, perubahan template tidak mengubah resep lama.
+Tes: validasi struktur dosis, pembangkitan aturan_pakai, harga tidak diisi saat resep,
+copy riwayat menyalin item dengan benar, resep terkunci setelah validasi,
+perubahan template tidak mengubah resep lama.
 ```
 
 ### 3.7 Rujukan Lab
@@ -370,11 +375,13 @@ Aturan:
   status menunggu_diambil→diambil→diterima|ditolak sesuai D22, waktu_pengambilan, diambil_oleh);
   `ditolak` wajib catatan; tautkan lab_permintaan_detail.spesimen_id. Pancarkan SpesimenDiambil (afterCommit).
 - kunci(): semua lab_permintaan_detail punya hasil; untuk sumber=rujukan, dokter_id WAJIB terisi;
-  set dikunci & dikunci_pada; antrean selesai; panggil StatusKunjunganService::sinkron;
-  pancarkan LabDikunci (afterCommit).
+  set dikunci & dikunci_pada; antrean selesai; buat/segarkan tagihan lab (bil_tagihan.jenis=lab,
+  komponen lab dari snapshot tarif) lewat TagihanService; panggil StatusKunjunganService::sinkron;
+  pancarkan LabDikunci (afterCommit). Pembayaran TIDAK mengubah hasil (D40).
 Tes: penanda berbagai kasus (batas tepat, di luar batas, non-numerik), kunci tanpa hasil lengkap ditolak,
-rujukan tanpa dokter ditolak, setelah kunci tidak bisa ubah, sinkron status terpicu, hasil ditolak jika
-spesimen belum diterima, penolakan tanpa catatan ditolak, SpesimenDiambil/LabDikunci terpancar setelah commit.
+rujukan tanpa dokter ditolak, setelah kunci tidak bisa ubah, tagihan lab dibuat setelah kunci,
+sinkron status terpicu, hasil ditolak jika spesimen belum diterima, penolakan tanpa catatan ditolak,
+SpesimenDiambil/LabDikunci terpancar setelah commit.
 ```
 
 ### 4.2 Pendaftaran Lab Mandiri
@@ -441,11 +448,14 @@ Selesai bila: tes lulus dan grep tidak menemukan update jumlah_sisa di luar serv
 Protokol sesi (PEMBUKA) berlaku.
 Tugas: PenerimaanService + UI Obat Masuk (menu apotek.penerimaan).
 Dokumen: business-rules §8.3, database.md (apt_penerimaan*).
-Aturan: faktur (no_faktur, supplier, tanggal) + detail (obat, nomor_bets, tanggal_kedaluwarsa, jumlah,
-harga_beli) dalam satu transaksi; tiap detail → StokService::tambahBatch (mutasi 'penerimaan');
-unik (supplier_id, no_faktur); total dihitung server-side; kedaluwarsa tidak boleh di masa lalu.
-Faktur yang sudah dibuat tidak dihapus (koreksi lewat retur/opname).
-Tes: transaksi atomik, faktur ganda ditolak, mutasi tercatat, izin apoteker.
+Aturan: faktur (no_faktur, supplier, tanggal, ppn_persen nullable) + detail (obat, nomor_bets,
+tanggal_kedaluwarsa, jumlah, harga_beli/HNA) dalam satu transaksi; tiap detail → StokService::tambahBatch
+(mutasi 'penerimaan'); hitung harga_jual batch = (HNA + PPN) × (1 + margin golongan) dari sys_pengaturan;
+PPN kosong = HNA sudah termasuk PPN; simpan apa adanya (tanpa pembulatan); unik (supplier_id, no_faktur);
+total dihitung server-side; kedaluwarsa tidak boleh di masa lalu. Faktur yang sudah dibuat tidak dihapus
+(koreksi lewat retur/opname).
+Tes: transaksi atomik, faktur ganda ditolak, mutasi tercatat, harga batch benar untuk PPN kosong/terisi,
+margin per golongan, harga tidak berubah saat pengaturan diubah, izin apoteker.
 ```
 
 ### 5.3 Kartu Stok, Peringatan, Laporan
@@ -464,25 +474,28 @@ Protokol sesi (PEMBUKA) berlaku.
 Tugas: ResepApotekService + UI Validasi & Racik Resep (menu apotek.resep) untuk item REGULER dulu.
 Dokumen: business-rules §6, §8.2, decisions D14; status resep diterbitkan→divalidasi→diserahkan.
 Aturan: validasi memeriksa ketersediaan (tanpa mengurangi stok); penyerahan memanggil StokService::kurangi
-per item dalam SATU transaksi, mencatat apt_pengeluaran_resep (batch yang terpakai) dan mutasi 'resep';
-setelah semua resep kunjungan diserahkan → StatusKunjunganService::sinkron.
+per item dalam SATU transaksi, mencatat apt_pengeluaran_resep (batch yang terpakai + harga_jual_satuan
+snapshot), mengisi erm_resep_item.harga_satuan dari harga batch, menambah baris obat + embalase ke tagihan
+farmasi lewat TagihanService; setelah semua resep kunjungan diserahkan → StatusKunjunganService::sinkron.
 Setelah transaksi penyerahan commit, pancarkan ResepDiserahkan (afterCommit) berisi resep_id dan item yang
 diserahkan beserta batch (apt_pengeluaran_resep). KFA tidak lagi menjadi prasyarat SATUSEHAT (D33).
-Tes: stok kurang → tidak ada item yang terpotong; pengeluaran per batch tercatat; status valid;
-event ResepDiserahkan terpancar sekali per penyerahan dan tidak terpancar saat rollback.
+Tes: stok kurang → tidak ada item yang terpotong; pengeluaran per batch + harga snapshot tercatat;
+embalase hanya item reguler; status valid; event ResepDiserahkan terpancar sekali per penyerahan dan
+tidak terpancar saat rollback.
 ```
 
 ### 5.5 Racikan (potong stok atomik + jasa racik)
 ```
 Protokol sesi (PEMBUKA) berlaku.
 Tugas: RacikanService: konfirmasi "selesai diracik" untuk item racikan.
-Dokumen: business-rules §8.5, decisions Q2 & Q3 (pakai default, tandai TODO(Q2)/TODO(Q3)), §10 no.4.
+Dokumen: business-rules §8.5, decisions D36, §10 no.4.
 Aturan: dalam SATU transaksi, untuk SETIAP bahan di erm_resep_racikan_bahan panggil StokService::kurangi
-(jenis mutasi 'racikan', pengeluaran tercatat per batch); satu bahan kurang → TIDAK ADA bahan yang terpotong;
-jasa racik FLAT dari sys_pengaturan.biaya_jasa_racik disnapshot ke erm_resep_item.biaya_jasa_racik
-(tidak dikalikan jumlah bungkus/kapsul); status resep→diracik.
-Tes: semua bahan terpotong; satu bahan kurang → rollback total; jasa racik flat tidak berubah oleh
-jumlah bungkus; perubahan pengaturan tidak mengubah resep lama.
+(jenis mutasi 'racikan', pengeluaran tercatat per batch + harga_jual_satuan snapshot); satu bahan kurang →
+TIDAK ADA bahan yang terpotong; harga obat racikan = Σ(jumlah bahan × harga jual batch); jasa racik FLAT
+per item racikan dari sys_pengaturan.biaya_jasa_racik disnapshot ke erm_resep_item.biaya_jasa_racik
+(tidak dikalikan jumlah bungkus/kapsul); item racikan TIDAK dikenai embalase; status resep→diracik.
+Tes: semua bahan terpotong; satu bahan kurang → rollback total; harga racikan benar; jasa racik flat tidak
+berubah oleh jumlah bungkus; embalase tidak dikenakan; perubahan pengaturan tidak mengubah resep lama.
 ```
 
 ### 5.6 Penjualan Umum
@@ -491,9 +504,10 @@ Protokol sesi (PEMBUKA) berlaku.
 Tugas: PenjualanUmumService + UI (menu apotek.penjualan).
 Dokumen: business-rules §8.6, §9.
 Aturan: membuat kunjungan jenis apotek_umum (pasien opsional / nama_pembeli); potong stok FEFO
-(mutasi 'penjualan_umum', batch tercatat di detail); harga_satuan snapshot; total server-side;
-status menunggu_bayar → tagihan dibuat di Fase 6 (jangan membuat tagihan di sini).
-Tes: stok terpotong FEFO, stok kurang → batal total, total benar, izin apoteker.
+(mutasi 'penjualan_umum', batch tercatat di detail); harga_satuan = harga jual batch (snapshot); total
+server-side; HANYA komponen obat (tanpa konsultasi/embalase/uang kopi/simpanan); status menunggu_bayar →
+tagihan dibuat di Fase 6 lewat TagihanService (jangan membuat tagihan di sini).
+Tes: stok terpotong FEFO, stok kurang → batal total, total benar, tanpa komponen tambahan, izin apoteker.
 ```
 
 ### 5.7 Retur ke Supplier
@@ -535,45 +549,72 @@ Tes: selisih plus/minus, invarian Σ mutasi tetap benar, final immutable, izin.
 ---
 
 # FASE 6 — Billing / Kasir
-Dokumen utama: `business-rules.md` §9, §1, §10 no.5–6; decisions D10, D13, Q1, Q4, Q9.
+Dokumen utama: `business-rules.md` §9, §1, §10 no.5–11; decisions D13, D36–D39, D43, Q1, Q4.
 
-### 6.1 TagihanService
+### 6.1 TagihanService (dua jenis tagihan)
 ```
 Protokol sesi (PEMBUKA) berlaku.
-Tugas: App\Services\Billing\TagihanService::susunDariKunjungan(Kunjungan) dan susunDariPenjualan(PenjualanUmum).
-Dokumen: business-rules §9; database.md (bil_*).
+Tugas: App\Services\Billing\TagihanService::susunFarmasi(Kunjungan|PenjualanUmum),
+susunLab(Kunjungan), dan tambahDetail().
+Dokumen: business-rules §9; database.md (bil_*); decisions D36, D37.
 Aturan: IDEMPOTEN — dipanggil berulang menghasilkan hasil sama (updateOrCreate per referensi_tipe+referensi_id,
-hapus baris yang sumbernya hilang hanya selama belum lunas). Komponen: konsultasi (tarif dokter, kunjungan poli saja),
-tindakan, lab (lab_permintaan_detail), obat reguler (harga snapshot × jumlah), obat racikan Σ(bahan × harga jual)
-[TODO(Q3)], jasa_racik (snapshot). Lab mandiri & apotek umum tanpa konsultasi. Satu bil_tagihan per kunjungan
-(unik). subtotal = Σ detail; total = subtotal − diskon. Uang pakai bcmath/brick-math, bukan float.
-Tagihan lunas tidak bisa disusun ulang (DataTerkunciException).
-Tes: tiap komponen, kombinasi lengkap, idempotensi, total, lunas immutable, tanpa konsultasi untuk lab mandiri.
+hapus baris yang sumbernya hilang hanya selama belum lunas).
+- Tagihan farmasi (jenis=farmasi): konsultasi (erm_pemeriksaan.tarif_konsultasi), obat (harga batch snapshot),
+  embalase (per item reguler), jasa_racik (per item racikan), uang_kopi dan simpanan (sekali per transaksi).
+  Selalu dibuat untuk pasien poli setelah pemeriksaan disimpan, termasuk tanpa resep.
+- Tagihan lab (jenis=lab): lab_permintaan_detail saat hasil dikunci; hanya untuk kunjungan itu.
+- Penjualan umum: tagihan farmasi hanya komponen obat.
+- Unik (kunjungan_id, jenis). subtotal = Σ detail; total = subtotal − diskon (diskon tidak ditampilkan).
+  Uang pakai bcmath/brick-math, bukan float. Tagihan lunas tidak bisa disusun ulang (DataTerkunciException).
+Tes: tiap komponen, tanpa resep tetap ada konsultasi, lab terpisah, penjualan umum tanpa komponen tambahan,
+idempotensi, total, lunas immutable.
 ```
 
-### 6.2 PembayaranService (konfirmasi lunas + kunci data)
+### 6.2 PembayaranService (shift, transfer, kunci ERM)
 ```
 Protokol sesi (PEMBUKA) berlaku.
-Tugas: PembayaranService::bayar(Tagihan, MetodeBayar, jumlah, Pengguna kasir, ?noReferensi).
-Dokumen: business-rules §9 (konfirmasi lunas), §1, §10 no.5–7; decisions D13.
-Aturan: hanya jika kunjungan berstatus kasir; boleh beberapa pembayaran, lunas ketika Σ ≥ total;
-kembalian dihitung; SATU transaksi saat lunas: tagihan lunas, kunjungan selesai (StatusKunjunganService),
-erm_pemeriksaan.dikunci=1 + dikunci_pada, lab_permintaan.dikunci=1; pembayaran pada tagihan lunas ditolak;
-catat sys_log_aktivitas. Di Service ini JANGAN ada cara membuka kunci.
-Tes: lunas menguncikan semuanya; kurang bayar tidak menyelesaikan; status bukan kasir ditolak;
-atomik (gagal di tengah → tidak ada yang terkunci); setelah lunas, upaya ubah SOAP/hasil lab lewat service ditolak.
+Tugas: PembayaranService::bayar(Tagihan, MetodeBayar, jumlah, Pengguna kasir, ?namaBank, ?namaPengirim, ?noReferensi).
+Dokumen: business-rules §9.3–9.4, §1, §10 no.5–11; decisions D13, D38, D40, D43.
+Aturan: hanya jika kasir punya shift terbuka; simpan shift_id + kasir_id; transfer wajib nama_bank dan
+nama_pengirim, no_referensi (ID transfer) opsional; boleh beberapa pembayaran, lunas ketika Σ ≥ total;
+kembalian dihitung; pembayaran pada tagihan lunas ditolak; catat sys_log_aktivitas.
+Saat tagihan farmasi lunas: dalam SATU transaksi set tagihan lunas, erm_pemeriksaan.dikunci=1 + dikunci_pada,
+lalu StatusKunjunganService::sinkron. Tagihan lab lunas hanya menyelesaikan kunjungan (hasil sudah dikunci
+saat verifikasi, D40). JANGAN ada cara membuka kunci di Service ini.
+Tes: bayar tanpa shift ditolak; transfer tanpa bank/pengirim ditolak; lunas farmasi mengunci ERM;
+lunas lab tidak mengubah hasil; kurang bayar tidak menyelesaikan; atomik; setelah lunas upaya ubah ditolak.
 ```
 
-### 6.3 UI Kasir
+### 6.3 UI Kasir Apotek & Lab
 ```
 Protokol sesi (PEMBUKA) berlaku.
-Tugas: menu kasir.tagihan dan kasir.pembayaran: daftar tagihan (belum_bayar), detail per komponen,
-form pembayaran (metode dari mtr_metode_bayar, jumlah, kembalian), kwitansi cetak.
-Logika hanya lewat TagihanService/PembayaranService. Hak: kasir (L pada tagihan, LT pada pembayaran).
-Tes: izin per peran, tidak bisa membayar saat status bukan kasir, kwitansi memuat data benar.
+Tugas: menu apotek.kasir dan lab.kasir: daftar tagihan (belum_bayar) sesuai jenis, detail per komponen,
+form pembayaran (metode dari mtr_metode_bayar, jumlah, kembalian, nama bank/nama pengirim/ID transfer),
+buka/tutup shift, kwitansi cetak. Apotek juga menampilkan ringkasan setoran dokter per shift.
+Logika hanya lewat TagihanService/PembayaranService/ShiftService/SetoranDokterService.
+Hak: apoteker (apotek.kasir LTU), petugas_lab (lab.kasir LTU). Kasir tanpa shift terbuka tidak bisa membayar.
+Tes: izin per peran, pembayaran ditolak tanpa shift, transfer wajib bank/pengirim, tagihan farmasi vs lab
+tidak tercampur, kwitansi memuat data benar.
 ```
 
-### 6.4 Integrasi Retur Pasien ke Tagihan
+### 6.4 ShiftService & SetoranDokterService
+```
+Protokol sesi (PEMBUKA) berlaku.
+Tugas: App\Services\Billing\ShiftService (buka, tutup, paksaTutup) dan SetoranDokterService
+(rekap per dokter per shift, catat setoran).
+Dokumen: business-rules §9.5, decisions D38, D39; database.md (bil_shift, bil_setoran_dokter).
+Aturan:
+- buka(): tolak jika akun masih punya shift terbuka; lock baris pengguna.
+- tutup(): hanya pemilik shift atau admin; isi ditutup_pada.
+- paksaTutup(): hanya admin, alasan wajib, tercatat di sys_log_aktivitas.
+- rekap(): Σ detail konsultasi pada tagihan farmasi lunas yang pembayarannya memakai shift itu, per dokter;
+  tampilkan porsi tunai dan transfer berdasarkan metode bayar.
+- catat setoran: unik (shift_id, dokter_id); metode tunai/transfer; referensi wajib bila transfer.
+Tes: dua shift terbuka ditolak; shift orang lain tidak memblokir; paksa tutup butuh alasan & admin;
+rekap tidak terpengaruh metode bayar pasien; setoran ganda ditolak.
+```
+
+### 6.5 Integrasi Retur Pasien ke Tagihan
 ```
 Protokol sesi (PEMBUKA) berlaku.
 Tugas: sambungkan retur pasien (Fase 5.8) ke tagihan: sesuaikan bil_tagihan_detail (baris pengurang) dan total.
@@ -581,15 +622,19 @@ Dokumen: business-rules §8.4 & §9, decisions Q4 (default: tidak setelah lunas)
 Tes: tagihan belum lunas disesuaikan, idempotent, lunas ditolak (sesuai default Q4), total benar.
 ```
 
-### 6.5 Laporan Kasir Harian
+### 6.6 Laporan Shift, Apotek, Lab, dan Setoran Dokter
 ```
 Protokol sesi (PEMBUKA) berlaku.
-Tugas: menu kasir.laporan: ringkasan harian per metode bayar dan per kasir, daftar transaksi, cetak.
-Aturan: query teragregasi di database (bukan loop di PHP), filter tanggal, indeks sesuai database.md.
-Tes: total laporan = Σ bil_pembayaran pada tanggal itu; izin.
+Tugas: menu laporan: rekap per shift (per kasir, per metode bayar), penjualan apotek poli vs umum,
+penjualan per golongan obat, HPP & laba kotor, laporan lab dipisah kategori lab/radiologi,
+dan daftar setoran dokter per shift (porsi tunai/transfer).
+Aturan: query teragregasi di database (bukan loop di PHP), filter tanggal/shift, indeks sesuai database.md.
+Laba kotor = Σ(harga jual − harga beli) baris yang terjual; PPN bukan pendapatan.
+Tes: total laporan = Σ bil_pembayaran pada shift; lab vs radiologi terpisah; setoran = Σ konsultasi lunas
+pada shift; izin.
 ```
 
-### 6.6 P-AUDIT Fase 6
+### 6.7 P-AUDIT Fase 6
 
 ---
 

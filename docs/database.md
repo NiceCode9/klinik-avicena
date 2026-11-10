@@ -1,6 +1,6 @@
 # Database — SIM Klinik Avicena
 
-- **60 tabel** (56 tabel dasar + 4 tabel pada migration pemetaan SATUSEHAT), MySQL 8, InnoDB, `utf8mb4_unicode_ci`.
+- **62 tabel** (56 tabel dasar + 4 tabel migration pemetaan SATUSEHAT + 2 tabel shift/setoran), MySQL 8, InnoDB, `utf8mb4_unicode_ci`.
 - Sumber kebenaran: folder `database/migrations/` (snapshot awal di `docs/schema.sql`; ERD & daftar di bawah dihasilkan dari snapshot itu — periksa migration jika ada perbedaan).
 - Konvensi: prefix modul + nama Indonesia; `created_at/updated_at/deleted_at` standar Laravel; `deleted_at` hanya master & `sys_pengguna`.
 - Kolom lengkap: lihat `docs/schema.sql` atau migration. Dokumen ini fokus pada peta, relasi, dan aturan.
@@ -14,7 +14,7 @@
 | `erm_` | `App\Models\Erm` | 11 |
 | `lab_` | `App\Models\Lab` | 4 |
 | `apt_` | `App\Models\Apotek` | 13 |
-| `bil_` | `App\Models\Billing` | 3 |
+| `bil_` | `App\Models\Billing` | 5 |
 | `sts_` | `App\Models\SatuSehat` | 2 |
 
 > Catatan: tabel `sys_pengguna` memakai model `App\Models\User` (extends `Authenticatable`, atribut `#[Table('sys_pengguna')]`), bukan `App\Models\Sys\Pengguna` (lihat `decisions.md` D21).
@@ -104,7 +104,7 @@ erDiagram
 | `reg_kunjungan_riwayat_status` | `kunjungan_id`→`reg_kunjungan`, `dibuat_oleh`→`sys_pengguna` | — |
 
 ### erm_ — Erm
-Pemeriksaan SOAP, diagnosis ICD-10, form khusus (penyakit dalam, saraf), odontogram, tindakan, e-resep (+item & bahan racikan), rujukan lab.
+Pemeriksaan SOAP, diagnosis ICD-10, form khusus (penyakit dalam, saraf), odontogram, tindakan, e-resep (+item & bahan racikan), rujukan lab. Sejak D41 hanya form penyakit dalam yang dipakai; tabel `erm_detail_penyakit_dalam`, `erm_detail_saraf`, `erm_odontogram`, dan `erm_tindakan` dibiarkan tidak dipakai (tidak dihapus).
 
 ```mermaid
 erDiagram
@@ -149,7 +149,7 @@ erDiagram
 | `erm_rujukan_lab_detail` | `rujukan_lab_id`→`erm_rujukan_lab`, `pemeriksaan_lab_id`→`mtr_pemeriksaan_lab` | (rujukan_lab_id, pemeriksaan_lab_id) |
 
 ### lab_ — Lab
-Permintaan lab (rujukan/mandiri, dokter lab penanggung jawab), detail pemeriksaan, dan hasil per parameter. Hasil dikunci lalu masuk tagihan.
+Permintaan lab (rujukan/mandiri, dokter lab penanggung jawab), detail pemeriksaan, dan hasil per parameter. Hasil dikunci saat verifikasi, lalu tagihan lab dibuat dan dibayar di kasir lab (D40).
 
 ```mermaid
 erDiagram
@@ -176,7 +176,7 @@ erDiagram
 | `lab_spesimen` | `permintaan_id`→`lab_permintaan`, `diambil_oleh`→`sys_pengguna` | — |
 
 ### apt_ — Apotek
-Obat masuk (faktur/bets/kedaluwarsa), stok per batch, buku besar mutasi stok, pengeluaran resep, penjualan umum, retur supplier/pasien, stock opname.
+Satu lokasi stok (apotek). Obat masuk (faktur/bets/kedaluwarsa/PPN), stok per batch dengan harga jual snapshot, buku besar mutasi stok, pengeluaran resep (harga jual per batch), penjualan umum, retur supplier/pasien, stock opname.
 
 ```mermaid
 erDiagram
@@ -232,23 +232,31 @@ erDiagram
 | `apt_opname_detail` | `opname_id`→`apt_opname`, `stok_batch_id`→`apt_stok_batch` | (opname_id, stok_batch_id) |
 
 ### bil_ — Billing
-Tagihan konsolidasi per kunjungan/penjualan, detail per komponen, dan pembayaran.
+Dua tagihan per kunjungan (farmasi dan lab), detail per komponen, pembayaran per shift, shift kasir, dan setoran dokter.
 
 ```mermaid
 erDiagram
-  reg_kunjungan ||--o| bil_tagihan : "kunjungan_id"
+  reg_kunjungan ||--o{ bil_tagihan : "kunjungan_id"
   apt_penjualan_umum ||--o| bil_tagihan : "penjualan_umum_id"
   bil_tagihan ||--o{ bil_tagihan_detail : "tagihan_id"
   bil_tagihan ||--o{ bil_pembayaran : "tagihan_id"
   mtr_metode_bayar ||--o{ bil_pembayaran : "metode_bayar_id"
   sys_pengguna ||--o{ bil_pembayaran : "kasir_id"
+  sys_pengguna ||--o{ bil_shift : "pengguna_id"
+  sys_pengguna ||--o{ bil_shift : "ditutup_oleh"
+  bil_shift ||--o{ bil_pembayaran : "shift_id"
+  bil_shift ||--o{ bil_setoran_dokter : "shift_id"
+  mtr_dokter ||--o{ bil_setoran_dokter : "dokter_id"
+  sys_pengguna ||--o{ bil_setoran_dokter : "diserahkan_oleh"
 ```
 
 | Tabel | Induk (FK) | Unik |
 |---|---|---|
-| `bil_tagihan` | `kunjungan_id`→`reg_kunjungan`, `penjualan_umum_id`→`apt_penjualan_umum` | (no_tagihan); (kunjungan_id); (penjualan_umum_id) |
+| `bil_tagihan` | `kunjungan_id`→`reg_kunjungan`, `penjualan_umum_id`→`apt_penjualan_umum` | (no_tagihan); (kunjungan_id, jenis); (penjualan_umum_id) |
 | `bil_tagihan_detail` | `tagihan_id`→`bil_tagihan` | — |
-| `bil_pembayaran` | `tagihan_id`→`bil_tagihan`, `metode_bayar_id`→`mtr_metode_bayar`, `kasir_id`→`sys_pengguna` | — |
+| `bil_pembayaran` | `tagihan_id`→`bil_tagihan`, `metode_bayar_id`→`mtr_metode_bayar`, `kasir_id`→`sys_pengguna`, `shift_id`→`bil_shift` | — |
+| `bil_shift` | `pengguna_id`→`sys_pengguna`, `ditutup_oleh`→`sys_pengguna` | — |
+| `bil_setoran_dokter` | `shift_id`→`bil_shift`, `dokter_id`→`mtr_dokter`, `diserahkan_oleh`→`sys_pengguna` | (shift_id, dokter_id) |
 
 ### sts_ — SatuSehat
 Status sinkronisasi SATUSEHAT per resource dan token akses.
@@ -264,15 +272,16 @@ _Relasi: `sts_sinkronisasi.bergantung_pada_id` → `sts_sinkronisasi.id` (self-r
 | Aturan | Tabel/kolom |
 |---|---|
 | `obat_id` wajib jika `jenis = reguler`; racikan wajib punya bahan | `erm_resep_item`, `erm_resep_racikan_bahan` |
-| Tepat satu dari `kunjungan_id` / `penjualan_umum_id` terisi | `bil_tagihan` |
+| Tepat satu dari `kunjungan_id` / `penjualan_umum_id` terisi; maksimal satu tagihan per `(kunjungan_id, jenis)` | `bil_tagihan` |
 | `dokter_id` wajib saat daftar (mandiri) / sebelum kunci (rujukan) | `lab_permintaan` |
 | Transisi status kunjungan hanya yang sah | `reg_kunjungan.status` |
 | `jumlah_sisa` batch = Σ `apt_mutasi_stok.jumlah`; hanya diubah `StokService` | `apt_stok_batch`, `apt_mutasi_stok` |
 | Stok hanya keluar dari batch belum kedaluwarsa (FEFO) | `apt_stok_batch` |
-| Data terkunci tidak boleh diubah | `erm_pemeriksaan.dikunci`, `lab_permintaan.dikunci` |
+| Data terkunci tidak boleh diubah; lab terkunci saat verifikasi (D40) | `erm_pemeriksaan.dikunci`, `lab_permintaan.dikunci` |
 | `total = subtotal − diskon`; tagihan lunas bila Σ pembayaran ≥ total | `bil_tagihan`, `bil_pembayaran` |
+| Maksimal satu shift terbuka per akun; pembayaran wajib `shift_id` | `bil_shift`, `bil_pembayaran` |
 | Retur pasien hanya jika `sys_pengaturan.retur_pasien_diizinkan = 1` | `apt_retur_pasien` |
-| Tarif/harga disnapshot saat transaksi | `erm_tindakan.tarif`, `lab_permintaan_detail.tarif`, `erm_resep_item.harga_satuan`, `bil_tagihan_detail` |
+| Tarif/harga disnapshot saat transaksi | `erm_pemeriksaan.tarif_konsultasi`, `lab_permintaan_detail.tarif`, `erm_resep_item.harga_satuan`, `apt_stok_batch.harga_jual`, `apt_pengeluaran_resep.harga_jual_satuan`, `bil_tagihan_detail` |
 
 Satu-satunya constraint `CHECK` di DB: `apt_stok_batch.jumlah_sisa >= 0`.
 
@@ -293,7 +302,7 @@ Satu-satunya constraint `CHECK` di DB: `apt_stok_batch.jumlah_sisa >= 0`.
 | `sts_sinkronisasi.payload/respons` | data pribadi — jangan di-log |
 
 ## Seed awal
-`DataAwalSeeder`: peran (admin, resepsionis, perawat, dokter, petugas_lab, apoteker, kasir), poli (INT, GIG, SRF, LAB), metode bayar, pengaturan (`biaya_jasa_racik`, `retur_pasien_diizinkan`, `batas_peringatan_kedaluwarsa_hari`), akun `admin`. `HakAksesAwalSeeder`: menu (`menu:sinkron`) + hak per peran.
+`DataAwalSeeder`: peran (admin, resepsionis, perawat, dokter, petugas_lab, apoteker, kasir), poli (INT, GIG, SRF, LAB), metode bayar, pengaturan (`biaya_jasa_racik`, `embalase`, `uang_kopi`, `simpanan_default`, `margin_bebas`, `margin_bebas_terbatas`, `margin_keras`, `margin_narkotika`, `margin_psikotropika`, `retur_pasien_diizinkan`, `batas_peringatan_kedaluwarsa_hari`), akun `admin`. `HakAksesAwalSeeder`: menu (`menu:sinkron`) + hak per peran.
 
 `PemetaanSatuSehatSeeder`: lokasi `APT` di `mtr_lokasi`. Saat ini belum dipanggil `DatabaseSeeder`; jalankan manual dengan `php artisan db:seed --class=PemetaanSatuSehatSeeder`.
 
@@ -303,3 +312,12 @@ Satu-satunya constraint `CHECK` di DB: `apt_stok_batch.jumlah_sisa >= 0`.
 - Kolom sensitif baru: `mtr_nakes.nik` (encrypted), `mtr_nakes.nik_hash` (HMAC).
 - Aturan app-level baru: kolom pemetaan boleh kosong, tetapi item belum terpetakan **tidak boleh dikirim** (status `gagal` dengan pesan jelas); satu `ServiceRequest` per kode pemeriksaan; `Specimen.type` wajib sebelum kirim lab.
 - Skrip DDL setara: `docs/schema-delta-satusehat.sql` (sudah diuji pada MariaDB 10.11 di atas schema dasar).
+
+## Migration `2026_11_01_000001_alur_apotek_kasir_lab` (rencana, total **62 tabel**)
+- **Tabel baru**: `bil_shift`, `bil_setoran_dokter`.
+- **Kolom baru**: `mtr_obat` (`zat_aktif`, `komposisi`); `mtr_pemeriksaan_lab.kategori` enum(`lab`,`radiologi`); `reg_ttv` (`frekuensi_napas`, `gula_darah`, `skala_nyeri`); `erm_pemeriksaan` (`tarif_konsultasi`, `riwayat_kesehatan`); `apt_penerimaan.ppn_persen`; `apt_stok_batch.harga_jual`; `apt_pengeluaran_resep.harga_jual_satuan`; `bil_tagihan.jenis`; `bil_pembayaran` (`shift_id`, `nama_bank`, `nama_pengirim`).
+- **Tanpa kolom baru**: cara pulang memakai kolom yang sudah ada di `reg_kunjungan` (`kode_cara_keluar`, `nama_cara_keluar`).
+- **Enum diubah**: `reg_kunjungan.status` tanpa `kasir`; `bil_tagihan_detail.komponen` + `embalase`, `uang_kopi`, `simpanan`.
+- **Kolom dihapus**: `mtr_obat.harga_jual` (harga pindah ke `apt_stok_batch`).
+- **Unik diubah**: `bil_tagihan` dari `(kunjungan_id)` menjadi `(kunjungan_id, jenis)`.
+- Aturan app-level baru: satu shift terbuka per akun; pembayaran wajib shift; harga batch tidak berubah setelah dibuat; hasil lab dikunci saat verifikasi; `selesai` menunggu kedua tagihan lunas.

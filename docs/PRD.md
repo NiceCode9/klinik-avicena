@@ -1,6 +1,7 @@
 # PRODUCT REQUIREMENT DOCUMENT (PRD)
-## SISTEM INFORMASI MANAJEMEN (SIM) KLINIK AVICENA (v2.2)
+## SISTEM INFORMASI MANAJEMEN (SIM) KLINIK AVICENA (v2.3)
 
+> v2.3 (30 Okt 2026): alur apotek sebagai kasir poli, kasir lab terpisah, harga jual per batch `(HNA + PPN) × (1 + margin golongan)`, shift kasir, setoran dokter, dan satu form ERM penyakit dalam (D34–D43).
 > v2.2 (29 Okt 2026): cakupan SATUSEHAT dipangkas ke Encounter, Observation (TTV dan hasil lab), Composition, ServiceRequest, dan Specimen (D33); Condition dan Medication* tidak dikirim.
 > v2.1 (21 Okt 2026): selaras dengan keputusan D14–D22 dan `docs/satusehat-kebutuhan-data.md` — siklus Encounter, event SATUSEHAT, dosis terstruktur, pencatatan spesimen, dan penguncian data.
 
@@ -26,10 +27,10 @@
 ## 2. PROFIL PENGGUNA (USER PERSONA)
 
 * **Resepsionis / Perawat:** Melakukan pendaftaran pasien *walk-in*, pemeriksaan TTV (Tanda-Tanda Vital), dan cetak nomor antrean.
-* **Dokter (Spesialis Dalam, Gigi, Saraf):** Menginput Rekam Medis Elektronik (ERM), membuat e-Resep, dan memberikan rujukan internal ke Laboratorium.
-* **Petugas Laboratorium:** Mendaftarkan pasien lab mandiri, memproses rujukan lab dari dokter, dan menginput hasil pemeriksaan.
-* **Apoteker / Petugas Farmasi:** Mengelola inventaris obat (stok masuk, opname, retur), memvalidasi e-Resep, meracik obat dengan kalkulasi stok otomatis, serta melayani pembelian obat umum.
-* **Kasir:** Menerima billing otomatis dari poli, lab, maupun apotek, serta memproses pembayaran pasien.
+* **Dokter:** Menginput Rekam Medis Elektronik (ERM) penyakit dalam, menetapkan biaya periksa, membuat e-Resep, dan memberikan rujukan lab/radiologi.
+* **Petugas Laboratorium:** Mendaftarkan pasien lab mandiri, memproses rujukan lab, menginput hasil, mengunci hasil, dan menerima pembayaran lab.
+* **Apoteker (merangkap kasir):** Mengelola inventaris obat, memvalidasi/menyerahkan e-Resep, melayani penjualan umum, menerima pembayaran pasien poli (termasuk biaya periksa), dan menyetorkan pendapatan dokter per shift.
+* **Kasir:** Peran lama tidak dipakai lagi; pembayaran dipegang apoteker (poli/apotek) dan petugas lab (lab).
 
 ---
 
@@ -37,40 +38,45 @@
 
 ### 3.1 Modul Pendaftaran & Antrean (Onsite Only)
 * **Pencarian Pasien:** Validasi berbasis **NIK (Nomor Induk Kependudukan)**. Jika NIK belum terdaftar, perawat menginput data rekam medis baru pasien.
-* **Pemeriksaan TTV:** Sebelum masuk ke poli, perawat wajib menginput data Tanda-Tanda Vital (Tekanan Darah, Nadi, Suhu, Berat Badan) ke dalam sistem. Untuk lab mandiri, TTV bersifat opsional.
-* **Status Kunjungan:** Alur status `terdaftar → ttv → menunggu → diperiksa → lab/farmasi → kasir → selesai` (lab dan farmasi dapat berjalan paralel), atau `batal` dengan alasan. Setiap perubahan status dicatat beserta waktu dan petugas; waktu datang, mulai, dan selesai pemeriksaan tersimpan.
+* **Pemeriksaan TTV:** Perawat wajib menginput TTV di loket pendaftaran sebelum nomor antrean diterbitkan: tekanan darah, nadi, frekuensi napas, suhu, berat badan, tinggi badan, saturasi oksigen, gula darah, dan skala nyeri. Dokter boleh memperbarui. Untuk lab mandiri, TTV opsional.
+* **Status Kunjungan:** Alur poli `terdaftar → ttv → menunggu → diperiksa → farmasi/lab → selesai`; lab mandiri `terdaftar → lab → selesai`; apotek umum `terdaftar → farmasi → selesai`. Tidak ada status `kasir`. Lab dan farmasi dapat berjalan paralel; `selesai` tercapai setelah tagihan farmasi dan lab lunas. Setiap perubahan status dicatat beserta waktu dan petugas.
 * **Format Antrean Terpisah:** Antrean dipisah per jenis layanan dan otomatis di-reset menjadi `1` setiap hari. Format penomoran:
     * Poli Penyakit Dalam: `INT-001`
     * Poli Gigi: `GIG-001`
     * Poli Saraf: `SRF-001`
     * Laboratorium: `LAB-001`
 
-### 3.2 Modul ERM & e-Resep (Spesialis & Umum)
-* **Metode Input:** Berbasis **SOAP** (*Subjective, Objective, Assessment, Plan*) dan kodefikasi penyakit **ICD-10**.
-* **Referensi Form Medis Khusus:**
-    * *Poli Penyakit Dalam:* Form riwayat penyakit kronis, status metabolik, dan review sistem organ.
-    * *Poli Gigi:* Integrasi grafik **Odontogram Digital** untuk mencatat kondisi per gigi pasien.
-    * *Poli Saraf:* Form evaluasi motorik, sensorik, dan pemeriksaan saraf kranial.
-* **Output Dokter:** Dokter dapat menerbitkan e-Resep langsung ke Farmasi atau mengirim permintaan Pemeriksaan Lab internal secara digital.
-* **e-Resep:** Resep reguler dan racikan memuat dosis terstruktur (dosis, satuan, frekuensi, periode, rute, lama hari, aturan tambahan); teks aturan pakai tetap ditampilkan. Resep tidak dapat diubah setelah divalidasi apoteker.
-* **Penyelesaian Pemeriksaan:** Dokter wajib mengisi cara keluar saat menyimpan final; waktu mulai dan selesai pemeriksaan tercatat.
+### 3.2 Modul ERM & e-Resep
+* **Satu Form:** Form ERM penyakit dalam dibuat otomatis saat pendaftaran dan dipakai untuk seluruh kunjungan poli penyakit dalam. Form khusus poli lain, odontogram, dan tindakan medis tidak dipakai.
+* **Isi Form:** Identitas pasien, judul poli, tombol Riwayat Lab/Radiologi, tanggal/jam, Subjektif dan Objektif, TTV (terisi perawat), Riwayat Kesehatan, Pemeriksaan Fisik, diagnosis ICD-10, planning lab/radiologi/e-resep/catatan, dan cara pulang.
+* **Diagnosis:** Pilihan ICD-10 (select2), satu diagnosis primer dan diagnosis sekunder tidak dibatasi.
+* **Cara Pulang:** `pulang`, `dirujuk`, atau `kontrol_lagi`, diisi saat dokter menyimpan pemeriksaan dan disimpan pada kunjungan (`reg_kunjungan.kode_cara_keluar`).
+* **e-Resep:** Reguler dan racikan memuat dosis terstruktur. Harga dan subtotal tidak ditampilkan saat meresepkan; harga diisi apoteker saat penyerahan dari harga batch. Copy riwayat e-resep tersedia; paket obat ditunda. Resep tidak dapat diubah setelah divalidasi apoteker.
+* **Biaya Periksa:** Tarif default dari `mtr_dokter.tarif_konsultasi`, dokter boleh mengubah untuk kunjungan itu; nilai disnapshot ke `erm_pemeriksaan.tarif_konsultasi`.
+* **Penyelesaian Pemeriksaan:** Waktu mulai dan selesai tercatat; data medis dikunci setelah tagihan farmasi lunas.
 
 ### 3.3 Modul Laboratorium
 * **Alur Pasien Rujukan:** Pasien yang dirujuk oleh dokter spesialis akan masuk ke antrean laboratorium (`LAB-X`) secara otomatis.
 * **Alur Pasien Mandiri (Walk-in):** Pasien yang datang langsung untuk tes lab (misal: Tes Darah Lengkap) didata oleh petugas lab menggunakan NIK, lalu masuk ke antrean laboratorium.
 * **Pencatatan Spesimen:** Pengambilan spesimen dicatat (jenis, waktu, petugas). Status: `menunggu_diambil → diambil → diterima | ditolak`; hasil hanya dapat diinput setelah spesimen diterima, dan penolakan wajib catatan.
 * **Permintaan per Pemeriksaan:** Setiap kode pemeriksaan dicatat sebagai satu baris detail permintaan; hasil per parameter menyimpan nilai rujukan dan penanda normal/rendah/tinggi.
-* **Billing:** Hasil pemeriksaan lab dikunci di sistem, dan rincian biayanya langsung dikirim ke modul Kasir.
+* **Kategori:** Master pemeriksaan lab punya penanda `lab` atau `radiologi`; laporan keuangan dipisah per kategori.
+* **Billing:** Hasil dikunci saat verifikasi, sebelum pembayaran. Setelah semua hasil selesai, tagihan lab dibuat terpisah dari tagihan apotek dan dibayar di kasir lab. Pasien lab mandiri membayar setelah hasil selesai.
 
 ### 3.4 Modul Inventaris Obat & Apotek (DIPERBARUI)
 Modul ini menangani sisi pemenuhan resep pasien (Farmasi), penjualan retail (Apotek), serta rantai pasok logistik obat (*Supply Chain*).
 
-* **Apotek Umum:** Melayani pembelian obat langsung secara retail untuk masyarakat umum tanpa resep dokter.
+* **Satu Lokasi Stok:** Seluruh stok berada di apotek; tidak ada gudang atau distribusi antar-lokasi.
+* **Harga Jual:** `harga_jual = (HNA + PPN faktur) × (1 + margin golongan)`. PPN diisi per faktur; kosong berarti HNA sudah termasuk PPN. Margin per golongan di pengaturan. Harga disnapshot per batch dan tidak berubah setelahnya.
+* **Komponen Tambahan:** Embalase per item reguler, jasa racik per item racikan, uang kopi dan simpanan sekali per transaksi. Nilai embalase/jasa racik/uang kopi dari pengaturan; simpanan diisi kasir dengan nilai default.
+* **Kasir Poli:** Apoteker menerima pembayaran biaya periksa + obat + komponen tambahan untuk semua pasien poli, termasuk yang tidak mendapat resep. Uang kopi dan simpanan masuk kas apotek.
+* **Apotek Umum:** Pembeli umum hanya membayar harga jual obat, tanpa komponen tambahan.
+* **Shift:** Kasir membuka/menutup shift manual; satu akun satu shift terbuka. Setoran dokter dihitung per dokter per shift dari biaya periksa yang dibayar.
 * **Alur Resep:** Validasi apoteker memeriksa ketersediaan stok; penyerahan memotong stok FEFO per batch dan mencatat batch yang dipakai. Status resep: `diterbitkan → divalidasi → diracik (jika ada) → diserahkan | batal`.
 * **Pemetaan Obat:** Obat tanpa kode KFA tetap boleh diresepkan dan diserahkan. Selama MedicationRequest/MedicationDispense di luar cakupan SATUSEHAT (D33), pemetaan KFA tidak menghambat layanan.
 * **Manajemen Obat Masuk (Logistik Pengadaan):**
     * Mencatat penerimaan obat dari Supplier/PBF (Pedagang Besar Farmasi).
-    * Pencatatan wajib menyertakan: **Nomor Faktur, Nama Supplier, Tanggal Kedaluwarsa (Expiry Date), Nomor Bets (Batch Number), dan Harga Beli**.
+    * Pencatatan wajib menyertakan: **Nomor Faktur, Nama Supplier, Tanggal Kedaluwarsa (Expiry Date), Nomor Bets (Batch Number), Harga Beli (HNA), dan PPN faktur (opsional)**.
     * Mendukung metode penilaian persediaan (misal: FIFO/FEFO) guna memastikan obat yang mendekati masa kedaluwarsa dikeluarkan terlebih dahulu.
 * **Manajemen Retur Obat:**
     * **Retur ke Supplier:** Mengakomodasi pengembalian obat yang rusak, cacat, atau mendekati kedaluwarsa kepada PBF dengan pelacakan nomor faktur asal.
@@ -78,16 +84,16 @@ Modul ini menangani sisi pemenuhan resep pasien (Farmasi), penjualan retail (Apo
 * **Manajemen Obat Racikan & Logika Potong Stok:**
     * Apoteker dapat membuat menu racikan dengan memilih beberapa bahan baku obat dari inventaris apotek.
     * Saat resep dikonfirmasi selesai diracik, stok masing-masing bahan baku obat terpotong secara otomatis secara *real-time* berdasarkan kuantitas komponennya.
-* **Biaya Jasa Racik:** Ditetapkan sebagai **Biaya Flat** per resep racikan (tidak dihitung per jumlah bungkus/kapsul hasil akhir).
+* **Biaya Jasa Racik:** **Flat per item racikan** (tidak dihitung per jumlah bungkus/kapsul), disnapshot saat penyerahan.
 * **Penyesuaian Stok (Stock Opname):** Fitur untuk mencocokkan stok fisik di apotek dengan stok di sistem secara berkala beserta pencatatan varians/selisih.
 
 ### 3.5 Modul Billing / Kasir
-* **Konsolidasi Tagihan:** Kasir menerima total tagihan otomatis yang menggabungkan seluruh komponen tindakan:
-    * Biaya Konsultasi Dokter Spesialis
-    * Biaya Tindakan Medis (jika ada)
-    * Biaya Pemeriksaan Laboratorium
-    * Biaya Obat (Reguler & Racikan) + Jasa Peracikan Flat
-* **Status Pembayaran:** Setelah kasir mengonfirmasi pembayaran lunas, status kunjungan menjadi "selesai"; data rekam medis dan hasil lab dikunci.
+* **Dua Tagihan:** Satu kunjungan dapat memiliki tagihan farmasi dan tagihan lab yang terpisah. Apotek menagih pasien poli; lab menagih pemeriksaannya sendiri.
+* **Tagihan Farmasi:** Biaya periksa + obat + embalase + jasa racik + uang kopi + simpanan. Biaya periksa tetap ditagih meskipun pasien tidak mendapat resep. Penjualan umum hanya berisi harga obat.
+* **Tagihan Lab:** Tarif pemeriksaan setelah hasil selesai, dibayar di kasir lab.
+* **Pembayaran:** Tunai atau transfer. Transfer wajib nama bank dan nama pengirim; ID transfer opsional. Diskon tidak ditampilkan.
+* **Shift & Setoran:** Pembayaran hanya dapat dilakukan saat shift kasir terbuka. Setoran dokter dicatat per dokter per shift dengan metode tunai/transfer dan rincian porsi tunai/transfer.
+* **Status Pembayaran:** Tagihan lunas bila total pembayaran mencukupi. Kunjungan `selesai` setelah tagihan farmasi dan lab lunas. Data ERM dikunci saat tagihan farmasi lunas; hasil lab sudah dikunci saat verifikasi.
 
 ---
 

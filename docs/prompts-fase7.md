@@ -231,10 +231,11 @@ Tes: numerik, kualitatif, interpretasi, parameter tanpa LOINC → gagal berpesan
 ### 7C.3 Observation TTV
 ```
 Protokol sesi (PEMBUKA) berlaku.
-Tugas: ObservationTtvPayloadBuilder + listener TtvDisimpan: satu Observation per ukuran (tekanan darah, nadi, suhu, berat badan;
-sub_kunci per ukuran), induk = Encounter. Kode LOINC dan satuan UCUM sebagai konstanta di config/satusehat.php — ambil dari
+Tugas: ObservationTtvPayloadBuilder + listener TtvDisimpan: satu Observation per ukuran (tekanan darah, nadi, frekuensi napas,
+suhu, berat badan, tinggi badan, saturasi oksigen, gula darah, skala nyeri; sub_kunci per ukuran), induk = Encounter.
+Kode LOINC dan satuan UCUM sebagai konstanta di config/satusehat.php — ambil dari
 halaman resmi (Pemeriksaan Fisik / Pelayanan Kefarmasian untuk BB-TB), catat di docs/satusehat-payload-observation.md.
-Tes: empat ukuran, nilai kosong dilewati, urutan setelah Encounter.
+Tes: sembilan ukuran, nilai kosong dilewati, urutan setelah Encounter.
 ```
 
 ### 7C.4 (Opsional) DiagnosticReport — ARSIP (jangan dikerjakan, D33)

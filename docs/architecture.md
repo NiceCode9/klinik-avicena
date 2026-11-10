@@ -102,16 +102,15 @@ stateDiagram-v2
   ttv --> menunggu: masuk antrean poli
   menunggu --> diperiksa: dokter memanggil
   diperiksa --> lab: ada rujukan lab
-  diperiksa --> farmasi: ada e-resep
-  diperiksa --> kasir: tanpa lab & resep
-  lab --> farmasi: hasil dikunci, ada resep
-  lab --> kasir: hasil dikunci
-  farmasi --> kasir: resep selesai
-  kasir --> selesai: pembayaran dikonfirmasi
+  diperiksa --> farmasi: pemeriksaan disimpan (tagihan farmasi dibuat)
+  lab --> farmasi: hasil lab selesai
+  farmasi --> lab: tagihan farmasi lunas, lab belum selesai
+  farmasi --> selesai: tagihan farmasi lunas
+  lab --> selesai: semua tagihan lunas
   terdaftar --> batal
   menunggu --> batal
 ```
-Lab mandiri dan apotek umum membuat kunjungan sendiri (`jenis_kunjungan = lab_mandiri | apotek_umum`) dan melewati TTV/poli. Catatan desain tentang lab + farmasi paralel ada di `business-rules.md` §1.
+Lab mandiri dan apotek umum membuat kunjungan sendiri (`jenis_kunjungan = lab_mandiri | apotek_umum`) dan melewati TTV/poli. Lab mandiri: `terdaftar → lab → selesai`; apotek umum: `terdaftar → farmasi → selesai`. Aturan paralel lab/farmasi ada di `business-rules.md` §1 dan D42.
 
 ## 8. Alur event domain → SATUSEHAT
 Aksi domain yang relevan memancarkan event `afterCommit`; listener SATUSEHAT yang membuat baris sinkronisasi dan job, bukan controller.
