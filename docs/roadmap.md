@@ -51,13 +51,13 @@ Master dibutuhkan semua modul, kerjakan lebih dulu. Semua CRUD memakai pola yang
 | ✅     | `AntreanService`: nomor harian per poli dengan lock (+ tes konkurensi)              | M      |
 | ✅     | `KunjunganService`: nomor kunjungan atomik, simpan TTV + antrean, event domain      | S      |
 | ✅     | `StatusKunjunganService`: matriks transisi + `sinkron()` lab/farmasi                | M      |
-| ⬜     | Form pendaftaran kunjungan poli + cetak nomor antrean (thermal/print browser)       | M      |
-| ⬜     | Input TTV (UI, wajib sebelum poli)                                                  | S      |
-| ⬜     | Daftar/panggil antrean per poli, ubah status                                        | M      |
-| ⬜     | (Opsional) layar TV antrean                                                         | S      |
+| ✅     | Form pendaftaran kunjungan poli + cetak nomor antrean (thermal/print browser)       | M      |
+| ✅     | Input TTV (UI, wajib sebelum poli)                                                  | S      |
+| ✅     | Daftar/panggil antrean per poli, ubah status                                        | M      |
+| ✅     | (Opsional) layar TV antrean                                                         | S      |
 
 **Selesai bila**: pasien baru/lama bisa didaftarkan, nomor `INT-001` dst. unik & reset harian meski 2 petugas mendaftar bersamaan, TTV tersimpan, status kunjungan berpindah benar.
-**Tercapai sebagian** (24 Okt 2026): `PendaftaranService`, `AntreanService`, `KunjunganService`, dan `StatusKunjunganService` selesai; seluruh tes hijau. Berikutnya form pendaftaran + cetak nomor, TTV UI, lalu daftar/panggil antrean.
+**Tercapai** (10 Nov 2026): seluruh item termasuk form pendaftaran, TTV, antrean, dan layar TV selesai. Revisi alur baru (TTV tambahan + pilih dokter saat daftar) ada di **4B.3**.
 
 ## Fase 3 — Rekam medis & e-resep
 
@@ -70,6 +70,8 @@ Master dibutuhkan semua modul, kerjakan lebih dulu. Semua CRUD memakai pola yang
 | Penguncian pemeriksaan (dipanggil dari Billing saat tagihan farmasi lunas) | S      |
 
 Form khusus penyakit dalam/saraf, odontogram, dan tindakan medis tidak dikerjakan (D41). Tabel lama dibiarkan tidak dipakai.
+
+**Status 10 Nov 2026**: form SOAP, e-resep, rujukan lab, dan riwayat kunjungan selesai dengan alur lama. Rekonsiliasi alur baru ada di **4B.2** (penguncian dari tagihan farmasi), **4B.3** (form ERM tunggal + tarif konsultasi), dan **4B.4** (harga resep diisi apoteker).
 
 **Selesai bila**: dokter menyelesaikan pemeriksaan end-to-end dalam satu form, e-resep muncul di apotek, rujukan lab masuk antrean `LAB-xxx` otomatis.
 
@@ -85,9 +87,23 @@ Form khusus penyakit dalam/saraf, odontogram, dan tindakan medis tidak dikerjaka
 | Cetak hasil lab                                                                               | S      |
 
 **Status 21 Okt 2026**: tabel `lab_spesimen`, model `Lab\Spesimen`, dan menu `lab.spesimen` sudah ada; alur/UI belum.
-**Status 28 Okt 2026**: layanan domain Lab selesai — `LabService` (mulaiProses, simpanHasil snapshot + penanda, kunci + sinkron status, event `LabDikunci`), `SpesimenService` (catat pengambilan, ubah status D22, tautan ke detail, event `SpesimenDiambil`), dan `LabMandiriService` (pendaftaran lab mandiri, antrean LAB, event `LabDiminta`). UI Lab/pendaftaran masih ⬜.
+**Status 10 Nov 2026**: seluruh alur dan UI Lab selesai — antrean rujukan & mandiri, spesimen, input hasil, kunci hasil, dan cetak hasil. Tagihan lab (D40) ditambahkan di **4B.2**.
 
 **Selesai bila**: kedua alur (rujukan & mandiri) sampai tagihan; hasil terkunci tidak bisa diubah; `dokter_id` wajib sebelum kunci.
+
+## Fase 4B — Rekonsiliasi alur baru (D34–D43)
+
+Fase 2–4 sudah selesai dengan alur lama. Fase ini menyesuaikannya dengan D34–D43 sebelum masuk Fase 5. Prompt: `prompts.md` 4B.1–4B.5.
+
+| Status | Item | Ukuran |
+|---|---|---|
+| ⬜ | 4B.1 Migration `2026_11_01_000001_alur_apotek_kasir_lab` + model + seeder pengaturan/menu | L |
+| ⬜ | 4B.2 `TagihanService` + `StatusKunjunganService` baru (tanpa `kasir`) + tagihan farmasi saat final + tagihan lab saat kunci | L |
+| ⬜ | 4B.3 Pendaftaran pilih dokter, TTV tambahan, form ERM tunggal, tarif konsultasi, cara pulang | L |
+| ⬜ | 4B.4 e-Resep tanpa harga, copy riwayat, modal lab tanpa kelas/ruangan, cetak resep + SIP | M |
+| ⬜ | 4B.5 P-AUDIT Fase 4B | — |
+
+**Selesai bila**: 4B.1–4B.4 lulus tes, aplikasi tetap jalan setelah `mtr_obat.harga_jual` dihapus, dan status kunjungan tidak lagi memakai `kasir`.
 
 ## Fase 5 — Apotek, farmasi, inventaris
 
@@ -118,7 +134,7 @@ Fase paling berisiko: kerjakan `StokService` + tes dulu, baru UI.
 
 **Selesai bila**: satu kunjungan dapat punya tagihan farmasi dan lab yang terpisah; pembayaran hanya saat shift terbuka; setoran dokter = biaya periksa lunas pada shift; laporan lab dan apotek tidak tercampur.
 
-**Status 30 Okt 2026**: revisi alur D34–D43 disetujui; rencana migration & service tercatat di `database.md`, `business-rules.md`, dan `prompts.md`. Implementasi belum dimulai.
+**Status 30 Okt 2026**: revisi alur D34–D43 disetujui. `TagihanService` (6.1) ditarik ke **4B.2** karena dipakai Fase 3/4/5. Sisa 6.2–6.6 dikerjakan setelah Fase 5; migration dimulai di 4B.1.
 
 ## Fase 7 — Integrasi SATUSEHAT (dipecah)
 | Sub-fase | Isi | Ukuran |
@@ -147,7 +163,7 @@ Fase paling berisiko: kerjakan `StokService` + tes dulu, baru UI.
 
 ## Urutan & ketergantungan
 
-`Fase 0 → 1 → 2 → 3 → (4 ∥ 5) → 6 → 7 → 8`. Fase 4 dan 5 bisa paralel setelah Fase 3. Fase 7 bisa dimulai lebih awal (sandbox) begitu Fase 3 selesai, tapi rilis menunggu Fase 6.
+`Fase 0 → 1 → 2 → 3 → 4 → 4B → 5 → 6 → 7 → 8`. Fase 4B adalah rekonsiliasi alur baru dan wajib sebelum Fase 5. Fase 7 bisa dimulai lebih awal (sandbox) begitu Fase 3 selesai, tapi rilis menunggu Fase 6.
 
 ## Di luar lingkup (belum diminta di PRD)
 

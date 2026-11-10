@@ -113,7 +113,8 @@ Jangan mengubah perilaku lain. Jika perbaikan menyentuh aturan di docs/, laporka
 
 ---
 
-# FASE 2 — Pendaftaran & Antrean
+# FASE 2 - Pendaftaran & Antrean
+> ✅ **Sudah dikerjakan dengan alur lama. Jangan diulang.** Revisi alur baru ada di **4B.3** (TTV frekuensi napas/gula darah/skala nyeri, pilih dokter saat daftar, ERM otomatis).
 Dokumen utama: `business-rules.md` §1–§4, `conventions.md` (pola AntreanService), `permissions.md`.
 
 ### 2.1 PendaftaranService (pasien)
@@ -233,6 +234,7 @@ Ini opsional; jika menurutmu melanggar AGENTS.md aturan #6/#11, jelaskan dan tan
 ---
 
 # FASE 3 — Rekam Medis & e-Resep
+> ✅ **Sudah dikerjakan dengan alur lama. Jangan diulang.** Revisi alur baru ada di **4B.2** (tagihan & penguncian), **4B.3** (form ERM tunggal, tarif konsultasi, cara pulang), dan **4B.4** (e-resep tanpa harga).
 Dokumen utama: `business-rules.md` §5–§7, `permissions.md` (Policy), `database.md` (tabel erm_*).
 
 ### 3.1 PemeriksaanService (SOAP + diagnosis)
@@ -358,7 +360,8 @@ akses tercatat di sys_log_aktivitas (aksi "lihat") karena ini data medis sensiti
 
 ---
 
-# FASE 4 — Laboratorium
+# FASE 4 - Laboratorium
+> ✅ **Sudah dikerjakan. Jangan diulang.** Tambahan alur baru ada di **4B.2** (tagihan lab dibuat saat kunci, dibayar di kasir lab).
 Dokumen utama: `business-rules.md` §7, `permissions.md`, decisions D8, D17, D22.
 
 ### 4.1 LabService
@@ -424,7 +427,104 @@ Tes: belum dikunci → 403/redirect; data cocok; izin.
 
 ---
 
-# FASE 5 — Apotek, Farmasi, Inventaris
+# FASE 4B — Rekonsiliasi Alur Baru (D34–D43)
+Fase 2–4 sudah dikerjakan memakai alur lama. Kerjakan **4B.1–4B.4 sebelum Fase 5**; setelah itu lanjut 5.1 seperti biasa.
+
+Dokumen utama: `business-rules.md` §1, §2, §4–§9; `database.md` (delta migration); `decisions.md` D34–D43.
+
+### 4B.1 Migration & fondasi skema (D34–D43)
+```
+Protokol sesi (PEMBUKA) berlaku.
+Tugas: migration BARU `2026_11_01_000001_alur_apotek_kasir_lab` + penyesuaian model/request/seed
+supaya aplikasi tetap jalan. BELUM ada logika billing di tugas ini.
+Dokumen: database.md ("Migration 2026_11_01_000001..."), business-rules.md §1, §4–§9, decisions D34–D43.
+Isi migration:
+- Tabel baru: bil_shift, bil_setoran_dokter (kolom sesuai database.md).
+- Kolom baru: mtr_obat.zat_aktif/komposisi; mtr_pemeriksaan_lab.kategori enum(lab,radiologi);
+  reg_ttv.frekuensi_napas/gula_darah/skala_nyeri; erm_pemeriksaan.tarif_konsultasi/riwayat_kesehatan;
+  apt_penerimaan.ppn_persen; apt_stok_batch.harga_jual; apt_pengeluaran_resep.harga_jual_satuan;
+  bil_tagihan.jenis; bil_pembayaran.shift_id/nama_bank/nama_pengirim.
+- Enum: reg_kunjungan.status tanpa 'kasir' — UPDATE ... SET status='farmasi' WHERE status='kasir' dulu,
+  lalu DB::statement MODIFY; bil_tagihan_detail.komponen + embalase/uang_kopi/simpanan.
+- Unik: bil_tagihan (kunjungan_id) menjadi (kunjungan_id, jenis).
+- Hapus mtr_obat.harga_jual setelah semua pemakaian dibersihkan: ResepService (harga_satuan = 0),
+  SimpanObatRequest, form/index obat, ObatCrudTest, ResepServiceTest.
+- down(): balikkan semampunya; beri komentar bahwa status 'kasir' tidak dipulihkan otomatis.
+Model/seed: Billing\Shift + Billing\SetoranDokter (relasi, fillable, cast); sesuaikan model lain;
+sys_pengaturan (embalase, uang_kopi, simpanan_default, margin_bebas, margin_bebas_terbatas, margin_keras,
+margin_narkotika, margin_psikotropika); config/menu.php (apotek.kasir, apotek.shift, apotek.setoran_dokter,
+lab.kasir, lab.shift) + HakAksesAwalSeeder.
+Tes: migrate:fresh --seed lulus; grep harga_jual di app/resources bersih; tes obat & resep lama tetap lulus.
+```
+
+### 4B.2 TagihanService + StatusKunjunganService baru (ditarik dari 6.1)
+```
+Protokol sesi (PEMBUKA) berlaku.
+Tugas: App\Services\Billing\TagihanService dan rombak StatusKunjunganService. Ini 6.1 yang dipindah lebih
+awal karena dipakai Fase 3/4/5/6.
+Dokumen: business-rules.md §9.1–§9.4, §1; decisions D36, D37, D42; database.md (bil_*).
+Aturan:
+- TagihanService::susunFarmasi(Kunjungan|PenjualanUmum), susunLab(Kunjungan), tambahDetail().
+  IDEMPOTEN (updateOrCreate per referensi_tipe+referensi_id); uang bcmath, bukan float.
+- Farmasi: konsultasi dari erm_pemeriksaan.tarif_konsultasi; uang_kopi + simpanan default sekali per
+  tagihan; obat/embalase/jasa_racik menyusul di 5.4/5.5. Selalu dibuat untuk pasien poli saat final,
+  termasuk tanpa resep.
+- Lab: rincian dari lab_permintaan_detail (tarif snapshot) saat kunci.
+- StatusKunjunganService: transisi sesuai business-rules §1 (tanpa 'kasir'); sinkron() memilih
+  lab / farmasi / selesai menurut lab terkunci+lunas dan tagihan farmasi lunas.
+- PemeriksaanService::simpanFinal: isi tarif_konsultasi (default mtr_dokter.tarif_konsultasi, boleh dari
+  input dokter), simpan riwayat_kesehatan, buat/segarkan tagihan farmasi, lalu sinkron.
+- LabService::kunci: setelah dikunci buat/segarkan tagihan lab (jenis=lab), lalu sinkron.
+- LabMandiriService: terdaftar→lab; selesai hanya setelah tagihan lab lunas.
+Tes: invarian §10 no.5, 7, 9; tanpa resep tetap ada baris konsultasi; lab dan farmasi terpisah;
+idempotensi susun ulang; tagihan lunas tidak bisa disusun ulang.
+```
+
+### 4B.3 Revisi Pendaftaran, TTV, dan Form ERM (D41)
+```
+Protokol sesi (PEMBUKA) berlaku.
+Tugas: sesuaikan fitur Fase 2–3 dengan D41.
+Dokumen: business-rules §2, §4, §5; PRD §3.2; decisions D41; database.md.
+Aturan:
+- Pendaftaran poli: petugas memilih poli + dokter; erm_pemeriksaan kosong langsung dibuat
+  (dokter_id dari pilihan, poli_id dari poli). Bila sudah ada, jangan buat baris kedua.
+- PemeriksaanService::mulai memakai pemeriksaan yang sudah ada; isi antrean/waktu_mulai/status.
+- TTV: tambah frekuensi_napas, gula_darah, skala_nyeri (FormRequest, KunjunganService::validasiTtv,
+  UI perawat, tampilan dokter). Wajib untuk kunjungan poli.
+- Form ERM tunggal: header identitas + judul poli; tombol Riwayat Lab/Radiologi; Subjektif;
+  TTV (boleh diubah dokter); riwayat_kesehatan; objektif (Pemeriksaan Fisik); ICD-10 select2
+  (satu primer, sekunder tak terbatas); planning (lab/radiologi/e-resep/catatan); cara pulang
+  (pulang/dirujuk/kontrol_lagi); tarif konsultasi.
+- Form khusus penyakit dalam/saraf, odontogram, tindakan tidak dipakai; JANGAN hapus tabelnya.
+Tes: TTV baru tervalidasi & tersimpan; ERM tidak dobel; satu primer + banyak sekunder; cara pulang wajib;
+tarif disnapshot; terkunci menolak ubah.
+```
+
+### 4B.4 Revisi e-Resep dan Modal Rujukan Lab
+```
+Protokol sesi (PEMBUKA) berlaku.
+Tugas: sesuaikan e-Resep dan modal rujukan lab dengan D36/D41.
+Dokumen: business-rules §6, §7; PRD §3.2; decisions D36.
+Aturan:
+- e-Resep dokter: harga & subtotal TIDAK ditampilkan/disimpan (harga_satuan 0, jasa racik 0);
+  tampilkan stok tersedia; racikan terstruktur (baris bahan); "Copy Riwayat e-Resep" dari kunjungan
+  sebelumnya; hapus depo tujuan, kelas, asuransi, perusahaan, PRB/konsultan/kronis, kategori,
+  jenis pasien, iter.
+- Cetak/pratinjau resep: kop klinik, format R/, identitas pasien, dokter + SIP (mtr_dokter.no_sip),
+  aturan pakai.
+- Modal rujukan lab: pasien, dokter, tanggal, catatan dokter, pilihan pemeriksaan dikelompokkan per
+  kategori (lab/radiologi); hapus kelas & ruangan.
+Tes: harga tidak muncul/tersimpan saat resep; copy riwayat menyalin item; modal lab tanpa kelas/ruangan;
+resep terkunci setelah validasi.
+```
+
+### 4B.5 P-AUDIT Fase 4B
+
+**Selesai bila:** 4B.1–4B.4 lulus dan `php artisan test --compact` hijau; setelah itu lanjut **5.1 StokService**.
+
+---
+
+# FASE 5 - Apotek, Farmasi, Inventaris
 Dokumen utama: `business-rules.md` §8 (8.1–8.7) dan §10 no.2–4. **Kerjakan service + tes dulu, UI belakangan.**
 
 ### 5.1 StokService (inti)

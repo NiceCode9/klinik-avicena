@@ -47,7 +47,7 @@
     * Laboratorium: `LAB-001`
 
 ### 3.2 Modul ERM & e-Resep
-* **Satu Form:** Form ERM penyakit dalam dibuat otomatis saat pendaftaran dan dipakai untuk seluruh kunjungan poli penyakit dalam. Form khusus poli lain, odontogram, dan tindakan medis tidak dipakai.
+* **Satu Form:** Form ERM penyakit dalam dibuat otomatis saat pendaftaran dan dipakai untuk seluruh kunjungan poli penyakit dalam. Dokter poli dipilih saat pendaftaran dan menjadi pemilik form. Form khusus poli lain, odontogram, dan tindakan medis tidak dipakai.
 * **Isi Form:** Identitas pasien, judul poli, tombol Riwayat Lab/Radiologi, tanggal/jam, Subjektif dan Objektif, TTV (terisi perawat), Riwayat Kesehatan, Pemeriksaan Fisik, diagnosis ICD-10, planning lab/radiologi/e-resep/catatan, dan cara pulang.
 * **Diagnosis:** Pilihan ICD-10 (select2), satu diagnosis primer dan diagnosis sekunder tidak dibatasi.
 * **Cara Pulang:** `pulang`, `dirujuk`, atau `kontrol_lagi`, diisi saat dokter menyimpan pemeriksaan dan disimpan pada kunjungan (`reg_kunjungan.kode_cara_keluar`).

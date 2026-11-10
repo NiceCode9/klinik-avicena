@@ -30,6 +30,7 @@ Sumber: `PRD.md` + keputusan di `decisions.md`. Item bertanda **[USULAN]** adala
 - NIK harus 16 digit angka; satu NIK = satu pasien (unique `nik_hash`). Jika NIK belum ada, perawat/petugas mendaftarkan pasien baru (data rekam medis dasar).
 - `no_rekam_medis` unik, dibuat otomatis oleh `PendaftaranService` **[format: lihat pertanyaan terbuka]**.
 - Peran `petugas_lab` boleh menambah pasien baru tetapi tidak mengubah identitas pasien yang sudah ada.
+- Saat mendaftar kunjungan poli, petugas memilih poli dan dokter; `erm_pemeriksaan` kosong dibuat otomatis dengan dokter tersebut (D41). `PemeriksaanService::mulai` memakai baris itu, bukan membuat baris baru.
 
 ## 3. Antrean
 - Satu penghitung per (poli, tanggal) di `reg_penghitung_antrean`; reset otomatis karena kunci memuat tanggal.
