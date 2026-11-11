@@ -43,6 +43,7 @@ Perbarui file ini setiap ada keputusan baru. Agen AI wajib memeriksanya sebelum 
 | D41 | Satu form ERM untuk poli penyakit dalam, dibuat otomatis saat pendaftaran. Dokter poli dipilih saat pendaftaran dan ERM otomatis memakai dokter itu. TTV diisi perawat di pendaftaran dan boleh diperbarui dokter. Diagnosis memakai ICD-10 select2 (satu primer, sekunder tak terbatas). Cara pulang: `pulang`, `dirujuk`, `kontrol_lagi`, disimpan di `reg_kunjungan.kode_cara_keluar`/`nama_cara_keluar`. Form khusus poli lain, odontogram, dan tindakan tidak dipakai. | Form contoh pemilik; fokus satu poli |
 | D42 | `reg_kunjungan.status` tidak lagi memakai `kasir`. `selesai` hanya tercapai bila tagihan farmasi lunas dan tagihan lab lunas/tidak ada; status `farmasi`/`lab` ditentukan `StatusKunjunganService::sinkron`. | Dua tagihan yang bisa dibayar dengan urutan bebas |
 | D43 | Pembayaran menerima tunai atau transfer. Transfer wajib nama bank dan nama pengirim; ID transfer opsional (`bil_pembayaran.no_referensi`). Diskon tidak ditampilkan di UI. | Instruksi pemilik 30 Okt 2026 |
+| D44 | Tagihan tidak dapat disusun ulang setelah berstatus `lunas` atau memiliki baris pembayaran. Tagihan baru bertotal 0 masih boleh disusun; `lunas()` tetap mengikuti Σ pembayaran ≥ total (§9.3). | Cegah baris berubah setelah uang diterima tanpa memblokir tagihan yang baru dibuat |
 
 ## Pertanyaan terbuka (tanyakan ke pemilik proyek sebelum implementasi final)
 | # | Pertanyaan | Default sementara |
@@ -54,7 +55,7 @@ Perbarui file ini setiap ada keputusan baru. Agen AI wajib memeriksanya sebelum 
 | Q5 | ~~Status kunjungan saat lab & farmasi berjalan paralel~~ Terjawab D42: `sinkron()` memilih `farmasi`/`lab`/`selesai` berdasarkan tagihan yang belum lunas. | — |
 | Q6 | Koreksi data medis/lab setelah terkunci (addendum? izin khusus + audit?) | Tidak ada koreksi; terkunci mutlak |
 | Q7 | TTV untuk lab mandiri wajib/opsional? | Opsional |
-| Q8 | Format `no_rekam_medis`, `no_kunjungan`, `no_resep`, `no_tagihan`, dll. | `RM-000001`, `KJ-YYYYMMDD-0001`, dst. (seq harian) |
+| Q8 | Format `no_rekam_medis`, `no_kunjungan`, `no_resep`, `no_tagihan`, dll. | `RM-000001`, `KJ-YYYYMMDD-0001`, `no_tagihan = TG-YYYYMMDD-0001`, dst. (seq harian) |
 | Q9 | ~~Pembayaran non-tunai/asuransi/BPJS, diskon, cicilan?~~ Terjawab D43: tunai/transfer (nama bank, nama pengirim, ID transfer opsional); diskon tidak ditampilkan; asuransi/BPJS/cicilan di luar lingkup. | — |
 | Q10 | ~~Laporan apa saja yang dibutuhkan?~~ Terjawab D36–D39: penjualan apotek (poli/umum, per golongan), HPP & laba kotor, rekap shift & setoran dokter, laporan lab dipisah lab/radiologi, laporan harian per shift. | — |
 | Q11 | Perangkat cetak antrean/kwitansi (thermal merk/ukuran) & layar TV antrean? | Cetak via browser (CSS print) |

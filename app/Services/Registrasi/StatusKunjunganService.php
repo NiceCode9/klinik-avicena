@@ -2,12 +2,13 @@
 
 namespace App\Services\Registrasi;
 
-use App\Models\Erm\Resep;
+use App\Models\Billing\Tagihan;
 use App\Models\Lab\Permintaan;
 use App\Models\Registrasi\Kunjungan;
 use App\Models\Registrasi\KunjunganRiwayatStatus;
 use App\Models\Sys\LogAktivitas;
 use App\Models\User;
+use App\Services\Billing\TagihanService;
 use App\Services\Registrasi\Exceptions\StatusTidakValidException;
 use Illuminate\Support\Facades\DB;
 
@@ -19,9 +20,9 @@ class StatusKunjunganService
             'terdaftar' => ['ttv', 'batal'],
             'ttv' => ['menunggu', 'batal'],
             'menunggu' => ['diperiksa', 'batal'],
-            'diperiksa' => ['lab', 'farmasi', 'selesai', 'batal'],
+            'diperiksa' => ['lab', 'farmasi', 'batal'],
             'lab' => ['farmasi', 'selesai', 'batal'],
-            'farmasi' => ['selesai', 'batal'],
+            'farmasi' => ['lab', 'selesai', 'batal'],
             'selesai' => [],
             'batal' => [],
         ],
@@ -46,6 +47,10 @@ class StatusKunjunganService
             'batal' => [],
         ],
     ];
+
+    public function __construct(
+        private TagihanService $tagihan,
+    ) {}
 
     public function pindahkan(
         Kunjungan $kunjungan,
@@ -112,30 +117,61 @@ class StatusKunjunganService
                 return null;
             }
 
-            // Baca dengan lock agar tidak memakai snapshot lama transaksi pemanggil.
             if ($this->adaPermintaanBelumTerkunci($kunjungan)) {
                 return 'lab';
             }
 
-            $resepBelumSelesai = Resep::whereHas('pemeriksaan', function ($query) use ($kunjungan) {
-                $query->where('kunjungan_id', $kunjungan->id);
-            })->lockForUpdate()
-                ->get(['id', 'status'])
-                ->contains(fn (Resep $resep) => ! in_array($resep->status, ['diserahkan', 'batal'], true));
+            $lab = $this->tagihan($kunjungan, 'lab');
+            if ($lab !== null && ! $this->tagihan->lunas($lab)) {
+                return 'lab';
+            }
 
-            return $resepBelumSelesai ? 'farmasi' : 'selesai';
+            $farmasi = $this->tagihan($kunjungan, 'farmasi');
+            if ($farmasi === null) {
+                return null;
+            }
+
+            return $this->tagihan->lunas($farmasi) ? 'selesai' : 'farmasi';
         }
 
         if ($kunjungan->jenis_kunjungan === 'lab_mandiri' && $kunjungan->status === 'lab') {
-            return $this->adaPermintaanBelumTerkunci($kunjungan) ? 'lab' : 'selesai';
+            if ($this->adaPermintaanBelumTerkunci($kunjungan)) {
+                return 'lab';
+            }
+
+            $lab = $this->tagihan($kunjungan, 'lab');
+            if ($lab !== null && ! $this->tagihan->lunas($lab)) {
+                return 'lab';
+            }
+
+            return 'selesai';
+        }
+
+        if ($kunjungan->jenis_kunjungan === 'apotek_umum') {
+            $farmasi = $this->tagihan($kunjungan, 'farmasi');
+
+            if ($farmasi === null) {
+                return null;
+            }
+
+            return $this->tagihan->lunas($farmasi) ? 'selesai' : 'farmasi';
         }
 
         return null;
     }
 
+    private function tagihan(Kunjungan $kunjungan, string $jenis): ?Tagihan
+    {
+        return Tagihan::where('kunjungan_id', $kunjungan->id)
+            ->where('jenis', $jenis)
+            ->lockForUpdate()
+            ->first();
+    }
+
     private function adaPermintaanBelumTerkunci(Kunjungan $kunjungan): bool
     {
         return $kunjungan->permintaan()
+            ->where('status', '!=', 'batal')
             ->lockForUpdate()
             ->get(['id', 'dikunci'])
             ->contains(fn (Permintaan $permintaan) => ! $permintaan->dikunci);

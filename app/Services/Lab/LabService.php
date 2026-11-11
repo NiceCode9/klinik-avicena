@@ -12,6 +12,7 @@ use App\Models\Registrasi\Antrean;
 use App\Models\Registrasi\Kunjungan;
 use App\Models\Sys\LogAktivitas;
 use App\Models\User;
+use App\Services\Billing\TagihanService;
 use App\Services\Erm\Exceptions\DataTerkunciException;
 use App\Services\Registrasi\StatusKunjunganService;
 use Illuminate\Support\Facades\DB;
@@ -20,6 +21,7 @@ class LabService
 {
     public function __construct(
         private StatusKunjunganService $statusKunjungan,
+        private TagihanService $tagihan,
     ) {}
 
     public function mulaiProses(Permintaan $permintaan, ?User $oleh = null): Permintaan
@@ -185,6 +187,7 @@ class LabService
             }
 
             if ($oleh !== null && $kunjungan !== null) {
+                $this->tagihan->susunLab($kunjungan);
                 $this->statusKunjungan->sinkron($kunjungan, $oleh);
             }
 

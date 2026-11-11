@@ -2,6 +2,7 @@
 
 use App\Events\LabDikunci;
 use App\Events\SpesimenDiambil;
+use App\Models\Billing\Tagihan;
 use App\Models\Lab\Hasil;
 use App\Models\Lab\Permintaan;
 use App\Models\Master\Dokter;
@@ -142,8 +143,14 @@ test('kunci tanpa hasil ditolak; setelah kunci terkunci; event lab dikunci', fun
 
     $locked = app(LabService::class)->kunci($permintaan, $user);
 
+    $tagihan = Tagihan::where('kunjungan_id', $permintaan->kunjungan_id)->where('jenis', 'lab')->first();
+
     expect($locked->dikunci)->toBeTrue()
-        ->and($permintaan->fresh()->status)->toBe('selesai');
+        ->and($permintaan->fresh()->status)->toBe('selesai')
+        ->and($tagihan)->not->toBeNull()
+        ->and($tagihan->tagihanDetail()->count())->toBe(1)
+        ->and((string) $tagihan->tagihanDetail()->first()->harga_satuan)->toBe('30000.00')
+        ->and($permintaan->kunjungan->fresh()->status)->toBe('lab');
 
     // attempt change rejected
     expect(fn () => app(LabService::class)->simpanHasil($detail, ['parameter_lab_id' => $param->id, 'nilai' => '15'], $user))

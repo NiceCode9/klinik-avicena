@@ -97,8 +97,8 @@ Fase 2–4 sudah selesai dengan alur lama. Fase ini menyesuaikannya dengan D34�
 
 | Status | Item | Ukuran |
 |---|---|---|
-| ⬜ | 4B.1 Migration `2026_11_01_000001_alur_apotek_kasir_lab` + model + seeder pengaturan/menu | L |
-| ⬜ | 4B.2 `TagihanService` + `StatusKunjunganService` baru (tanpa `kasir`) + tagihan farmasi saat final + tagihan lab saat kunci | L |
+| ✅ | 4B.1 Migration `2026_11_01_000001_alur_apotek_kasir_lab` + model + seeder pengaturan/menu | L |
+| ✅ | 4B.2 `TagihanService` + `StatusKunjunganService` baru (tanpa `kasir`) + tagihan farmasi saat final + tagihan lab saat kunci — selesai 11 Nov 2026; `TagihanService` dari 6.1 | L |
 | ⬜ | 4B.3 Pendaftaran pilih dokter, TTV tambahan, form ERM tunggal, tarif konsultasi, cara pulang | L |
 | ⬜ | 4B.4 e-Resep tanpa harga, copy riwayat, modal lab tanpa kelas/ruangan, cetak resep + SIP | M |
 | ⬜ | 4B.5 P-AUDIT Fase 4B | — |

@@ -15,6 +15,7 @@ use App\Models\Registrasi\Antrean;
 use App\Models\Registrasi\Kunjungan;
 use App\Models\Sys\LogAktivitas;
 use App\Models\User;
+use App\Services\Billing\TagihanService;
 use App\Services\Erm\Exceptions\DataTerkunciException;
 use App\Services\Registrasi\AntreanService;
 use App\Services\Registrasi\StatusKunjunganService;
@@ -25,6 +26,7 @@ class PemeriksaanService
     public function __construct(
         private StatusKunjunganService $statusKunjungan,
         private AntreanService $antrean,
+        private TagihanService $tagihan,
     ) {}
 
     public function mulai(Antrean|Kunjungan $sumber, Dokter $dokter, User $oleh): Pemeriksaan
@@ -120,6 +122,8 @@ class PemeriksaanService
                 'objektif' => $data['objektif'] ?? $terkunci->objektif,
                 'asesmen' => $data['asesmen'] ?? $terkunci->asesmen,
                 'rencana' => $data['rencana'] ?? $terkunci->rencana,
+                'tarif_konsultasi' => $this->tarifKonsultasi($terkunci, $data),
+                'riwayat_kesehatan' => $data['riwayat_kesehatan'] ?? $terkunci->riwayat_kesehatan,
             ]);
 
             $this->simpanDiagnosis($terkunci, $diagnosis);
@@ -131,6 +135,7 @@ class PemeriksaanService
                 'waktu_selesai' => now(),
             ]);
 
+            $this->tagihan->susunFarmasi($kunjungan);
             $this->statusKunjungan->sinkron($kunjungan, $oleh);
 
             LogAktivitas::catat($oleh, 'final_pemeriksaan', 'erm_pemeriksaan', $terkunci->id);
@@ -346,6 +351,24 @@ class PemeriksaanService
         if ($pemeriksaan->dikunci) {
             throw new DataTerkunciException;
         }
+    }
+
+    /**
+     * @param  array<string, mixed>  $data
+     */
+    private function tarifKonsultasi(Pemeriksaan $pemeriksaan, array $data): string
+    {
+        $input = trim((string) ($data['tarif_konsultasi'] ?? ''));
+        if ($input !== '') {
+            return bcadd($input, '0', 2);
+        }
+
+        $tersimpan = (string) $pemeriksaan->tarif_konsultasi;
+        if (bccomp($tersimpan, '0', 2) > 0) {
+            return bcadd($tersimpan, '0', 2);
+        }
+
+        return bcadd((string) ($pemeriksaan->dokter?->tarif_konsultasi ?? '0'), '0', 2);
     }
 
     /**

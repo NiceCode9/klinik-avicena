@@ -2,6 +2,7 @@
 
 use App\Events\PemeriksaanDimulai;
 use App\Events\PemeriksaanSelesai;
+use App\Models\Billing\Tagihan;
 use App\Models\Erm\Pemeriksaan;
 use App\Models\Master\Dokter;
 use App\Models\Master\Icd10;
@@ -128,8 +129,9 @@ test('simpanFinal mengisi waktu_selesai dan memancarkan event setelah commit', f
     Event::assertDispatched(PemeriksaanSelesai::class);
 });
 
-test('simpanFinal tanpa lab/resep menggerakkan kunjungan ke selesai', function () {
+test('simpanFinal tanpa lab/resep menggerakkan kunjungan ke farmasi', function () {
     [$kunjungan, $antrean, $dokter, $user] = setupKunjunganMenunggu();
+    $dokter->update(['tarif_konsultasi' => 75000]);
     $icd10 = Icd10::create(['kode' => 'A00', 'nama_diagnosis' => 'Kolera']);
     $pemeriksaan = app(PemeriksaanService::class)->mulai($antrean, $dokter, $user);
 
@@ -140,7 +142,45 @@ test('simpanFinal tanpa lab/resep menggerakkan kunjungan ke selesai', function (
     ], $user);
 
     $kunjungan->refresh();
-    expect($kunjungan->status)->toBe('selesai');
+    expect($kunjungan->status)->toBe('farmasi');
+});
+
+test('simpanFinal memakai tarif konsultasi dokter dan menyimpan riwayat kesehatan', function () {
+    [$kunjungan, $antrean, $dokter, $user] = setupKunjunganMenunggu();
+    $dokter->update(['tarif_konsultasi' => 75000]);
+    $icd10 = Icd10::create(['kode' => 'A00', 'nama_diagnosis' => 'Kolera']);
+    $pemeriksaan = app(PemeriksaanService::class)->mulai($antrean, $dokter, $user);
+
+    $final = app(PemeriksaanService::class)->simpanFinal($pemeriksaan, [
+        'diagnosis' => [['icd10_id' => $icd10->id, 'primer' => true]],
+        'kode_cara_keluar' => '1',
+        'nama_cara_keluar' => 'Pulang',
+        'riwayat_kesehatan' => 'Hipertensi sejak 2020',
+    ], $user);
+
+    $tagihan = Tagihan::where('kunjungan_id', $kunjungan->id)->where('jenis', 'farmasi')->first();
+    $konsultasi = $tagihan?->tagihanDetail()->where('komponen', 'konsultasi')->first();
+
+    expect((string) $final->tarif_konsultasi)->toBe('75000.00')
+        ->and($final->riwayat_kesehatan)->toBe('Hipertensi sejak 2020')
+        ->and($tagihan)->not->toBeNull()
+        ->and((string) $konsultasi?->harga_satuan)->toBe('75000.00');
+});
+
+test('simpanFinal memakai tarif konsultasi dari input dokter', function () {
+    [$kunjungan, $antrean, $dokter, $user] = setupKunjunganMenunggu();
+    $dokter->update(['tarif_konsultasi' => 75000]);
+    $icd10 = Icd10::create(['kode' => 'A00', 'nama_diagnosis' => 'Kolera']);
+    $pemeriksaan = app(PemeriksaanService::class)->mulai($antrean, $dokter, $user);
+
+    $final = app(PemeriksaanService::class)->simpanFinal($pemeriksaan, [
+        'diagnosis' => [['icd10_id' => $icd10->id, 'primer' => true]],
+        'kode_cara_keluar' => '1',
+        'nama_cara_keluar' => 'Pulang',
+        'tarif_konsultasi' => '125000',
+    ], $user);
+
+    expect((string) $final->tarif_konsultasi)->toBe('125000.00');
 });
 
 test('pemeriksaan terkunci menolak ubah', function () {

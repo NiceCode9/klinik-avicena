@@ -87,7 +87,12 @@ class PemeriksaanController extends Controller implements HasMiddleware
             abort(403);
         }
 
-        $data = $request->only(['subjektif', 'objektif', 'asesmen', 'rencana', 'diagnosis', 'kode_cara_keluar', 'nama_cara_keluar']);
+        $request->validate([
+            'tarif_konsultasi' => ['nullable', 'numeric', 'min:0'],
+            'riwayat_kesehatan' => ['nullable', 'string'],
+        ]);
+
+        $data = $request->only(['subjektif', 'objektif', 'asesmen', 'rencana', 'diagnosis', 'kode_cara_keluar', 'nama_cara_keluar', 'tarif_konsultasi', 'riwayat_kesehatan']);
 
         // diagnosis comes as JSON string from form
         if (is_string($data['diagnosis'] ?? null)) {

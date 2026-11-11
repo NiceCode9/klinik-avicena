@@ -1,7 +1,6 @@
 <?php
 
-use App\Models\Erm\Pemeriksaan;
-use App\Models\Erm\Resep;
+use App\Models\Billing\Tagihan;
 use App\Models\Lab\Permintaan;
 use App\Models\Registrasi\Kunjungan;
 use App\Models\User;
@@ -16,6 +15,19 @@ beforeEach(function () {
     DB::purge('mysql_sinkron');
 });
 
+function buatTagihanSnapshot(Kunjungan $kunjungan, string $jenis, string $status = 'belum_bayar'): Tagihan
+{
+    return Tagihan::create([
+        'no_tagihan' => 'TG-'.fake()->unique()->numerify('##########'),
+        'kunjungan_id' => $kunjungan->id,
+        'jenis' => $jenis,
+        'subtotal' => '10000.00',
+        'diskon' => '0',
+        'total' => '10000.00',
+        'status' => $status,
+    ]);
+}
+
 test('sinkron memakai data lab terbaru meski transaksi pemanggil punya snapshot lama', function () {
     $user = User::factory()->create();
     $kunjungan = Kunjungan::factory()->create([
@@ -24,6 +36,7 @@ test('sinkron memakai data lab terbaru meski transaksi pemanggil punya snapshot 
         'dibuat_oleh' => $user->id,
     ]);
     $permintaan = Permintaan::factory()->for($kunjungan)->create(['dikunci' => false]);
+    buatTagihanSnapshot($kunjungan, 'farmasi');
 
     $koneksiLain = DB::connection('mysql_sinkron');
     $koneksiLain->getPdo();
@@ -35,22 +48,20 @@ test('sinkron memakai data lab terbaru meski transaksi pemanggil punya snapshot 
 
     $hasil = app(StatusKunjunganService::class)->sinkron($kunjungan, $user);
 
-    expect($hasil->status)->toBe('selesai');
+    expect($hasil->status)->toBe('farmasi');
 
     DB::rollBack();
     DB::purge('mysql_sinkron');
 });
 
-test('sinkron memakai status resep terbaru meski transaksi pemanggil punya snapshot lama', function () {
+test('sinkron memakai status tagihan terbaru meski transaksi pemanggil punya snapshot lama', function () {
     $user = User::factory()->create();
     $kunjungan = Kunjungan::factory()->create([
         'jenis_kunjungan' => 'poli',
-        'status' => 'lab',
+        'status' => 'farmasi',
         'dibuat_oleh' => $user->id,
     ]);
-    Permintaan::factory()->for($kunjungan)->create(['dikunci' => true]);
-    $pemeriksaan = Pemeriksaan::factory()->for($kunjungan)->create();
-    $resep = Resep::factory()->for($pemeriksaan, 'pemeriksaan')->create(['status' => 'diterbitkan']);
+    $tagihan = buatTagihanSnapshot($kunjungan, 'farmasi');
 
     $koneksiLain = DB::connection('mysql_sinkron');
     $koneksiLain->getPdo();
@@ -58,7 +69,7 @@ test('sinkron memakai status resep terbaru meski transaksi pemanggil punya snaps
     DB::beginTransaction();
     Kunjungan::whereKey($kunjungan->id)->first();
 
-    $koneksiLain->table('erm_resep')->where('id', $resep->id)->update(['status' => 'diserahkan']);
+    $koneksiLain->table('bil_tagihan')->where('id', $tagihan->id)->update(['status' => 'lunas']);
 
     $hasil = app(StatusKunjunganService::class)->sinkron($kunjungan, $user);
 
