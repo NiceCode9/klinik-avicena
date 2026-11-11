@@ -184,6 +184,7 @@ Prefix tabel ↔ namespace: `sys_`=Sys, `mtr_`=Master, `reg_`=Registrasi, `erm_`
 11. **Keamanan data**: `nik` (pasien/dokter) dan token memakai cast `encrypted`; pencarian NIK lewat `nik_hash` (HMAC). Jangan log NIK, hasil lab, atau isi SOAP ke file log. Rahasia hanya di `.env`.
 12. **Zona waktu** `Asia/Jakarta`, locale `id`. Pesan validasi dan UI berbahasa Indonesia.
 13. **"Payload SATUSEHAT hanya dari dokumentasi resmi yang dibaca saat implementasi (dicatat di `docs/satusehat-payload-<resource>.md` + sumbernya). Jangan menebak elemen wajib, kode terminologi, atau URL. Jangan memakai PDF playbook lama."**
+14. **Branch**: pengembangan di `develop`; `master` hanya menerima merge fase yang sudah lulus `php artisan test`.
 
 ## JANGAN
 
