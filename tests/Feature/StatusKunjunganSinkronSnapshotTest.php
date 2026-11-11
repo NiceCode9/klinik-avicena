@@ -35,7 +35,7 @@ test('sinkron memakai data lab terbaru meski transaksi pemanggil punya snapshot 
 
     $hasil = app(StatusKunjunganService::class)->sinkron($kunjungan, $user);
 
-    expect($hasil->status)->toBe('kasir');
+    expect($hasil->status)->toBe('selesai');
 
     DB::rollBack();
     DB::purge('mysql_sinkron');
@@ -62,7 +62,7 @@ test('sinkron memakai status resep terbaru meski transaksi pemanggil punya snaps
 
     $hasil = app(StatusKunjunganService::class)->sinkron($kunjungan, $user);
 
-    expect($hasil->status)->toBe('kasir');
+    expect($hasil->status)->toBe('selesai');
 
     DB::rollBack();
     DB::purge('mysql_sinkron');

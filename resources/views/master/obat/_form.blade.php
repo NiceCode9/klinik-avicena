@@ -63,7 +63,7 @@
 </div>
 
 <div class="row">
-    <div class="col-md-4 mb-3">
+    <div class="col-md-6 mb-3">
         <label for="golongan" class="form-label">Golongan</label>
         <select id="golongan" name="golongan" class="form-select @error('golongan') is-invalid @enderror">
             @foreach (\App\Models\Master\Obat::GOLONGAN as $nilai => $label)
@@ -77,7 +77,7 @@
         @enderror
     </div>
 
-    <div class="col-md-4 mb-3">
+    <div class="col-md-6 mb-3">
         <label for="stok_minimum" class="form-label">Stok Minimum</label>
         <input type="number" id="stok_minimum" name="stok_minimum" min="0" step="0.01"
             class="form-control @error('stok_minimum') is-invalid @enderror"
@@ -86,13 +86,24 @@
             <div class="invalid-feedback">{{ $message }}</div>
         @enderror
     </div>
+</div>
 
-    <div class="col-md-4 mb-3">
-        <label for="harga_jual" class="form-label">Harga Jual (Rp)</label>
-        <input type="number" id="harga_jual" name="harga_jual" min="0" step="0.01"
-            class="form-control @error('harga_jual') is-invalid @enderror"
-            value="{{ old('harga_jual', $obat->harga_jual ?? 0) }}">
-        @error('harga_jual')
+<div class="row">
+    <div class="col-md-6 mb-3">
+        <label for="zat_aktif" class="form-label">Zat Aktif (opsional)</label>
+        <input type="text" id="zat_aktif" name="zat_aktif" maxlength="255"
+            class="form-control @error('zat_aktif') is-invalid @enderror"
+            value="{{ old('zat_aktif', $obat->zat_aktif ?? '') }}">
+        @error('zat_aktif')
+            <div class="invalid-feedback">{{ $message }}</div>
+        @enderror
+    </div>
+
+    <div class="col-md-6 mb-3">
+        <label for="komposisi" class="form-label">Komposisi (opsional)</label>
+        <textarea id="komposisi" name="komposisi" rows="2"
+            class="form-control @error('komposisi') is-invalid @enderror">{{ old('komposisi', $obat->komposisi ?? '') }}</textarea>
+        @error('komposisi')
             <div class="invalid-feedback">{{ $message }}</div>
         @enderror
     </div>

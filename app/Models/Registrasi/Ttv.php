@@ -16,6 +16,7 @@ class Ttv extends ModelDasar
             'suhu' => 'decimal:1',
             'berat_badan' => 'decimal:2',
             'tinggi_badan' => 'decimal:2',
+            'gula_darah' => 'decimal:1',
         ];
     }
 

@@ -37,6 +37,14 @@ class DataAwalSeeder extends Seeder
 
         DB::table('sys_pengaturan')->insert(array_map(fn ($r) => $r + $waktu, [
             ['kunci' => 'biaya_jasa_racik', 'nilai' => '0', 'keterangan' => 'Biaya flat jasa racik per resep racikan (Rp)'],
+            ['kunci' => 'embalase', 'nilai' => '0', 'keterangan' => 'Biaya embalase per item obat reguler (Rp)'],
+            ['kunci' => 'uang_kopi', 'nilai' => '0', 'keterangan' => 'Uang kopi per transaksi (Rp)'],
+            ['kunci' => 'simpanan_default', 'nilai' => '0', 'keterangan' => 'Simpanan default per transaksi (Rp)'],
+            ['kunci' => 'margin_bebas', 'nilai' => '0', 'keterangan' => 'Margin harga jual golongan bebas'],
+            ['kunci' => 'margin_bebas_terbatas', 'nilai' => '0', 'keterangan' => 'Margin harga jual golongan bebas terbatas'],
+            ['kunci' => 'margin_keras', 'nilai' => '0', 'keterangan' => 'Margin harga jual golongan keras'],
+            ['kunci' => 'margin_narkotika', 'nilai' => '0', 'keterangan' => 'Margin harga jual golongan narkotika'],
+            ['kunci' => 'margin_psikotropika', 'nilai' => '0', 'keterangan' => 'Margin harga jual golongan psikotropika'],
             ['kunci' => 'retur_pasien_diizinkan', 'nilai' => '1', 'keterangan' => '1 = retur obat dari pasien diizinkan'],
             ['kunci' => 'batas_peringatan_kedaluwarsa_hari', 'nilai' => '90', 'keterangan' => 'Peringatan obat mendekati kedaluwarsa'],
         ]));

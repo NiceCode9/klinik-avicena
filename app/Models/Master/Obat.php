@@ -34,7 +34,6 @@ class Obat extends ModelDasar
     {
         return [
             'stok_minimum' => 'decimal:2',
-            'harga_jual' => 'decimal:2',
             'aktif' => 'boolean',
         ];
     }

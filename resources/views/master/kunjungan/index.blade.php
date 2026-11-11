@@ -15,7 +15,7 @@
                 <form method="get" action="{{ route('kunjungan.index') }}" class="d-flex gap-2">
                     <select name="status" class="form-select form-select-sm" style="width:160px">
                         <option value="">Semua status</option>
-                        @foreach (['terdaftar','ttv','menunggu','diperiksa','lab','farmasi','kasir','selesai','batal'] as $s)
+                        @foreach (['terdaftar','ttv','menunggu','diperiksa','lab','farmasi','selesai','batal'] as $s)
                             <option value="{{ $s }}" @selected($status === $s)>{{ $s }}</option>
                         @endforeach
                     </select>

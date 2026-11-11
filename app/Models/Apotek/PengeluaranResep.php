@@ -15,6 +15,7 @@ class PengeluaranResep extends ModelDasar
     {
         return [
             'jumlah' => 'decimal:3',
+            'harga_jual_satuan' => 'decimal:2',
         ];
     }
 

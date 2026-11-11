@@ -13,6 +13,9 @@ class Pengaturan extends ModelDasar
      */
     public const TIPE = [
         'biaya_jasa_racik' => 'uang',
+        'embalase' => 'uang',
+        'uang_kopi' => 'uang',
+        'simpanan_default' => 'uang',
         'retur_pasien_diizinkan' => 'boolean',
         'batas_peringatan_kedaluwarsa_hari' => 'angka',
     ];

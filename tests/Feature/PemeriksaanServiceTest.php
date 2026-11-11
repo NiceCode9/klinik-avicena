@@ -128,7 +128,7 @@ test('simpanFinal mengisi waktu_selesai dan memancarkan event setelah commit', f
     Event::assertDispatched(PemeriksaanSelesai::class);
 });
 
-test('simpanFinal tanpa lab/resep menggerakkan kunjungan ke kasir', function () {
+test('simpanFinal tanpa lab/resep menggerakkan kunjungan ke selesai', function () {
     [$kunjungan, $antrean, $dokter, $user] = setupKunjunganMenunggu();
     $icd10 = Icd10::create(['kode' => 'A00', 'nama_diagnosis' => 'Kolera']);
     $pemeriksaan = app(PemeriksaanService::class)->mulai($antrean, $dokter, $user);
@@ -140,7 +140,7 @@ test('simpanFinal tanpa lab/resep menggerakkan kunjungan ke kasir', function () 
     ], $user);
 
     $kunjungan->refresh();
-    expect($kunjungan->status)->toBe('kasir');
+    expect($kunjungan->status)->toBe('selesai');
 });
 
 test('pemeriksaan terkunci menolak ubah', function () {

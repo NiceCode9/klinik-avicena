@@ -21,7 +21,6 @@ function dataObat(Satuan $satuan, array $ganti = []): array
         'satuan_id' => $satuan->id,
         'golongan' => 'bebas',
         'stok_minimum' => '20',
-        'harga_jual' => '500',
         'aktif' => '1',
     ];
 }
@@ -59,7 +58,6 @@ test('pengguna dengan hak dapat menambah obat', function () {
         'kategori_obat_id' => $kategori->id,
         'satuan_id' => $satuan->id,
         'golongan' => 'keras',
-        'harga_jual' => 500,
         'kode_kfa' => '93000001',
     ]);
 });
@@ -97,14 +95,12 @@ test('pengguna dengan hak dapat mengubah obat', function () {
     $this->actingAs(penggunaDenganIzin(['dasbor', 'master.obat']))
         ->put(route('obat.update', $obat), dataObat($satuan, [
             'nama' => 'Paracetamol 650 mg',
-            'harga_jual' => '750',
         ]))
         ->assertRedirect(route('obat.index'));
 
     $this->assertDatabaseHas('mtr_obat', [
         'id' => $obat->id,
         'nama' => 'Paracetamol 650 mg',
-        'harga_jual' => 750,
     ]);
 });
 

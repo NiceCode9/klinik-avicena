@@ -27,6 +27,8 @@ return [
         ['kode' => 'lab.antrean', 'nama' => 'Antrean Lab', 'rute' => 'lab-antrean.index'],
         ['kode' => 'lab.hasil',   'nama' => 'Hasil Lab',   'rute' => 'lab-hasil.index'],
         ['kode' => 'lab.spesimen',  'nama' => 'Pengambilan Spesimen', 'rute' => 'spesimen.index'],
+        ['kode' => 'lab.kasir',     'nama' => 'Kasir Lab',            'rute' => 'lab-kasir.index'],
+        ['kode' => 'lab.shift',     'nama' => 'Shift Kasir',          'rute' => 'lab-shift.index'],
     ]],
 
     ['kode' => 'apotek', 'nama' => 'Apotek & Farmasi', 'ikon' => 'bi-capsule', 'anak' => [
@@ -37,12 +39,9 @@ return [
         ['kode' => 'apotek.retur_supplier', 'nama' => 'Retur ke Supplier',      'rute' => 'retur-supplier.index'],
         ['kode' => 'apotek.retur_pasien',   'nama' => 'Retur dari Pasien',      'rute' => 'retur-pasien.index'],
         ['kode' => 'apotek.opname',         'nama' => 'Stock Opname',           'rute' => 'opname.index'],
-    ]],
-
-    ['kode' => 'kasir', 'nama' => 'Kasir', 'ikon' => 'bi-cash-coin', 'anak' => [
-        ['kode' => 'kasir.tagihan',    'nama' => 'Tagihan',       'rute' => 'tagihan.index'],
-        ['kode' => 'kasir.pembayaran', 'nama' => 'Pembayaran',    'rute' => 'pembayaran.index'],
-        ['kode' => 'kasir.laporan',    'nama' => 'Laporan Kasir', 'rute' => 'laporan-kasir.index'],
+        ['kode' => 'apotek.kasir',          'nama' => 'Kasir Apotek',           'rute' => 'apotek-kasir.index'],
+        ['kode' => 'apotek.shift',          'nama' => 'Shift Kasir',            'rute' => 'apotek-shift.index'],
+        ['kode' => 'apotek.setoran_dokter', 'nama' => 'Setoran Dokter',         'rute' => 'apotek-setoran-dokter.index'],
     ]],
 
     ['kode' => 'master', 'nama' => 'Data Master', 'ikon' => 'bi-database', 'anak' => [

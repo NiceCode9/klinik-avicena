@@ -19,10 +19,9 @@ class StatusKunjunganService
             'terdaftar' => ['ttv', 'batal'],
             'ttv' => ['menunggu', 'batal'],
             'menunggu' => ['diperiksa', 'batal'],
-            'diperiksa' => ['lab', 'farmasi', 'kasir', 'batal'],
-            'lab' => ['farmasi', 'kasir', 'batal'],
-            'farmasi' => ['kasir', 'batal'],
-            'kasir' => ['selesai'],
+            'diperiksa' => ['lab', 'farmasi', 'selesai', 'batal'],
+            'lab' => ['farmasi', 'selesai', 'batal'],
+            'farmasi' => ['selesai', 'batal'],
             'selesai' => [],
             'batal' => [],
         ],
@@ -31,20 +30,18 @@ class StatusKunjunganService
             'ttv' => [],
             'menunggu' => [],
             'diperiksa' => [],
-            'lab' => ['kasir', 'batal'],
+            'lab' => ['selesai', 'batal'],
             'farmasi' => [],
-            'kasir' => ['selesai'],
             'selesai' => [],
             'batal' => [],
         ],
         'apotek_umum' => [
-            'terdaftar' => ['kasir', 'batal'],
+            'terdaftar' => ['farmasi', 'batal'],
             'ttv' => [],
             'menunggu' => [],
             'diperiksa' => [],
             'lab' => [],
-            'farmasi' => [],
-            'kasir' => ['selesai'],
+            'farmasi' => ['selesai', 'batal'],
             'selesai' => [],
             'batal' => [],
         ],
@@ -126,11 +123,11 @@ class StatusKunjunganService
                 ->get(['id', 'status'])
                 ->contains(fn (Resep $resep) => ! in_array($resep->status, ['diserahkan', 'batal'], true));
 
-            return $resepBelumSelesai ? 'farmasi' : 'kasir';
+            return $resepBelumSelesai ? 'farmasi' : 'selesai';
         }
 
         if ($kunjungan->jenis_kunjungan === 'lab_mandiri' && $kunjungan->status === 'lab') {
-            return $this->adaPermintaanBelumTerkunci($kunjungan) ? 'lab' : 'kasir';
+            return $this->adaPermintaanBelumTerkunci($kunjungan) ? 'lab' : 'selesai';
         }
 
         return null;

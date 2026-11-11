@@ -18,6 +18,7 @@ class Penerimaan extends ModelDasar
             'tanggal_faktur' => 'date',
             'tanggal_terima' => 'date',
             'total' => 'decimal:2',
+            'ppn_persen' => 'decimal:2',
         ];
     }
 

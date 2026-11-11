@@ -27,7 +27,6 @@
                         <th style="width:150px">KFA</th>
                         <th style="width:100px">Satuan</th>
                         <th style="width:130px">Golongan</th>
-                        <th class="text-end" style="width:120px">Harga Jual</th>
                         <th style="width:110px">Status</th>
                         <th class="text-end pe-3" style="width:180px">Aksi</th>
                     </tr>
@@ -55,7 +54,6 @@
                             </td>
                             <td>{{ $obat->satuan?->nama ?? '-' }}</td>
                             <td>{{ \App\Models\Master\Obat::GOLONGAN[$obat->golongan] ?? $obat->golongan }}</td>
-                            <td class="text-end">{{ number_format($obat->harga_jual, 0, ',', '.') }}</td>
                             <td>
                                 @if ($obat->aktif)
                                     <span class="badge text-bg-success">Aktif</span>
@@ -79,7 +77,7 @@
                         </tr>
                     @empty
                         <tr>
-                            <td colspan="9" class="text-center text-muted py-3">Belum ada data obat.</td>
+                            <td colspan="8" class="text-center text-muted py-3">Belum ada data obat.</td>
                         </tr>
                     @endforelse
                 </tbody>

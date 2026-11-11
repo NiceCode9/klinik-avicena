@@ -72,8 +72,8 @@ class Kunjungan extends ModelDasar
         return $this->hasMany(PenjualanUmum::class, 'kunjungan_id');
     }
 
-    public function tagihan(): HasOne
+    public function tagihan(): HasMany
     {
-        return $this->hasOne(Tagihan::class, 'kunjungan_id');
+        return $this->hasMany(Tagihan::class, 'kunjungan_id');
     }
 }

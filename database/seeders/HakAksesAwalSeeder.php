@@ -52,6 +52,8 @@ class HakAksesAwalSeeder extends Seeder
                 'lab.hasil' => 'LTU',
                 'master.pemeriksaan_lab' => 'L',
                 'lab.spesimen' => 'LTU',
+                'lab.kasir' => 'LTU',
+                'lab.shift' => 'LTU',
             ],
             'apoteker' => [
                 'dasbor' => 'L',
@@ -62,15 +64,12 @@ class HakAksesAwalSeeder extends Seeder
                 'apotek.retur_supplier' => 'LTU',
                 'apotek.retur_pasien' => 'LTU',
                 'apotek.opname' => 'LTU',
+                'apotek.kasir' => 'LTU',
+                'apotek.shift' => 'LTU',
+                'apotek.setoran_dokter' => 'LTU',
                 'master.obat' => 'LTU',
                 'master.racikan' => 'LTU',
                 'master.supplier' => 'LTU',
-            ],
-            'kasir' => [
-                'dasbor' => 'L',
-                'kasir.tagihan' => 'L',
-                'kasir.pembayaran' => 'LT',
-                'kasir.laporan' => 'L',
             ],
         ];
 

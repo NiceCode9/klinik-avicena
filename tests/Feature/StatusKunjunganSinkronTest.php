@@ -27,15 +27,15 @@ function buatResepSinkron(Kunjungan $kunjungan, string $status): Resep
     return Resep::factory()->for($pemeriksaan, 'pemeriksaan')->create(['status' => $status]);
 }
 
-test('sinkron memindahkan kunjungan diperiksa tanpa lab dan resep ke kasir', function () {
+test('sinkron memindahkan kunjungan diperiksa tanpa lab dan resep ke selesai', function () {
     $user = User::factory()->create();
     $kunjungan = buatKunjunganSinkron($user);
 
     $hasil = app(StatusKunjunganService::class)->sinkron($kunjungan, $user);
 
-    expect($hasil->status)->toBe('kasir')
+    expect($hasil->status)->toBe('selesai')
         ->and($hasil->riwayatStatus()->count())->toBe(1)
-        ->and($hasil->riwayatStatus()->first()->status)->toBe('kasir');
+        ->and($hasil->riwayatStatus()->first()->status)->toBe('selesai');
 });
 
 test('sinkron memindahkan ke lab saat permintaan lab belum dikunci', function () {
@@ -61,7 +61,7 @@ test('sinkron tetap di lab saat satu dari dua permintaan lab belum dikunci', fun
     expect($hasil->status)->toBe('lab');
 });
 
-test('sinkron memindahkan ke kasir saat semua permintaan lab terkunci', function () {
+test('sinkron memindahkan ke selesai saat semua permintaan lab terkunci', function () {
     $user = User::factory()->create();
     $kunjungan = buatKunjunganSinkron($user);
     Permintaan::factory()->for($kunjungan)->create(['dikunci' => true]);
@@ -69,10 +69,10 @@ test('sinkron memindahkan ke kasir saat semua permintaan lab terkunci', function
 
     $hasil = app(StatusKunjunganService::class)->sinkron($kunjungan, $user);
 
-    expect($hasil->status)->toBe('kasir');
+    expect($hasil->status)->toBe('selesai');
 });
 
-test('sinkron mensyaratkan permintaan lab batal tetap terkunci sebelum kasir', function () {
+test('sinkron mensyaratkan permintaan lab batal tetap terkunci sebelum selesai', function () {
     $user = User::factory()->create();
     $kunjungan = buatKunjunganSinkron($user);
     $permintaan = Permintaan::factory()->for($kunjungan)->create([
@@ -88,7 +88,7 @@ test('sinkron mensyaratkan permintaan lab batal tetap terkunci sebelum kasir', f
     $permintaan->update(['dikunci' => true]);
     $selesai = $layanan->sinkron($belum, $user);
 
-    expect($selesai->status)->toBe('kasir');
+    expect($selesai->status)->toBe('selesai');
 });
 
 test('sinkron memindahkan ke farmasi saat resep belum diserahkan', function () {
@@ -110,7 +110,7 @@ test('sinkron menganggap resep selesai saat berstatus diserahkan atau batal', fu
 
     $hasil = app(StatusKunjunganService::class)->sinkron($kunjungan, $user);
 
-    expect($hasil->status)->toBe('kasir');
+    expect($hasil->status)->toBe('selesai');
 })->with(['diserahkan', 'batal']);
 
 test('sinkron memprioritaskan lab saat resep sudah diserahkan tetapi lab belum dikunci', function () {
@@ -167,13 +167,13 @@ test('sinkron tidak mengubah kunjungan yang masih menunggu', function () {
         ->and(KunjunganRiwayatStatus::count())->toBe(0);
 });
 
-test('sinkron idempoten pada kunjungan yang sudah di kasir', function () {
+test('sinkron idempoten pada kunjungan yang sudah di selesai', function () {
     $user = User::factory()->create();
-    $kunjungan = buatKunjunganSinkron($user, 'kasir');
+    $kunjungan = buatKunjunganSinkron($user, 'selesai');
 
     $hasil = app(StatusKunjunganService::class)->sinkron($kunjungan, $user);
 
-    expect($hasil->status)->toBe('kasir')
+    expect($hasil->status)->toBe('selesai')
         ->and(KunjunganRiwayatStatus::count())->toBe(0);
 });
 
@@ -191,20 +191,20 @@ test('sinkron lab mandiri menunggu semua permintaan lab terkunci', function () {
     $permintaan->update(['dikunci' => true]);
     $selesai = $layanan->sinkron($belum, $user);
 
-    expect($selesai->status)->toBe('kasir')
+    expect($selesai->status)->toBe('selesai')
         ->and(KunjunganRiwayatStatus::count())->toBe(1);
 });
 
-test('sinkron lab mandiri tanpa permintaan lab langsung ke kasir', function () {
+test('sinkron lab mandiri tanpa permintaan lab langsung ke selesai', function () {
     $user = User::factory()->create();
     $kunjungan = buatKunjunganSinkron($user, 'lab', 'lab_mandiri');
 
     $hasil = app(StatusKunjunganService::class)->sinkron($kunjungan, $user);
 
-    expect($hasil->status)->toBe('kasir');
+    expect($hasil->status)->toBe('selesai');
 });
 
-test('sinkron mengikuti urutan lab lalu farmasi lalu kasir', function () {
+test('sinkron mengikuti urutan lab lalu farmasi lalu selesai', function () {
     $user = User::factory()->create();
     $kunjungan = buatKunjunganSinkron($user);
     $permintaan = Permintaan::factory()->for($kunjungan)->create(['dikunci' => false]);
@@ -221,5 +221,5 @@ test('sinkron mengikuti urutan lab lalu farmasi lalu kasir', function () {
 
     $resep->update(['status' => 'diserahkan']);
     $selesai = $layanan->sinkron($setelahFarmasi, $user);
-    expect($selesai->status)->toBe('kasir');
+    expect($selesai->status)->toBe('selesai');
 });

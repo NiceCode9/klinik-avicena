@@ -58,7 +58,6 @@ function buatObatUji(): Obat
         'kategori_obat_id' => $kategori->id,
         'satuan_id' => $satuan->id,
         'golongan' => 'bebas',
-        'harga_jual' => 5000,
         'aktif' => true,
     ]);
 }
@@ -76,7 +75,7 @@ test('buatResep membuat resep status diterbitkan dan memancarkan event', functio
     Event::assertDispatched(ResepDiterbitkan::class);
 });
 
-test('tambahItem reguler snapshot harga dan auto aturan_pakai', function () {
+test('tambahItem reguler tanpa harga dan auto aturan_pakai', function () {
     [$pemeriksaan, $user] = setupPemeriksaanForResep();
     $obat = buatObatUji();
     $resep = app(ResepService::class)->buatResep($pemeriksaan, $user);
@@ -95,7 +94,7 @@ test('tambahItem reguler snapshot harga dan auto aturan_pakai', function () {
         'lama_hari' => 5,
     ], $user);
 
-    expect((float) $item->harga_satuan)->toBe(5000.0)
+    expect((float) $item->harga_satuan)->toBe(0.0)
         ->and($item->aturan_pakai)->toContain('1 tablet')
         ->and($item->obat_id)->toBe($obat->id);
 });

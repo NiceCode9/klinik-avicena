@@ -16,6 +16,7 @@ class StokBatch extends ModelDasar
         return [
             'tanggal_kedaluwarsa' => 'date',
             'harga_beli' => 'decimal:2',
+            'harga_jual' => 'decimal:2',
             'jumlah_masuk' => 'decimal:2',
             'jumlah_sisa' => 'decimal:2',
         ];

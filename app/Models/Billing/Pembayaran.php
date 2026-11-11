@@ -30,6 +30,11 @@ class Pembayaran extends ModelDasar
         return $this->belongsTo(MetodeBayar::class, 'metode_bayar_id');
     }
 
+    public function shift(): BelongsTo
+    {
+        return $this->belongsTo(Shift::class, 'shift_id');
+    }
+
     public function kasir(): BelongsTo
     {
         return $this->belongsTo(User::class, 'kasir_id');

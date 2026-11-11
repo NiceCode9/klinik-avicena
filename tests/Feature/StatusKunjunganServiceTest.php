@@ -17,10 +17,9 @@ function matriksTransisiKunjungan(): array
             'terdaftar' => ['ttv', 'batal'],
             'ttv' => ['menunggu', 'batal'],
             'menunggu' => ['diperiksa', 'batal'],
-            'diperiksa' => ['lab', 'farmasi', 'kasir', 'batal'],
-            'lab' => ['farmasi', 'kasir', 'batal'],
-            'farmasi' => ['kasir', 'batal'],
-            'kasir' => ['selesai'],
+            'diperiksa' => ['lab', 'farmasi', 'selesai', 'batal'],
+            'lab' => ['farmasi', 'selesai', 'batal'],
+            'farmasi' => ['selesai', 'batal'],
             'selesai' => [],
             'batal' => [],
         ],
@@ -29,20 +28,18 @@ function matriksTransisiKunjungan(): array
             'ttv' => [],
             'menunggu' => [],
             'diperiksa' => [],
-            'lab' => ['kasir', 'batal'],
+            'lab' => ['selesai', 'batal'],
             'farmasi' => [],
-            'kasir' => ['selesai'],
             'selesai' => [],
             'batal' => [],
         ],
         'apotek_umum' => [
-            'terdaftar' => ['kasir', 'batal'],
+            'terdaftar' => ['farmasi', 'batal'],
             'ttv' => [],
             'menunggu' => [],
             'diperiksa' => [],
             'lab' => [],
-            'farmasi' => [],
-            'kasir' => ['selesai'],
+            'farmasi' => ['selesai', 'batal'],
             'selesai' => [],
             'batal' => [],
         ],
@@ -60,7 +57,7 @@ dataset('transisi_kunjungan_sah', function () {
 });
 
 dataset('transisi_kunjungan_tidak_sah', function () {
-    $semuaStatus = ['terdaftar', 'ttv', 'menunggu', 'diperiksa', 'lab', 'farmasi', 'kasir', 'selesai', 'batal'];
+    $semuaStatus = ['terdaftar', 'ttv', 'menunggu', 'diperiksa', 'lab', 'farmasi', 'selesai', 'batal'];
 
     foreach (matriksTransisiKunjungan() as $jenis => $statusAwal) {
         foreach ($semuaStatus as $asal) {

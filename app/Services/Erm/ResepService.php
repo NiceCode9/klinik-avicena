@@ -76,7 +76,7 @@ class ResepService
                     'jenis' => 'reguler',
                     'obat_id' => $obat->id,
                     'jumlah' => $jumlah,
-                    'harga_satuan' => $obat->harga_jual,
+                    'harga_satuan' => 0,
                     'aturan_pakai' => $data['aturan_pakai'] ?? $this->aturanPakai($dosis, $satuanDosis, $frekuensi, $periode, $satuanPeriode, $kodeRute, $lamaHari, $aturanTambahan),
                     'dosis' => $dosis,
                     'satuan_dosis' => $satuanDosis,

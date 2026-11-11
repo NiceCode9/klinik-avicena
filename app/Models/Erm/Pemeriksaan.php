@@ -23,6 +23,7 @@ class Pemeriksaan extends ModelDasar
         return [
             'dikunci' => 'boolean',
             'dikunci_pada' => 'datetime',
+            'tarif_konsultasi' => 'decimal:2',
         ];
     }
 
